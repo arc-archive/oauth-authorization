@@ -8,9 +8,7 @@ before_script:
 addons:
   sauce_connect: true
 script:
-- "./node_modules/.bin/polymer lint oauth-authorization.html"
-- ./node_modules/.bin/polymer test --plugin sauce --job-name "oauth-authorization:${TRAVIS_BRANCH}"
-  --build-number=${TRAVIS_BUILD_NUMBER}
+- ./node_modules/.bin/polymer lint oauth-authorization.html
 cache:
   directories:
   - bower_components
