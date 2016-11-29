@@ -10,7 +10,7 @@
   ],
   "private": true,
   "main": [
-    "outh-authorization.html"
+    "oauth2-authorization.html"
   ],
   "repository": {
     "type": "git",
@@ -36,5 +36,5 @@
     "test",
     "tasks"
   ],
-  "version": "0.0.1"
+  "version": "0.0.2"
 }

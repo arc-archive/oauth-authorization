@@ -9,14 +9,17 @@ addons:
   sauce_connect: true
 script:
 - ./node_modules/.bin/polymer lint oauth-authorization.html
-- ./node_modules/.bin/polymer test --plugin sauce --job-name "oauth-authorization:${TRAVIS_BRANCH}" --build-number=${TRAVIS_BUILD_NUMBER}
 cache:
   directories:
   - bower_components
   - node_modules
 branches:
   only:
-    - stage
-    - develop
+  - stage
+  - develop
 after_success:
-  - node tasks/ci.js
+- node tasks/ci.js
+env:
+  global:
+  - secure: hBfPekC4z+QgtwIv14kO98pGk8llnEZABws5X0SumHXXuSlaQrY/oTLuECQl1qBqlU3DP8OU1I1iyRbdebQ31lzojNxTANAAwTehqFT0Eeb1rWr0jSb2if5Lqe+77h85d5UOF3CXEZkaBtMhshgKjDNxRhtDs0Z1MiVOd9fVONeHrX2p1Pcg2jXQLew7seUOLiQSbrDuP0rJ+0vY/t6/huyZCfdpmHdErtk1wA6ZHg7WnRZv5S8aOxmqVV1fqoUDrXo9qhhKr/Fq7Epx1ZIf2Rj69NcFhvakaZU+IHLck4Dq7oAQX10BKmr+57Ovau7RPsBdW3+xBhVazJGguKB0IJrN4mLp/B30x20T1Ty4vXkU0A3LrNv3eq4CJONpMNMHcKSiXAxmZ/WtzBSb2yi3dRYqcI2n/V2slMsrlPzXvy3GRHm66b8wA7G1trahoIBZdKY8y3aPOhc+tMV1Q8D3ebXXI427NADMxMwHYwHEJUNYZPWOc8zP/HohYYz0DIGg4dV0NDNi7JKNlbXBk2dvVqg+Eizw2mbWCz7jp1bEYYa243O5JgRjJOqsDdu9y1KtgnAwWMImxOfvwWUxmiEQc21Y52Mcqy1Uz0E3Tt4A41tbONBymP3XcaYm/xfxq6TJKaOtpWYLqxMhZalWS3BIb3zFz3b2OTmTE8CYqfzZOgk=
+  - secure: filEsPWizH7bWCxJLZs/2wV0P+6DR+m1PxPp7YvBn38AJR9uXfnD6TCBSkbjnv4fHnl1Ylgi2T43g9KP0DJlxagErho7rKL9Hr55jCDAK5AM/3ZW1ZoHRu8GlmlkR7kWqwJ0nizhyNjGhspx5cr4DX1p0rGwODvYuDR3hov7XxdDJAC/rprRbKb4bmciRgi6JtYKeBhGQ5tyhzmHRcfSHsudKXbL4OT25gaVi5JDdorp02gnyNnYsXDLQkmzDd9HlE7pz2q5zFhVm3QG0tNlLWArUZLT9FA0VThzpCCO0G4EGRHxGUkYmSKUEQfu/5y2exbWyK0wbZt+Ra7Roz8VIXvoqBDyUORYszAnDbXmmrrz421Ab9gaSxdfOsiBJz2+zzogJxsj3NuvDOPNtnFGAByJ7ks32kppZV6so+u8VXfowqIfE1sjYvt0MMyemc5ysMJGmYWoSW5KxBLZ+kFHkSy/5K4rDSXabguYh2RxtFICeJ9uovNZ1SI1jgeROqJxnKQ19I207w1TE8tie0GUx3EUn6fGhvbSWJ6FYEiWliaAXacjmDmUMJv/C17DMjekaYouTbIxlCrstYqTbD/idkpPBMUAhG2MwJPKlxdMhMqWzwbrnrvCssFzhs+pl344zACeswkao5KKSd85Yc17Ugh53SpO4GYLAcIdneNAUF4=
