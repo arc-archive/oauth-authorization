@@ -242,7 +242,7 @@ Polymer({
         this.fire('oauth2-token-response', tokenInfo);
         this._eventSource = undefined;
       } else if (this._type === 'authorization_code') {
-        this._exchangeCode = tokenInfo.code;
+        this._exchangeCodeValue = tokenInfo.code;
         this._exchangeCode(tokenInfo.code);
       }
     }
@@ -260,7 +260,7 @@ Polymer({
     // Popup is closed by this element so if data is not yet set it means that the
     // user closed the window - probably some error.
     // The UI state should reset if needed.
-    if (this.tokenInfo || (this._type === 'authorization_code' && this._exchangeCode)) {
+    if (this.tokenInfo || (this._type === 'authorization_code' && this._exchangeCodeValue)) {
       return;
     }
     this.clear();
@@ -328,7 +328,7 @@ Polymer({
         });
         this._settings = undefined;
         this._eventSource = undefined;
-        this._exchangeCode = undefined;
+        this._exchangeCodeValue = undefined;
         return;
       }
     } else {
@@ -363,7 +363,7 @@ Polymer({
 
     this._settings = undefined;
     this._eventSource = undefined;
-    this._exchangeCode = undefined;
+    this._exchangeCodeValue = undefined;
   },
 
   _handleTokenCodeError: function(e) {
