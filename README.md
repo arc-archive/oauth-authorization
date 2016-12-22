@@ -6,7 +6,7 @@ The `<outh2-authorization>` performs an OAuth2 requests to get a token for given
 
 There are 4 basic token requests flows:
 - Authorization Code for apps running on a web server (`authorization_code` type)
-- Implicit for browser-based or mobile apps (`access_token` type)
+- Implicit for browser-based or mobile apps (`implicit` type)
 - Password for logging in with a username and password (`password` type)
 - Client credentials for application access (`client_credentials` type)
 
@@ -23,7 +23,7 @@ parameters. If it fails, than it fail on the server side.
 ```
 ```
 var settings = {
-  type: 'access_token',
+  type: 'implicit',
   clientId: 'CLIENT ID',
   redirectUrl: 'https://example.com/auth-popup.html',
   authorizationUrl: 'https://auth.example.com/token'
@@ -74,4 +74,4 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
 | --- | --- | --- |
 | oauth2-error | Fired wne error occurred. An error may occure when `state` parameter of the OAuth2 response is different from the requested one. Another example is when the popup window has been closed before it passed response token. It may happen when the OAuth request was invalid. | message **String** - A message that can be displayed to the user. |
 code **String** - A message code: `invalid_state` - when `state` parameter is different; `no_response` when the popup was closed before sendin token data; `response_parse` - when the response from the code exchange can't be parsed; `request_error` when the request errored by the transport library. Other status codes are defined in [rfc6749](https://tools.ietf.org/html/rfc6749). |
-| oauth2-token-response | Fired when OAuth2 token has been received. Properties of the `detail` object will contain the response from the authentication server. It will contain the original parameteres but also camel case of the parameters.  So for example 'access_token' will be in the response as well as `accessToken` with the same value. The puropse of this is to support JS application that has strict formatting rules and disallow using '_' in property names. Like ARC. | __none__ |
+| oauth2-token-response | Fired when OAuth2 token has been received. Properties of the `detail` object will contain the response from the authentication server. It will contain the original parameteres but also camel case of the parameters.  So for example 'implicit' will be in the response as well as `accessToken` with the same value. The puropse of this is to support JS application that has strict formatting rules and disallow using '_' in property names. Like ARC. | __none__ |
