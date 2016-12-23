@@ -1,3 +1,23 @@
+<a name="0.1.4"></a>
+## [0.1.4](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.2...v0.1.4) (2016-12-23)
+
+
+### Fix
+
+* Fixed an issue with token parser when the response is URL encoded ([588e9e28d6aad1dea7ea2fcaa0d9c33adea81adc](https://github.com/advanced-rest-client/oauth-authorization/commit/588e9e28d6aad1dea7ea2fcaa0d9c33adea81adc))
+
+
+
+<a name="0.1.3"></a>
+## [0.1.3](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.1...v0.1.3) (2016-12-22)
+
+
+### Breaking
+
+* changed the access_token type name to implicit to match with the authorization panels ([41430494412c815e3b03059b2df48ad7671c5a95](https://github.com/advanced-rest-client/oauth-authorization/commit/41430494412c815e3b03059b2df48ad7671c5a95))
+
+
+
 <a name="0.1.2"></a>
 ## [0.1.2](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.1...v0.1.2) (2016-12-22)
 

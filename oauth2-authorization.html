@@ -301,7 +301,15 @@ Polymer({
   _tokenCodeRequest: function(url, body) {
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
-      this._handleTokenCodeResponse(e.target.response, e.target.getResponseHeader('content-type'));
+      try {
+        this._handleTokenCodeResponse(e.target.response,
+          e.target.getResponseHeader('content-type'));
+      } catch (e) {
+        this.fire('oauth2-error', {
+          'message': e.message || 'App error while decoding the token.',
+          'code': 0
+        });
+      }
     }.bind(this));
     xhr.addEventListener('error', this._handleTokenCodeError.bind(this));
     xhr.open('POST', url);
@@ -332,21 +340,15 @@ Polymer({
         return;
       }
     } else {
+      tokenInfo = {};
       data.split('&').forEach(function(p) {
         var item = p.split('=');
         var name = item[0];
-        var origName = name;
-        var i = 0;
-        var l;
-        while ((l = name[i])) {
-          if ((l === '_' || l === '-') && i + 1 < name.length) {
-            name = name.substr(0, i) + name[i + 1].toUpperCase() + name.substr(i + 2);
-          }
-          i++;
-        }
-        tokenInfo[name] = decodeURIComponent(item[1]);
-        tokenInfo[origName] = decodeURIComponent(item[1]);
-      });
+        var camelName = this._camel(name);
+        var value = decodeURIComponent(item[1]);
+        tokenInfo[name] = value;
+        tokenInfo[camelName] = value;
+      }, this);
     }
     this._setTokenInfo(tokenInfo);
     if ('error' in tokenInfo) {
@@ -394,7 +396,15 @@ Polymer({
     var body = this._getPasswordBody(settings);
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
-      this._handleTokenCodeResponse(e.target.response, e.target.getResponseHeader('content-type'));
+      try {
+        this._handleTokenCodeResponse(e.target.response,
+          e.target.getResponseHeader('content-type'));
+      } catch (e) {
+        this.fire('oauth2-error', {
+          'message': e.message || 'App error while decoding the token.',
+          'code': 0
+        });
+      }
     }.bind(this));
     xhr.addEventListener('error', this._handleTokenCodeError.bind(this));
     xhr.open('POST', url);
@@ -420,7 +430,15 @@ Polymer({
     var body = this._getClientCredentialBody(settings);
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
-      this._handleTokenCodeResponse(e.target.response, e.target.getResponseHeader('content-type'));
+      try {
+        this._handleTokenCodeResponse(e.target.response,
+          e.target.getResponseHeader('content-type'));
+      } catch (e) {
+        this.fire('oauth2-error', {
+          'message': e.message || 'App error while decoding the token.',
+          'code': 0
+        });
+      }
     }.bind(this));
     xhr.addEventListener('error', this._handleTokenCodeError.bind(this));
     xhr.open('POST', url);
