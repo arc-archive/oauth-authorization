@@ -1,3 +1,13 @@
+<a name="0.1.4"></a>
+## [0.1.4](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.2...v0.1.4) (2016-12-23)
+
+
+### Fix
+
+* Fixed an issue with token parser when the response is URL encoded ([588e9e28d6aad1dea7ea2fcaa0d9c33adea81adc](https://github.com/advanced-rest-client/oauth-authorization/commit/588e9e28d6aad1dea7ea2fcaa0d9c33adea81adc))
+
+
+
 <a name="0.1.3"></a>
 ## [0.1.3](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.1...v0.1.3) (2016-12-22)
 
