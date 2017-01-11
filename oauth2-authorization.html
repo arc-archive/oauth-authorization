@@ -214,7 +214,8 @@ Polymer({
    * request came from an event, a `tokenValue` property fill be set on the event target.
    */
   _listenPopup: function(e) {
-    if (e.origin !== location.origin || e.source.location.href !== this._popup.location.href) {
+    if (!location || !e.source || !this._popup || e.origin !== location.origin ||
+      e.source.location.href !== this._popup.location.href) {
       return;
     }
     var tokenInfo = e.data;
