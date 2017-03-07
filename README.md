@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/advanced-rest-client/oauth-authorization.svg?branch=master)](https://travis-ci.org/advanced-rest-client/oauth-authorization)  
+[![Build Status](https://travis-ci.org/advanced-rest-client/oauth-authorization.svg?branch=stage)](https://travis-ci.org/advanced-rest-client/oauth-authorization)  
 
 # oauth2-authorization
 
