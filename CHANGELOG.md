@@ -1,3 +1,13 @@
+<a name="0.1.7"></a>
+## [0.1.7](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.5...v0.1.7) (2017-03-07)
+
+
+### Update
+
+* Added an error event when the popup is blocked ([82224e813ad4835e83dbb9e3a3652fef44391f5e](https://github.com/advanced-rest-client/oauth-authorization/commit/82224e813ad4835e83dbb9e3a3652fef44391f5e))
+
+
+
 <a name="0.1.6"></a>
 ## [0.1.6](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.5...v0.1.6) (2017-01-11)
 
