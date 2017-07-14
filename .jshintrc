@@ -16,7 +16,6 @@
   "newcap": false,
   "globals": {
     "Polymer": true,
-    "fetch": true,
-    "Headers": true
+    "CryptoJS": true
   }
 }
