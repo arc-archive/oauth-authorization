@@ -14,6 +14,7 @@ the License.
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../cryptojs-lib/cryptojs-lib.html">
 <link ref="import" href="../iron-meta/iron-meta.html">
+<link ref="import" href="jsrsasign-import.html">
 <!--
 The `<outh2-authorization>` performs an OAuth2 requests to get a token for given settings.
 
@@ -80,6 +81,13 @@ one generated before the request.
 ## Demo
 See `auth-methods` > `auth-method-oauth2` element for the demo.
 
+## Acknowledgements
+
+- This element uses [jsrsasign](https://github.com/kjur/jsrsasign) library distributed
+under MIT licence.
+- This element uses [crypto-js](https://code.google.com/archive/p/crypto-js/) libraty
+distributed under BSD license.
+
 @group Logic Elements
 @element oauth-authorization
 -->
@@ -143,7 +151,7 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
       this._requestUrl = params.requestTokenUrl;
       this._accessUrl = params.accessTokenUrl;
       this._consumerKey = params.consumerKey;
-      this._consumerSecret = this._encodeData(params.consumerSecret);
+      this._consumerSecret = params.consumerSecret;
       var signMethod = params.signatureMethod;
       if (signMethod === 'RSA-SHA1') {
         this._privateKey = params.consumerSecret;
@@ -175,44 +183,91 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
         'User-Agent': 'Advanced REST Client authorization'
       };
     },
-
-    _getDefaultClientOptions: function() {
-      return {
-        'requestTokenHttpMethod': 'POST',
-        'accessTokenHttpMethod': 'POST',
-        'followRedirects': true
-      };
-    },
-
+    /**
+     * Returns current timestamp.
+     *
+     * @return {Number} Current timestamp
+     */
     getTimestamp: function() {
       return Math.floor((new Date()).getTime() / 1000);
     },
-
-    _encodeData: function(toEncode) {
+    /**
+     * URL encodes the string.
+     *
+     * @param {String} toEncode A string to encode.
+     * @return {String} Encoded string
+     */
+    encodeData: function(toEncode) {
       if (!toEncode) {
         return '';
-      } else {
-        var result = encodeURIComponent(toEncode);
-        return result.replace(/\!/g, '%21')
-          .replace(/\'/g, '%27')
-          .replace(/\(/g, '%28')
-          .replace(/\)/g, '%29')
-          .replace(/\*/g, '%2A');
       }
+      var result = encodeURIComponent(toEncode);
+      return result.replace(/\!/g, '%21')
+        .replace(/\'/g, '%27')
+        .replace(/\(/g, '%28')
+        .replace(/\)/g, '%29')
+        .replace(/\*/g, '%2A');
     },
-
-    _decodeData: function(toDecode) {
-      if (toDecode !== null) {
-        toDecode = toDecode.replace(/\+/g, ' ');
+    /**
+     * URL decodes data.
+     * Also replaces `+` with ` ` (space).
+     *
+     * @param {String} toDecode String to decode.
+     * @return {String} Decoded string
+     */
+    decodeData: function(toDecode) {
+      if (!toDecode) {
+        return '';
       }
+      toDecode = toDecode.replace(/\+/g, ' ');
       return decodeURIComponent(toDecode);
     },
+    /**
+     * Computes signature for the request.
+     *
+     * @param {String} signatureMethod Method to use to generate the signature.
+     * Supported are: `PLAINTEXT`, `HMAC-SHA1`, `RSA-SHA1`. It throws an error if
+     * value of this property is other than listed here.
+     * @param {String} requestMethod Request HTTP method.
+     * @param {String} url Request full URL.
+     * @param {Object} oauthParameters Map of oauth parameters.
+     * @param {?String} tokenSecret Optional, token secret.
+     * @return {String} Generated OAuth1 signature for given `signatureMethod`
+     * @param {?String} body Body used with the request. Note: this parameter
+     * can only be set if the request's content-type header equals
+     * `application/x-www-form-urlencoded`.
+     * @throws Error when `signatureMethod` is not one of listed here.
+     */
+    getSignature: function(signatureMethod, requestMethod, url, oauthParameters, tokenSecret, body) {
+      var signatureBase;
+      var key;
+      if (signatureMethod !== 'PLAINTEXT') {
+        signatureBase = this.createSignatureBase(requestMethod, url, oauthParameters, body);
+        console.log('BASE', signatureBase);
+      }
+      if (signatureMethod !== 'RSA-SHA1') {
+        key = this.createSignatureKey(this._consumerSecret, tokenSecret);
+        console.log('KEY', key);
+      }
 
-    _getSignature: function(method, url, parameters, tokenSecret) {
-      var signatureBase = this._createSignatureBase(method, url, parameters);
-      return this._createSignature(signatureBase, tokenSecret);
+      switch (signatureMethod) {
+        case 'PLAINTEXT':
+          return this._createSignaturePlainText(key);
+        case 'RSA-SHA1':
+          return this._createSignatureRsaSha1(signatureBase, this._privateKey);
+        case 'HMAC-SHA1':
+          return this._createSignatureHamacSha1(signatureBase, key);
+        default:
+          throw new Error('Unknown signature method');
+      }
     },
-
+    /**
+     * Normalizes URL to base string URI as described in
+     * https://tools.ietf.org/html/rfc5849#section-3.4.1.2
+     *
+     * @param {String} url Request full URL.
+     * @return {String} Base String URI
+     */
     _normalizeUrl: function(url) {
       var parsedUrl = new URL(url);
       var port = '';
@@ -228,11 +283,21 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
       return parsedUrl.protocol + '//' + parsedUrl.hostname + port + parsedUrl.pathname;
     },
 
-    // Is the parameter considered an OAuth parameter
+    /**
+     * @param {String} parameter Parameter name (key).
+     * @return {Boolean} True if the `parameter` is an OAuth 1 parameter.
+     */
     _isParameterNameAnOAuthParameter: function(parameter) {
       return parameter.indexOf('oauth_') === 0;
     },
-    // build the OAuth request authorization header
+    /**
+     * Creates an Authorization header value to trasmit OAuth params in headers
+     * as described in https://tools.ietf.org/html/rfc5849#section-3.5.1
+     *
+     * @param {Array} orderedParameters Oauth parameters that are already
+     * ordered.
+     * @return {String} The Authorization header value
+     */
     _buildAuthorizationHeaders: function(orderedParameters) {
       var authHeader = 'OAuth ';
       // if (this._isEcho) {
@@ -242,7 +307,7 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
           if (!this._isParameterNameAnOAuthParameter(item[0])) {
             return;
           }
-          return this._encodeData(item[0]) + '="' + this._encodeData(item[1]) + '"';
+          return this.encodeData(item[0]) + '="' + this.encodeData(item[1]) + '"';
         }, this)
         .filter(function(item) {
           return !!item;
@@ -250,10 +315,39 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
       authHeader += params.join(this._oauthParameterSeperator + ' ');
       return authHeader;
     },
-    _buildAuthorizationQueryStirng: function(url, params) {
+    /**
+     * Creates a body for www-urlencoded content type to transmit OAuth params
+     * in request body as described in
+     * https://tools.ietf.org/html/rfc5849#section-3.5.2
+     *
+     * @param {Array} orderedParameters Oauth parameters that are already
+     * ordered.
+     * @return {String} The body to send
+     */
+    _buildFormDataParameters: function(orderedParameters) {
+      return orderedParameters.map(function(item) {
+        if (!this._isParameterNameAnOAuthParameter(item[0])) {
+          return;
+        }
+        return this.encodeData(item[0]) + '=' + this.encodeData(item[1]);
+      }, this)
+      .filter(function(item) {
+        return !!item;
+      })
+      .join('&');
+    },
+    /**
+     * Adds query paramteres with OAuth 1 parameters to the URL
+     * as described in https://tools.ietf.org/html/rfc5849#section-3.5.3
+     *
+     * @param {Array} orderedParameters Oauth parameters that are already
+     * ordered.
+     * @return {String} URL to use with the request
+     */
+    _buildAuthorizationQueryStirng: function(url, orderedParameters) {
       var urlParser = new URL(url);
       var sParams = urlParser.searchParams;
-      params.forEach(function(param) {
+      orderedParameters.forEach(function(param) {
         sParams.append(param[0], param[1]);
       });
       url = urlParser.toString();
@@ -288,32 +382,59 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
       });
       return argumentPairs;
     },
-
+    /**
+     * Sort function to sort parameters as described in
+     * https://tools.ietf.org/html/rfc5849#section-3.4.1.3.2
+     */
+    _sortParamsFunction: function(a, b) {
+      if (a[0] === b[0]) {
+        return String(a[1]).localeCompare(String(b[1]));
+      }
+      return String(a[0]).localeCompare(String(b[0]));
+    },
+    /**
+     * Normalizes request parameters as described in
+     * https://tools.ietf.org/html/rfc5849#section-3.4.1.3.2
+     *
+     * @param {Array} args List of parameters to normalize. It must contain
+     * a list of array items where first element of the array is parameter name
+     * and second is parameter value.
+     * @return {String} Normalized parameters to string.
+     */
     _normaliseRequestParams: function(args) {
-      // var argumentPairs = this._makeArrayOfArgumentsHash(args);
       var len = args.length;
       var i = 0;
       // First encode them #3.4.1.3.2 .1
       for (; i < len; i++) {
-        args[i][0] = this._encodeData(args[i][0]);
-        args[i][1] = this._encodeData(args[i][1]);
+        args[i][0] = this.encodeData(args[i][0]);
+        args[i][1] = this.encodeData(args[i][1]);
       }
 
       // Then sort them #3.4.1.3.2 .2
-      args = this._sortRequestParams(args);
+      args.sort(this._sortParamsFunction);
 
       // Then concatenate together #3.4.1.3.2 .3 & .4
       var result = args.map(function(pair) {
-        return pair[0] + '=' + pair[1];
+        if (pair[0] === 'oauth_signature') {
+          return;
+        }
+        return pair[0] + '=' + String(pair[1]);
+      })
+      .filter(function(item) {
+        return !!item;
       })
       .join('&');
       return result;
     },
-
-    _createSignatureBase: function(method, url, parameters) {
-      var allParameter = [];
-      var uriParameters = [];
-
+    /**
+     * Computes array of parameters from the request URL.
+     *
+     * @param {String} url Full request URL
+     * @return {Array} Array of parameters where each item is an array with
+     * first element as a name of the parameter and second element as a value.
+     */
+    _listQueryParameters: function(url) {
+      var result = [];
       var parsedUrl = new URL(url);
       var iterator = parsedUrl.searchParams.entries();
       while (true) {
@@ -322,39 +443,142 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
           break;
         }
         var _param = item.value;
-        uriParameters[_param[0]] = _param[1];
+        result.push([_param[0], _param[1]]);
       }
-      allParameter = uriParameters.concat(Object.keys(parameters).map(function(key) {
-        return [key, parameters[key]];
-      }));
-
-      url = this._encodeData(this._normalizeUrl(url));
-      parameters = this._normaliseRequestParams(allParameter);
-      parameters = this._encodeData(parameters);
-
-      return method.toUpperCase() + '&' + url + '&' + parameters;
+      return result;
     },
-
-    _createSignature: function(signatureBase, tokenSecret) {
+    /**
+     * Computes array of parameters from the entity body.
+     * The body must be `application/x-www-form-urlencoded`.
+     *
+     * @param {String} body Entity body of `application/x-www-form-urlencoded`
+     * request
+     * @return {Array} Array of parameters where each item is an array with
+     * first element as a name of the parameter and second element as a value.
+     * Keys and values are percent decoded. Additionally each `+` is replaced
+     * with space character.
+     */
+    _formUrlEncodedToParams: function(body) {
+      if (!body) {
+        return [];
+      }
+      var parts = body.split('&').map(function(part) {
+        var pair = part.split('=');
+        var key = this.decodeData(pair[0]);
+        var value = '';
+        if (pair[1]) {
+          value = this.decodeData(pair[1]);
+        }
+        return [key, value];
+      }, this);
+      return parts;
+    },
+    /**
+     * Creates a signature base as defined in
+     * https://tools.ietf.org/html/rfc5849#section-3.4.1
+     *
+     * @param {String} method HTTP method used with the request
+     * @param {String} url Full URL of the request
+     * @param {Object} oauthParams Key - value pairs of OAuth parameters
+     * @param {?String} body Body used with the request. Note: this parameter
+     * can only be set if the request's content-type header equals
+     * `application/x-www-form-urlencoded`.
+     * @return {String} A base string to be used to generate signature.
+     */
+    createSignatureBase: function(method, url, oauthParams, body) {
+      var allParameter = [];
+      var uriParameters = this._listQueryParameters(url);
+      oauthParams = this._makeArrayOfArgumentsHash(oauthParams);
+      allParameter = uriParameters.concat(oauthParams);
+      if (body) {
+        body = this._formUrlEncodedToParams(body);
+        allParameter = allParameter.concat(body);
+      }
+      allParameter = this._normaliseRequestParams(allParameter);
+      allParameter = this.encodeData(allParameter);
+      url = this.encodeData(this._normalizeUrl(url));
+      return [method.toUpperCase(), url, allParameter].join('&');
+    },
+    /**
+     * Creates a signature key to compute the signature as described in
+     * https://tools.ietf.org/html/rfc5849#section-3.4.2
+     *
+     * @param {String} clientSecret Client secret (consumer secret).
+     * @param {?String} tokenSecret Optional, token secret
+     * @return {String} A key to be used to generate the signature.
+     */
+    createSignatureKey: function(clientSecret, tokenSecret) {
       if (!tokenSecret) {
         tokenSecret = '';
       } else {
-        tokenSecret = this._encodeData(tokenSecret);
+        tokenSecret = this.encodeData(tokenSecret);
       }
-      // consumerSecret is already encoded
-      var key = this._consumerSecret + '&' + tokenSecret;
-      var hash = '';
-      if (this._signatureMethod === 'PLAINTEXT') {
-        hash = key;
-        // } else if (this._signatureMethod == 'RSA-SHA1') {
-        //   key = this._privateKey || '';
-        //   hash = crypto.createSign("RSA-SHA1").update(signatureBase).sign(key, 'base64');
-      } else {
-        var _hash = CryptoJS.HmacSHA1(signatureBase, key);
-        hash = _hash.toString(CryptoJS.enc.Base64);
-        debugger;
+      clientSecret = this.encodeData(clientSecret);
+      return clientSecret + '&' + tokenSecret;
+    },
+    /**
+     * Found at http://jsfiddle.net/ARTsinn/6XaUL/
+     *
+     * @param {String} h Hexadecimal input
+     * @return {String} Result of transforming value to string.
+     */
+    hex2b64: function(h) {
+      var b64map = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+      var b64pad = '=';
+      var i;
+      var c;
+      var ret = '';
+      for (i = 0; i + 3 <= h.length; i += 3) {
+        c = parseInt(h.substring(i, i + 3), 16);
+        ret += b64map.charAt(c >> 6) + b64map.charAt(c & 63);
       }
-      return hash;
+      if (i + 1 === h.length) {
+        c = parseInt(h.substring(i, i + 1), 16);
+        ret += b64map.charAt(c << 2);
+      } else if (i + 2 === h.length) {
+        c = parseInt(h.substring(i, i + 2), 16);
+        ret += b64map.charAt(c >> 2) + b64map.charAt((c & 3) << 4);
+      }
+      while ((ret.length & 3) > 0) {
+        ret += b64pad;
+      }
+      return ret;
+    },
+    /**
+     * Creates a signature for the PLAINTEXT method.
+     *
+     * In this case the signature is the key.
+     *
+     * @param {String} baseText Computed signature base text.
+     * @param {String} key Computed signature key.
+     * @return {String} Computed OAuth1 signature.
+     */
+    _createSignaturePlainText: function(key) {
+      return key;
+    },
+    /**
+     * Creates a signature for the RSA-SHA1 method.
+     *
+     * @param {String} baseText Computed signature base text.
+     * @param {String} privateKey Client private key.
+     * @return {String} Computed OAuth1 signature.
+     */
+    _createSignatureRsaSha1: function(baseText, privateKey) {
+      var rsa = new RSAKey();
+      rsa.readPrivateKeyFromPEMString(privateKey);
+      var hSig = rsa.sign(baseText, 'sha1');
+      return this.hex2b64(hSig);
+    },
+    /**
+     * Creates a signature for the HMAC-SHA1 method.
+     *
+     * @param {String} signatureBase Computed signature base text.
+     * @param {String} key Computed signature key.
+     * @return {String} Computed OAuth1 signature.
+     */
+    _createSignatureHamacSha1: function(baseText, key) {
+      var hash = CryptoJS.HmacSHA1(baseText, key);
+      return hash.toString(CryptoJS.enc.Base64);
     },
 
     get nonceChars() {
@@ -390,19 +614,20 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
       };
 
       if (token) {
-        oauthParameters['oauth_token'] = token;
+        oauthParameters.oauth_token = token;
       }
 
       var sig;
       if (this._isEcho) {
-        sig = this._getSignature('GET', this._verifyCredentials, oauthParameters, tokenSecret);
+        sig = this.getSignature(this._signatureMethod, 'GET',
+          this._verifyCredentials, oauthParameters, tokenSecret);
       } else {
         if (extraParams) {
           Object.keys(extraParams).forEach(function(key) {
             oauthParameters[key] = extraParams[key];
           });
         }
-        sig = this._getSignature(method, url, oauthParameters, tokenSecret);
+        sig = this.getSignature(this._signatureMethod, method, url, oauthParameters, tokenSecret);
       }
 
       var orderedParameters = this._sortRequestParams(
@@ -419,8 +644,10 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
     },
 
     _performRequest: function(token, tokenSecret, method, url, extraParams, body, contentType) {
+      var withPayload = ['POST', 'PUT'].indexOf(method) !== -1;
+
       var orderedParameters = this._prepareParameters(token, tokenSecret, method, url, extraParams);
-      if (!contentType) {
+      if (withPayload && !contentType) {
         contentType = 'application/x-www-form-urlencoded';
       }
       var headers = {};
@@ -447,7 +674,7 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
         }, this);
       }
 
-      if ((extraParams && !body) && ['POST', 'PUT'].indexOf(method) !== -1) {
+      if (withPayload && (extraParams && !body) && ['POST', 'PUT'].indexOf(method) !== -1) {
         body = this.encodeUriParams(extraParams)
         .replace(/\!/g, '%21')
         .replace(/\'/g, '%27')
@@ -456,7 +683,7 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
         .replace(/\*/g, '%2A');
       }
 
-      if (!body) {
+      if (withPayload && !body) {
         headers['Content-length'] = '0';
       }
 
@@ -464,9 +691,10 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
         method: method,
         headers: headers
       };
-      if (body) {
+      if (withPayload && body) {
         init.body = body;
       }
+      debugger;
       var responseHeaders;
       return this.request(url, init).then(function(response) {
         if (!response.ok) {
@@ -492,20 +720,18 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
       return this._performRequest(token, secret, method, this._accessUrl, extraParams)
       .then(function(response) {
         console.log(response);
-        debugger;
       });
     },
 
     getOAuthRequestToken: function(extraParams) {
       extraParams = extraParams || {};
       if (this._authorizeCallback) {
-        extraParams['oauth_callback'] = this._authorizeCallback;
+        extraParams.oauth_callback = this._authorizeCallback;
       }
       var method = this._authTokenMethod;
       return this._performRequest(null, null, method, this._requestUrl, extraParams)
       .then(function(response) {
         console.log(response);
-        debugger;
       });
     },
 

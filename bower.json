@@ -20,7 +20,8 @@
     "polymer": "Polymer/polymer#^1.0.0",
     "cryptojs-lib": "advanced-rest-client/cryptojs-lib#^0.1.1",
     "bytes-counter": "advanced-rest-client/bytes-counter#^0.1.1",
-    "iron-meta": "PolymerElements/iron-meta#<2"
+    "iron-meta": "PolymerElements/iron-meta#<2",
+    "kjur-jsrsasign": "jsrsasign#^8.0.3"
   },
   "devDependencies": {
     "iron-component-page": "polymerelements/iron-component-page#1.0.0",
