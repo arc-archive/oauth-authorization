@@ -16,70 +16,7 @@ the License.
 <link ref="import" href="../iron-meta/iron-meta.html">
 <link ref="import" href="jsrsasign-import.html">
 <!--
-The `<outh2-authorization>` performs an OAuth2 requests to get a token for given settings.
 
-There are 4 basic token requests flows:
-- Authorization Code for apps running on a web server (`authorization_code` type)
-- Implicit for browser-based or mobile apps (`implicit` type)
-- Password for logging in with a username and password (`password` type)
-- Client credentials for application access (`client_credentials` type)
-
-This element uses them all.
-
-Main function is the `authorize()` function that can be also used via event system.
-This function accepts different set of parameters depending on request type. However it will
-not perform a validation on the settings. It will try to perform the request for given set of
-parameters. If it fails, than it fail on the server side.
-
-### Example
-```
-<outh2-authorization></outh2-authorization>
-```
-```
-var settings = {
-  type: 'implicit',
-  clientId: 'CLIENT ID',
-  redirectUrl: 'https://example.com/auth-popup.html',
-  authorizationUrl: 'https://auth.example.com/token'
-  scopes: ['email']
-};
-var factory = document.querySelector('outh2-authorization');
-factory.authorize(settings)
-
-// or event based
-var event = new CustomEvent('oauth2-token-requested', { 'detail': settings, bubbles: true });
-document.dispatchEvent(event);
-```
-
-There is one difference for from using event based approach. When the token has been received
-this will set `tokenValue` property on the target of the event.
-The event will be canceled one it reach this element so other elements will not double the action.
-
-An element or app that requesting the token should observe the `oauth2-token-response` and
-`oauth2-error` events to get back the response.
-
-## Popup in authorization flow
-This element conatin a `oauth-popup.html` that can be used to exchange token / code data with
-hosting page. Other page can be used as well. But in must `window.postMessage` back to the
-`window.opener`. The structure of the message if the parsed query or has string to the map
-of parameters. Furthermore it must camel case the parameters. Example script is source code
-of the `oauth-popup.html` page.
-Popup should be served over the SSL.
-
-## The state parameter and security
-This element is intened to be used in debug applications where confidentialy is already
-compromised because users may be asked to provide client secret parameter (depending on the flow).
-**It should not be used in client applications** that don't serve debugging purposes.
-Client secret should never be used on the client side.
-
-To have at least minimum of protection (in already compromised environment) this library generates
-a `state` parameter as a series of alphanumeric characters and append them to the request.
-It is expected to return the same string in the response (as defined in rfc6749). Though this
-parameter is optional, it will reject the response if the `state` parameter is not the same as the
-one generated before the request.
-
-## Demo
-See `auth-methods` > `auth-method-oauth2` element for the demo.
 
 ## Acknowledgements
 
@@ -106,7 +43,51 @@ distributed under BSD license.
         type: Object,
         readOnly: true
       },
+      /**
+       * If set, requests made by this element to authorization endpoint will be
+       * prefixed with the proxy value.
+       */
       proxy: String,
+      /**
+       * Latest valid token exchanged with the authorization endpoint.
+       */
+      lastIssuedToken: {
+        type: Object,
+        notify: true
+      },
+      /**
+       * OAuth 1 token authorization endpoint.
+       */
+      requestTokenUrl: String,
+      /**
+       * Oauth 1 token exchange endpoint
+       */
+      accessTokenUrl: String,
+      /**
+       * Oauth 1 consumer key to use with auth request
+       */
+      consumerKey: String,
+      /**
+       * Oauth 1 consumer secret to be used to generate the signature.
+       */
+      consumerSecret: String,
+      /**
+       * A signature generation method.
+       * Once of: `PLAINTEXT`, `HMAC-SHA1` or `RSA-SHA1`
+       */
+      signatureMethod: {
+        type: String,
+        value: 'HMAC-SHA1'
+      },
+      /**
+       * Location of the OAuth authorization parameters.
+       * It can be either `authorization` meaning as a header and
+       * `querystring` to put OAuth parameters to the URL.
+       */
+      authParamsLocation: {
+        type: String,
+        value: 'authorization'
+      },
       _caseMap: {
         type: Object,
         value: {}
@@ -137,43 +118,76 @@ distributed under BSD license.
     },
 
     authorize: function(settings) {
-      console.log(settings);
-      // settings = this.prepareParameters(settings);
       this._prepareOauth(settings);
-      this.getOAuthRequestToken();
-      // .then(function(token) {
-      //   debugger;
-      //   token.sign(request);
-      // });
+      this.getOAuthRequestToken()
+      .then(function(temporaryCredentials) {
+        this.temporaryCredentials = temporaryCredentials;
+        var authorizationUrl = settings.authorizationUrl + '?oauth_token=' +
+          temporaryCredentials.oauth_token;
+        this.popupClosedProperly = undefined;
+        this._popup = window.open(authorizationUrl, 'api-console-oauth1');
+        if (!this._popup) {
+          // popup blocked.
+          this.fire('oauth1-error', {
+            'message': 'Authorization popup is blocked.',
+            'code': 'popup-blocked'
+          });
+          return;
+        }
+        this._next = 'exchange-token';
+        this._popup.window.focus();
+        this._observePopupState();
+      }.bind(this))
+      .catch(function(e) {
+        this.fire('oauth1-error', {
+          'message': e.message || 'Unknown error when getting the token',
+          'code': 'token-request-error'
+        });
+      }.bind(this));
     },
 
     _prepareOauth: function(params) {
-      this._requestUrl = params.requestTokenUrl;
-      this._accessUrl = params.accessTokenUrl;
-      this._consumerKey = params.consumerKey;
-      this._consumerSecret = params.consumerSecret;
-      var signMethod = params.signatureMethod;
-      if (signMethod === 'RSA-SHA1') {
-        this._privateKey = params.consumerSecret;
+      if (params.signatureMethod) {
+        var signMethod = params.signatureMethod;
+        if (['PLAINTEXT', 'HMAC-SHA1', 'RSA-SHA1'].indexOf(signMethod) === -1) {
+          throw new Error('Unsupported signature method: ' + signMethod);
+        }
+        if (signMethod === 'RSA-SHA1') {
+          this._privateKey = params.consumerSecret;
+        }
+        this.signatureMethod = signMethod;
       }
-      this._version = params.version || '1.0';
-      if (!params.redirectUrl) {
-        this._authorizeCallback = 'oob';
-      } else {
+      if (params.requestTokenUrl) {
+        this.requestTokenUrl = params.requestTokenUrl;
+      }
+      if (params.accessTokenUrl) {
+        this.accessTokenUrl = params.accessTokenUrl;
+      }
+      if (params.consumerKey) {
+        this.consumerKey = params.consumerKey;
+      }
+      if (params.consumerSecret) {
+        this.consumerSecret = params.consumerSecret;
+      }
+      if (params.redirectUrl) {
         this._authorizeCallback = params.redirectUrl;
       }
-      //&& signMethod !== 'RSA-SHA1'
-      if (signMethod !== 'PLAINTEXT' && signMethod !== 'HMAC-SHA1') {
-        throw new Error('Un-supported signature method: ' + signMethod);
+      if (params.authParamsLocation) {
+        this.authParamsLocation = params.authParamsLocation;
+      } else if (!this.authParamsLocation) {
+        this.authParamsLocation = 'authorization';
       }
-      this._signatureMethod = signMethod;
+      if (params.authTokenMethod) {
+        this.authTokenMethod = params.authTokenMethod;
+      } else if (!this.authTokenMethod) {
+        this.authTokenMethod = 'POST';
+      }
+      this._version = params.version || '1.0';
       this._nonceSize = params.nonceSize || 32;
       this._nonce = params.nonce;
       this._timestamp = params.timestamp;
       this._headers = params.customHeaders || this._defaultHeaders();
       this._oauthParameterSeperator = ',';
-      this._authParamsLocation = params.authParamsLocation || 'authorization';
-      this._authTokenMethod = params.authTokenMethod || 'POST';
     },
 
     _defaultHeaders: function() {
@@ -243,11 +257,9 @@ distributed under BSD license.
       var key;
       if (signatureMethod !== 'PLAINTEXT') {
         signatureBase = this.createSignatureBase(requestMethod, url, oauthParameters, body);
-        console.log('BASE', signatureBase);
       }
       if (signatureMethod !== 'RSA-SHA1') {
-        key = this.createSignatureKey(this._consumerSecret, tokenSecret);
-        console.log('KEY', key);
+        key = this.createSignatureKey(this.consumerSecret, tokenSecret);
       }
 
       switch (signatureMethod) {
@@ -604,13 +616,13 @@ distributed under BSD license.
       return result.join('');
     },
 
-    _prepareParameters: function(token, tokenSecret, method, url, extraParams) {
+    _prepareParameters: function(token, tokenSecret, method, url, extraParams, body) {
       var oauthParameters = {
-        'oauth_timestamp': this._timestamp || this._getTimestamp(),
+        'oauth_timestamp': this._timestamp || this.getTimestamp(),
         'oauth_nonce': this._nonce || this._getNonce(this._nonceSize),
         'oauth_version': this._version,
-        'oauth_signature_method': this._signatureMethod,
-        'oauth_consumer_key': this._consumerKey
+        'oauth_signature_method': this.signatureMethod,
+        'oauth_consumer_key': this.consumerKey
       };
 
       if (token) {
@@ -619,15 +631,15 @@ distributed under BSD license.
 
       var sig;
       if (this._isEcho) {
-        sig = this.getSignature(this._signatureMethod, 'GET',
-          this._verifyCredentials, oauthParameters, tokenSecret);
+        sig = this.getSignature(this.signatureMethod, 'GET',
+          this._verifyCredentials, oauthParameters, tokenSecret, body);
       } else {
         if (extraParams) {
           Object.keys(extraParams).forEach(function(key) {
             oauthParameters[key] = extraParams[key];
           });
         }
-        sig = this.getSignature(this._signatureMethod, method, url, oauthParameters, tokenSecret);
+        sig = this.getSignature(this.signatureMethod, method, url, oauthParameters, tokenSecret, body);
       }
 
       var orderedParameters = this._sortRequestParams(
@@ -635,12 +647,61 @@ distributed under BSD license.
       orderedParameters[orderedParameters.length] = ['oauth_signature', sig];
       return orderedParameters;
     },
-    //
+    // Encodes parameters in the map.
     encodeUriParams: function(params) {
       var result = Object.keys(params).map(function(key) {
         return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
       });
       return result.join('&');
+    },
+    /**
+     * Creates OAuth1 signature for a `request` object.
+     * The request object must contain:
+     * - `url` - String
+     * - `method` - String
+     * - `headers` - String
+     * It also may contain the `body` property.
+     *
+     * It alters the request object by applying OAuth1 parameters to a set
+     * location (qurey parameters, authorization header, body). This is
+     * controlled by `this.authParamsLocation` property. By default the
+     * parameters are applied to authorization header.
+     *
+     * @param {Object} request ARC request object.
+     * @param {?String} token OAuth token to use to generate the signature.
+     * If not set, then it will use a value from `this.lastIssuedToken`.
+     * @param {?String} tokenSecret OAuth token secret to use to generate the
+     * signature. If not set, then it will use a value from
+     * `this.lastIssuedToken`.
+     * @return {Object} The same object with applied OAuth 1 parameters.
+     */
+    signRequestObject: function(request, token, tokenSecret) {
+      if (!request || !request.method || !request.url) {
+        return request;
+      }
+      token = token || this.lastIssuedToken.oauth_token;
+      tokenSecret = tokenSecret || this.lastIssuedToken.oauth_token_secret;
+
+      var method = request.method || 'GET';
+      method = method.toUpperCase();
+      var withPayload = ['GET', 'HEAD'].indexOf(request.method) !== -1;
+      var body;
+      if (withPayload && request.headers && request.body) {
+        var contentType = this.getContentType(request.headers);
+        if (contentType && contentType.indexOf('application/x-www-form-urlencoded') === 0) {
+          body = request.body;
+        }
+      }
+      var orderedParameters = this._prepareParameters(token, tokenSecret, method, request.url, {}, body);
+      if (this.authParamsLocation === 'authorization') {
+        var authorization = this._buildAuthorizationHeaders(orderedParameters);
+        request.headers = this._replaceHeaderValue(request.headers, 'authorization', authorization);
+      } else {
+        request.url = this._buildAuthorizationQueryStirng(request.url, orderedParameters);
+      }
+
+      this.clearRequestVariables();
+      return request;
     },
 
     _performRequest: function(token, tokenSecret, method, url, extraParams, body, contentType) {
@@ -651,7 +712,7 @@ distributed under BSD license.
         contentType = 'application/x-www-form-urlencoded';
       }
       var headers = {};
-      if (this._authParamsLocation === 'authorization') {
+      if (this.authParamsLocation === 'authorization') {
         var authorization = this._buildAuthorizationHeaders(orderedParameters);
         if (this._isEcho) {
           headers['X-Verify-Credentials-Authorization'] = authorization;
@@ -694,9 +755,10 @@ distributed under BSD license.
       if (withPayload && body) {
         init.body = body;
       }
-      debugger;
+
       var responseHeaders;
-      return this.request(url, init).then(function(response) {
+      return this.request(url, init)
+      .then(function(response) {
         if (!response.ok) {
           throw new Error('Token request error ended with status ' + response.status);
         }
@@ -710,31 +772,89 @@ distributed under BSD license.
         };
       });
     },
-
+    /**
+     * Exchanges temporary authorization token for authorized token.
+     * When ready this function fires `oauth1-token-response`
+     */
     getOAuthAccessToken: function(token, secret, verifier) {
       var extraParams = {};
-      if (typeof verifier !== 'function') {
+      if (verifier) {
         extraParams.oauth_verifier = verifier;
       }
-      var method = this._authTokenMethod;
-      return this._performRequest(token, secret, method, this._accessUrl, extraParams)
+      var method = this.authTokenMethod;
+      return this._performRequest(token, secret, method, this.accessTokenUrl, extraParams)
       .then(function(response) {
-        console.log(response);
-      });
+        if (!response.response) {
+          var message = 'Couldn\'t exchange token. ';
+          message += 'Authorization server may be down or CORS is disabled.';
+          throw new Error(message);
+        }
+        var params = {};
+        this._formUrlEncodedToParams(response.response).map(function(pair) {
+          params[pair[0]] = pair[1];
+        });
+        return params;
+      }.bind(this))
+      .then(function(tokenInfo) {
+        this.clearRequestVariables();
+        this.lastIssuedToken = tokenInfo;
+        this.fire('oauth1-token-response', tokenInfo);
+      }.bind(this));
     },
-
+    /**
+     * Clears variables set for current request after signature has been
+     * generated and token obtained.
+     */
+    clearRequestVariables: function() {
+      this.temporaryCredentials = undefined;
+      this._timestamp = undefined;
+      this._nonce = undefined;
+    },
+    /**
+     * Requests the authorization server for temporarty authorization token.
+     * This token should be passed to `authorizationUri` as a `oauth_token`
+     * parameter.
+     *
+     * @param {Object} extraParams List of extra parameters to include in the
+     * request.
+     * @return {Promise} A promise resolved to a map of OAuth 1 parameters:
+     * `oauth_token`, `oauth_token_secret`, `oauth_verifier` and
+     * `oauth_callback_confirmed` (for 1.0a version).
+     */
     getOAuthRequestToken: function(extraParams) {
       extraParams = extraParams || {};
       if (this._authorizeCallback) {
         extraParams.oauth_callback = this._authorizeCallback;
       }
-      var method = this._authTokenMethod;
-      return this._performRequest(null, null, method, this._requestUrl, extraParams)
+      var method = this.authTokenMethod;
+      return this._performRequest(null, null, method, this.requestTokenUrl, extraParams)
       .then(function(response) {
-        console.log(response);
-      });
+        if (!response.response) {
+          var message = 'Couldn\'t request for authorization token. ';
+          message += 'Authorization server may be down or CORS is disabled.';
+          throw new Error(message);
+        }
+        var params = {};
+        this._formUrlEncodedToParams(response.response).map(function(pair) {
+          params[pair[0]] = pair[1];
+        });
+        return params;
+      }.bind(this));
     },
-
+    /**
+     * Makes a HTTP request.
+     * Before making the request it sends `auth-request-proxy` custom event
+     * with the URL and init object in event's detail object.
+     * If the event is cancelled then it will use detail's `result` value to
+     * return from this function. The `result` must be a Promise that will
+     * resolve to a `Response` object.
+     * Otherwise it will use internall `fetch` implementation.
+     *
+     * @param {String} url An URL to call
+     * @param {Object} init Init object that will be passed to a `Request`
+     * object.
+     * @return {Promise} A promise that resolves to a `Response` object.
+     */
     request: function(url, init) {
       var event = this.fire('auth-request-proxy', {
         url: init,
@@ -751,7 +871,16 @@ distributed under BSD license.
       }
       return p;
     },
-
+    /**
+     * Performs a HTTP request.
+     * If `proxy` is set or `iron-meta` with a key `auth-proxy` is set then
+     * it will prefix the URL with the value of proxy.
+     *
+     * @param {String} url An URL to call
+     * @param {Object} init Init object that will be passed to a `Request`
+     * object.
+     * @return {Promise} A promise that resolves to a `Response` object.
+     */
     _fetch: function(url, init) {
       var proxy;
       if (this.proxy) {
@@ -764,36 +893,184 @@ distributed under BSD license.
       }
       init.mode = 'cors';
       return fetch(url, init);
-    }
+    },
 
-    // prepareParameters: function(settings) {
-    //   ['consumerKey', 'consumerSecret', 'signatureMethod', 'timestamp',
-    //     'nonce', 'token', 'tokenSecret', 'realm'
-    //   ]
-    //   .forEach(function(key) {
-    //     settings = this._parseParameter(key, settings);
-    //   }, this);
-    //   return settings;
-    // },
-    //
-    // _parseParameter: function(param, settings) {
-    //   if (!(param in settings)) {
-    //     return settings;
-    //   }
-    //   var value = settings[param];
-    //   var oauthParam;
-    //   if (this._caseMap[param]) {
-    //     oauthParam = this._caseMap[param];
-    //   } else {
-    //     oauthParam = this._getCaseParam(param);
-    //   }
-    //   settings[oauthParam] = value;
-    //   return settings;
-    // },
-    //
-    // _getCaseParam: function(param) {
-    //   return 'oauth_' + param.replace(this._camelRegex, '_$1').toLowerCase();
-    // }
+    _listenPopup: function(e) {
+      if (!location || !e.source || !this._popup || e.origin !== location.origin ||
+        e.source.location.href !== this._popup.location.href) {
+        return;
+      }
+
+      var tokenInfo = e.data;
+      this.popupClosedProperly = true;
+      switch(this._next) {
+        case 'exchange-token':
+          this.getOAuthAccessToken(tokenInfo.oauthToken,
+            this.temporaryCredentials.oauth_token_secret,
+            tokenInfo.oauthVerifier);
+        break;
+      }
+      this._popup.close();
+    },
+
+    // Observer if the popup has been closed befor the data has been received.
+    _observePopupState: function() {
+      var context = this;
+      var popupCheckInterval = setInterval(function() {
+        if (!context._popup || context._popup.closed) {
+          clearInterval(popupCheckInterval);
+          context._beforePopupUnloadHandler();
+        }
+      }, 500);
+    },
+
+    _beforePopupUnloadHandler: function() {
+      if (this.popupClosedProperly) {
+        return;
+      }
+      this._popup = undefined;
+      this.fire('oauth1-error', {
+        'message': 'No response has been recorded.',
+        'code': 'no_response'
+      });
+    },
+    /**
+     * Adds camel case keys to a map of parameters.
+     * It adds new keys to the object tranformed from `oauth_token`
+     * to `oauthToken`
+     */
+    parseMapKeys: function(obj) {
+      Object.keys(obj).forEach(function(key) {
+        obj = this._parseParameter(key, obj);
+      }, this);
+      return obj;
+    },
+
+    _parseParameter: function(param, settings) {
+      if (!(param in settings)) {
+        return settings;
+      }
+      var value = settings[param];
+      var oauthParam;
+      if (this._caseMap[param]) {
+        oauthParam = this._caseMap[param];
+      } else {
+        oauthParam = this._getCaseParam(param);
+      }
+      settings[oauthParam] = value;
+      return settings;
+    },
+
+    _getCaseParam: function(param) {
+      return 'oauth_' + param.replace(this._camelRegex, '_$1').toLowerCase();
+    },
+
+    /**
+     * Get the Content-Type value from the headers.
+     *
+     * @param {String} headers HTTP headers string
+     * @return {String} A content-type header value or null if not found
+     */
+    getContentType: function(headers) {
+      if (!headers || typeof headers !== 'string') {
+        return;
+      }
+      headers = headers.trim();
+      if (headers === '') {
+        return;
+      }
+      var re = /^content-type:\s?(.*)$/im;
+      var match = headers.match(re);
+      if (!match) {
+        return;
+      }
+      var ct = match[1].trim();
+      if (ct.indexOf('multipart') === -1) {
+        var index = ct.indexOf('; ');
+        if (index > 0) {
+          ct = ct.substr(0, index);
+        }
+      }
+      return ct;
+    },
+
+    /**
+     * Replace value for given header in the headers list.
+     *
+     * @param {String} headers HTTP headers string
+     * @param {String} name Header name to be replaced.
+     * @param {String} value Header value to be repleced.
+     * @return {String} Updated headers.
+     */
+    _replaceHeaderValue: function(headers, name, value) {
+      headers = this._headersStringToArray(headers);
+      var _name = name.toLowerCase();
+      var found = false;
+      for (var i = 0, len = headers.length; i < len; i++) {
+        var header = headers[i];
+        if (header.name.toLowerCase() === _name) {
+          header.value = value;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        headers.push({
+          name: name,
+          value: value
+        });
+      }
+      var result = headers.map(function(header) {
+        var key = header.name;
+        var value = header.value;
+        var _result;
+        if (key && key.trim() !== '') {
+          _result = key + ': ';
+          if (value && value.trim() !== '') {
+            _result += value;
+          }
+        }
+        return _result;
+      })
+      .filter(function(item) {
+        return !!item;
+      })
+      .join('\n');
+      return result;
+    },
+
+    _headersStringToArray: function(headersString) {
+      if (!headersString || headersString.trim() === '') {
+        return [];
+      }
+      if (typeof headersString !== 'string') {
+        return [];
+      }
+      var result = [];
+      var headers = headersString.split(/\n/gim);
+      for (var i = 0, len = headers.length; i < len; i++) {
+        var line = headers[i].trim();
+        if (line === '') {
+          continue;
+        }
+        var sepPosition = line.indexOf(':');
+        if (sepPosition === -1) {
+          result[result.length] = {
+            name: line,
+            value: ''
+          };
+          continue;
+        }
+        var name = line.substr(0, sepPosition);
+        var value = line.substr(sepPosition + 1).trim();
+        var obj = {
+          name: name,
+          value: value
+        };
+        result.push(obj);
+      }
+      return result;
+    }
   });
 })();
 </script>

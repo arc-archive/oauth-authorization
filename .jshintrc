@@ -18,6 +18,7 @@
   "globals": {
     "Polymer": true,
     "CryptoJS": true,
-    "RSAKey": true
+    "RSAKey": true,
+    "ArcBehaviors": true
   }
 }

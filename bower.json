@@ -21,7 +21,8 @@
     "cryptojs-lib": "advanced-rest-client/cryptojs-lib#^0.1.1",
     "bytes-counter": "advanced-rest-client/bytes-counter#^0.1.1",
     "iron-meta": "PolymerElements/iron-meta#<2",
-    "kjur-jsrsasign": "jsrsasign#^8.0.3"
+    "kjur-jsrsasign": "jsrsasign#^8.0.3",
+    "headers-parser-behavior": "advanced-rest-client/headers-parser-behavior#^0.1.3"
   },
   "devDependencies": {
     "iron-component-page": "polymerelements/iron-component-page#1.0.0",

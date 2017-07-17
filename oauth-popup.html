@@ -6,7 +6,10 @@
     <style>*[hidden] { display: none; } </style>
   </head>
   <body>
-    <p id="general-error" hidden>A general error occured.</p>
+    <p id="general-error" hidden>
+      The window wasn't opened as a popup and therefore it can't pass authorization information.<br/>
+      This is an error.
+    </p>
     <script>
     var $ = function(selector, target) {
       return (target || document).querySelector(selector);
@@ -41,7 +44,17 @@
           params[name] = decodeURIComponent(item[1]);
           params[origName] = decodeURIComponent(item[1]);
         });
-        window.opener.postMessage(params, window.opener.location.origin);
+        var origin;
+        try {
+          if ('origin' in window.opener.location) {
+            origin = window.opener.location.origin;
+          }
+        } catch (e) {
+          // This will happend when the popup is in different domain
+          // (port, host, scheme)
+          origin = '*';
+        }
+        window.opener.postMessage(params, origin);
       }
     };
     if (!window.opener || !window.opener.postMessage) {
