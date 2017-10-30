@@ -1,0 +1,101 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+  <link rel="import" href="../oauth1-authorization.html">
+</head>
+
+<body>
+  <test-fixture id="basic">
+    <template>
+      <oauth1-authorization></oauth1-authorization>
+    </template>
+  </test-fixture>
+  <script>
+  /* global fixture, assert */
+  suite('Before request', function() {
+
+    var element;
+    var request;
+    var auth;
+    setup(function() {
+      element = fixture('basic');
+      request = {
+        url: 'http://domain.com/endpoint/?param=value',
+        headers: 'x-requested-with: xmlhttprequest',
+        method: 'GET'
+      };
+      auth = {
+        signatureMethod: 'HMAC-SHA1',
+        requestTokenUrl: 'https://echo.advancedrestclient.com/auth/oauth1/request_token',
+        accessTokenUrl: 'https://echo.advancedrestclient.com/auth/oauth1/access_token',
+        authorizationUrl: 'https://echo.advancedrestclient.com/auth/oauth1/dialog/authorize',
+        consumerKey: 'key',
+        consumerSecret: 'secret',
+        redirectUrl: 'http://127.0.0.1:8081/components/oauth-authorization/oauth-popup.html',
+        authParamsLocation: 'authorization',
+        authTokenMethod: 'POST',
+        nonce: 'abcdefg',
+        timestamp: 1509402152,
+        oauth_token: 'tWfvyFw7anQYC0Fo',
+        oauth_token_secret: 'kOZA2NjIVQ1c8pUZ6Ku2c2Rs16aGeYnJHlZL7Kg2jFAfmigL1uFSUHNO5zLkkIru',
+        type: 'oauth1'
+      };
+    });
+
+    function fire() {
+      var detail = Object.assign({}, request);
+      detail.auth = auth;
+      var event = new CustomEvent('before-request', {
+        detail: detail,
+        bubbles: true
+      });
+      document.body.dispatchEvent(event);
+      return event;
+    }
+
+    test('Handles before-request event', function() {
+      var event = fire();
+      var headers = event.detail.headers;
+      assert.typeOf(headers, 'string');
+      assert.isTrue(headers.toLowerCase().indexOf('authorization') !== -1);
+    });
+
+    test('Generates signature', function() {
+      var event = fire();
+      var headers = event.detail.headers;
+      var index = headers.indexOf('authorization');
+      var value = headers.substr(index + 15 + 6);
+      var params = {};
+      value.split(', ').forEach(function(line) {
+        var parts = line.split('=');
+        var _value = parts[1].substr(1);
+        _value = _value.substr(0, _value.length - 1);
+        params[parts[0]] = _value;
+      });
+      assert.equal(params.oauth_consumer_key, auth.consumerKey);
+      assert.equal(params.oauth_nonce, auth.nonce);
+      assert.equal(params.oauth_signature_method, auth.signatureMethod);
+      assert.equal(params.oauth_timestamp, auth.timestamp);
+      assert.equal(params.oauth_token, auth.oauth_token);
+      assert.equal(params.oauth_version, '1.0');
+      assert.equal(params.oauth_signature, '4huy8JcLkX8bch540ZTXiwH%2B4Vc%3D');
+    });
+  });
+  </script>
+</body>
+
+</html>

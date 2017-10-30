@@ -366,7 +366,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var signatureMethod = 'HMAC-SHA1';
         setup(function() {
           element = fixture('basic');
-          element._consumerSecret = 'secret';
+          element.consumerSecret = 'secret';
         });
 
         var oauthParams = {
@@ -418,7 +418,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var signatureMethod = 'PLAINTEXT';
         setup(function() {
           element = fixture('basic');
-          element._consumerSecret = 'secret';
+          element.consumerSecret = 'secret';
         });
 
         var oauthParams = {

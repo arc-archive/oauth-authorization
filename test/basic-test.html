@@ -1,0 +1,322 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+  <link rel="import" href="../oauth1-authorization.html">
+</head>
+
+<body>
+  <test-fixture id="basic">
+    <template>
+      <oauth1-authorization></oauth1-authorization>
+    </template>
+  </test-fixture>
+  <script>
+  /* global fixture, assert */
+  suite('Basic', function() {
+
+    suite('_defaultHeaders()', function() {
+      var element;
+      var result;
+      setup(function() {
+        element = fixture('basic');
+        result = element._defaultHeaders();
+      });
+
+      test('Returns a map', function() {
+        assert.typeOf(result, 'object');
+      });
+
+      test('Contains 3 entries', function() {
+        assert.lengthOf(Object.keys(result), 3);
+      });
+    });
+
+    suite('_prepareOauth()', function() {
+      var element;
+      var settings;
+      setup(function() {
+        element = fixture('basic');
+        settings = {
+          signatureMethod: 'RSA-SHA1',
+          requestTokenUrl: 'http://request-token-url.com/',
+          accessTokenUrl: 'http://access-token-url.com/',
+          consumerKey: 'test-consumer-key',
+          consumerSecret: 'test-consumer-secret',
+          redirectUrl: 'http://redirect-url.com/',
+          authParamsLocation: 'url',
+          authTokenMethod: 'GET-test',
+          version: '1.0a-test',
+          nonceSize: 56,
+          nonce: 'abcdefg',
+          timestamp: 1234567,
+          customHeaders: {'x-header': 'value'}
+        };
+      });
+
+      test('Sets default values', function() {
+        var s = Object.assign({}, settings);
+        delete s.authParamsLocation;
+        delete s.authTokenMethod;
+        delete s.version;
+        delete s.nonceSize;
+        delete s.customHeaders;
+        element._prepareOauth(s);
+        assert.equal(element.authParamsLocation, 'authorization', 'authParamsLocation is set');
+        assert.equal(element.authTokenMethod, 'POST', 'authTokenMethod is set');
+        assert.equal(element._version, '1.0', '_version is set');
+        assert.equal(element._nonceSize, 32, '_nonceSize is set');
+        assert.typeOf(element._headers, 'object', '_headers is set');
+      });
+
+      test('Sets values on the element', function() {
+        element._prepareOauth(settings);
+        assert.equal(element.signatureMethod, settings.signatureMethod, 'Signature method is set');
+        assert.equal(element._privateKey, settings.consumerSecret, '_privateKey is set');
+        assert.equal(element.requestTokenUrl, settings.requestTokenUrl, 'requestTokenUrl is set');
+        assert.equal(element.accessTokenUrl, settings.accessTokenUrl, 'accessTokenUrl is set');
+        assert.equal(element.consumerKey, settings.consumerKey, 'consumerKey is set');
+        assert.equal(element.consumerSecret, settings.consumerSecret, 'consumerSecret is set');
+        assert.equal(element._authorizeCallback, settings.redirectUrl, '_authorizeCallback is set');
+        assert.equal(element.authParamsLocation,
+          settings.authParamsLocation, 'authParamsLocation is set');
+        assert.equal(element.authTokenMethod, settings.authTokenMethod, 'authTokenMethod is set');
+        assert.equal(element._nonceSize, settings.nonceSize, '_nonceSize is set');
+        assert.equal(element._nonce, settings.nonce, '_nonce is set');
+        assert.equal(element._version, settings.version, '_version is set');
+        assert.deepEqual(element._headers, settings.customHeaders, '_headers is set');
+        assert.equal(element._timestamp, settings.timestamp, '_timestamp is set');
+        assert.equal(element._oauthParameterSeperator, ',', '_oauthParameterSeperator is set');
+      });
+
+      test('Throws an error when auth signature is not supported', function() {
+        assert.throws(function() {
+          var s = Object.assign({}, settings);
+          s.signatureMethod = 'test';
+          element._prepareOauth(s);
+        });
+      });
+    });
+    suite('getTimestamp()', function() {
+      var element;
+      var result;
+      setup(function() {
+        element = fixture('basic');
+        result = element.getTimestamp();
+      });
+
+      test('Returns a number', function() {
+        assert.typeOf(result, 'number');
+      });
+    });
+
+    suite('encodeData()', function() {
+      var element;
+      setup(function() {
+        element = fixture('basic');
+      });
+
+      test('Returns empty string if argument not set', function() {
+        assert.equal(element.encodeData(), '');
+      });
+
+      test('Returns empty string if argument is falsy', function() {
+        assert.equal(element.encodeData(false), '');
+        assert.equal(element.encodeData(null), '');
+        assert.equal(element.encodeData(''), '');
+      });
+
+      test('Encodes string', function() {
+        var str = '(hello) \'world*';
+        var compare = '%28hello%29%20%27world%2A';
+        var encoded = element.encodeData(str);
+        assert.equal(encoded, compare);
+      });
+    });
+
+    suite('decodeData()', function() {
+      var element;
+      setup(function() {
+        element = fixture('basic');
+      });
+
+      test('Returns empty string if argument not set', function() {
+        assert.equal(element.decodeData(), '');
+      });
+
+      test('Returns empty string if argument is falsy', function() {
+        assert.equal(element.decodeData(false), '');
+        assert.equal(element.decodeData(null), '');
+        assert.equal(element.decodeData(''), '');
+      });
+
+      test('Encodes string', function() {
+        var str = 'he%20llo+world';
+        var compare = 'he llo world';
+        var encoded = element.decodeData(str);
+        assert.equal(encoded, compare);
+      });
+    });
+
+    suite('_isParameterNameAnOAuthParameter()', function() {
+      var element;
+      setup(function() {
+        element = fixture('basic');
+      });
+
+      test('Returns empty string if argument not set', function() {
+        assert.equal(element.decodeData(), '');
+      });
+
+      test('Returns false for falsy argument', function() {
+        assert.isFalse(element._isParameterNameAnOAuthParameter(false));
+        assert.isFalse(element._isParameterNameAnOAuthParameter(null));
+        assert.isFalse(element._isParameterNameAnOAuthParameter(''));
+      });
+
+      test('Returns false for any string', function() {
+        assert.isFalse(element._isParameterNameAnOAuthParameter('oauth'));
+        assert.isFalse(element._isParameterNameAnOAuthParameter('any'));
+        assert.isFalse(element._isParameterNameAnOAuthParameter('string'));
+      });
+
+      test('Returns true for oauth parameter', function() {
+        assert.isTrue(element._isParameterNameAnOAuthParameter('oauth_'));
+        assert.isTrue(element._isParameterNameAnOAuthParameter('oauth_nonce'));
+        assert.isTrue(element._isParameterNameAnOAuthParameter('oauth_token'));
+      });
+    });
+
+    suite('_buildAuthorizationHeaders()', function() {
+      var element;
+      var oauthParams;
+      var notOauthParams;
+      setup(function() {
+        element = fixture('basic');
+        oauthParams = [['oauth_nonce', 'abcd'], ['oauth_timestamp', 1234567]];
+        notOauthParams = [['test', true], ['value', 'test']];
+        element._oauthParameterSeperator = ',';
+      });
+
+      test('Creates a string of params', function() {
+        var result = element._buildAuthorizationHeaders(oauthParams);
+        assert.typeOf(result, 'string');
+      });
+
+      test('Only accepts OAuth1 parameters', function() {
+        var params = oauthParams.concat(notOauthParams);
+        var result = element._buildAuthorizationHeaders(params);
+        assert.isTrue(result.indexOf('test') === -1);
+        assert.isTrue(result.indexOf('value') === -1);
+      });
+
+      test('Encodes parameters', function() {
+        var params = [
+          ['oauth_test_encode', '(hello) \'world*'],
+          ['oauth_other', 'param']
+        ];
+        var compare = 'OAuth oauth_test_encode="%28hello%29%20%27world%2A", ';
+        compare += 'oauth_other="param"';
+        var result = element._buildAuthorizationHeaders(params);
+        assert.equal(result, compare);
+      });
+    });
+    suite('_buildFormDataParameters()', function() {
+      var element;
+      var oauthParams;
+      var notOauthParams;
+      setup(function() {
+        element = fixture('basic');
+        oauthParams = [['oauth_nonce', 'abcd'], ['oauth_timestamp', 1234567]];
+        notOauthParams = [['test', true], ['value', 'test']];
+      });
+
+      test('Creates a string of params', function() {
+        var result = element._buildFormDataParameters(oauthParams);
+        assert.typeOf(result, 'string');
+      });
+
+      test('Only accepts OAuth1 parameters', function() {
+        var params = oauthParams.concat(notOauthParams);
+        var result = element._buildFormDataParameters(params);
+        assert.isTrue(result.indexOf('test') === -1);
+        assert.isTrue(result.indexOf('value') === -1);
+      });
+
+      test('Encodes parameters', function() {
+        var params = [
+          ['oauth_test_encode', '(hello) \'world*'],
+          ['oauth_other', 'param']
+        ];
+        var compare = 'oauth_test_encode=%28hello%29%20%27world%2A&';
+        compare += 'oauth_other=param';
+        var result = element._buildFormDataParameters(params);
+        assert.equal(result, compare);
+      });
+    });
+
+    suite('_buildAuthorizationQueryStirng()', function() {
+      var element;
+      var oauthParams;
+      var url = 'http://endpoint.domain.com/?test=true&other=test';
+      setup(function() {
+        element = fixture('basic');
+        oauthParams = [['oauth_nonce', 'abcd'], ['oauth_timestamp', 1234567]];
+      });
+
+      test('Creates a string of params', function() {
+        var result = element._buildAuthorizationQueryStirng(url, oauthParams);
+        assert.typeOf(result, 'string');
+      });
+
+      test('Appends parameters', function() {
+        var result = element._buildAuthorizationQueryStirng(url, oauthParams);
+        var compare = url + '&oauth_nonce=abcd&oauth_timestamp=1234567';
+        assert.equal(result, compare);
+      });
+    });
+
+    suite('_makeArrayOfArgumentsHash()', function() {
+      var element;
+      setup(function() {
+        element = fixture('basic');
+      });
+
+      test('Computes simple object', function() {
+        var data = {
+          a: 'b',
+          c: 123
+        };
+        var result = element._makeArrayOfArgumentsHash(data);
+        assert.typeOf(result, 'array');
+        assert.lengthOf(result, 2);
+      });
+
+      test('Computes object with array', function() {
+        var data = {
+          a: 'b',
+          c: ['a', 'b']
+        };
+        var result = element._makeArrayOfArgumentsHash(data);
+        assert.typeOf(result, 'array');
+        assert.lengthOf(result, 3);
+      });
+    });
+  });
+  </script>
+</body>
+
+</html>
