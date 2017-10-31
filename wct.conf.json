@@ -2,6 +2,7 @@
   "verbose": false,
   "plugins": {
     "local": {
+      "disabled": true,
       "browsers": ["chrome", "firefox"]
     },
     "sauce": {
@@ -15,10 +16,6 @@
         "platform": "Windows 8.1",
         "version": "11"
       }, {
-        "browserName": "internet explorer",
-        "platform": "Windows 7",
-        "version": "10"
-      }, {
         "browserName": "firefox",
         "platform": "Windows 10",
         "version": "latest-4"
@@ -30,6 +27,10 @@
         "browserName": "safari",
         "platform": "OS X 10.11",
         "version": "9"
+      }, {
+        "browserName": "safari",
+        "platform": "OS X 10.11",
+        "version": "10"
       }]
     }
   }

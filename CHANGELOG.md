@@ -1,3 +1,29 @@
+<a name="0.2.1"></a>
+## [0.2.1](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.7...0.2.1) (2017-10-31)
+
+
+### Fix
+
+* Fixed test for safari. ([fc0e0995e0f5660fd4d2d786631fc02588fe5016](https://github.com/advanced-rest-client/oauth-authorization/commit/fc0e0995e0f5660fd4d2d786631fc02588fe5016))
+* Fixed tests for IE 11 ([8d776b41f2c3f7596659124c6487a10e80de7d7d](https://github.com/advanced-rest-client/oauth-authorization/commit/8d776b41f2c3f7596659124c6487a10e80de7d7d))
+
+### New
+
+* Finished OAuth1 implementation. ([0a40cd533242d8b454d02f2b47c6e38ab14ddc0d](https://github.com/advanced-rest-client/oauth-authorization/commit/0a40cd533242d8b454d02f2b47c6e38ab14ddc0d))
+
+### Udate
+
+* Created working code for generating valid signature. Added tests. ([8c7085dd89690bd7f48ca4dd04985653ea958e94](https://github.com/advanced-rest-client/oauth-authorization/commit/8c7085dd89690bd7f48ca4dd04985653ea958e94))
+
+### Update
+
+* Bumbed version for new release. ([c8247f04220aaf19d882ed64d8a880c308ea4226](https://github.com/advanced-rest-client/oauth-authorization/commit/c8247f04220aaf19d882ed64d8a880c308ea4226))
+* Ci commands ([1045e78b96175a58e8b18be1687ed2af9d768597](https://github.com/advanced-rest-client/oauth-authorization/commit/1045e78b96175a58e8b18be1687ed2af9d768597))
+* Finished main implementation. ([70113d6b58c519ee184d4091e428cf8effa4316e](https://github.com/advanced-rest-client/oauth-authorization/commit/70113d6b58c519ee184d4091e428cf8effa4316e))
+* Updated element metadata ([e9d2797b5362ed36f16fcddb3ad514d6f354a680](https://github.com/advanced-rest-client/oauth-authorization/commit/e9d2797b5362ed36f16fcddb3ad514d6f354a680))
+
+
+
 <a name="0.1.7"></a>
 ## [0.1.7](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.5...v0.1.7) (2017-03-07)
 
