@@ -75,3 +75,69 @@ See `auth-methods` > `auth-method-oauth2` element for the demo.
 | oauth2-error | Fired wne error occurred. An error may occure when `state` parameter of the OAuth2 response is different from the requested one. Another example is when the popup window has been closed before it passed response token. It may happen when the OAuth request was invalid. | message **String** - A message that can be displayed to the user. |
 code **String** - A message code: `invalid_state` - when `state` parameter is different; `no_response` when the popup was closed before sendin token data; `response_parse` - when the response from the code exchange can't be parsed; `request_error` when the request errored by the transport library. Other status codes are defined in [rfc6749](https://tools.ietf.org/html/rfc6749). |
 | oauth2-token-response | Fired when OAuth2 token has been received. Properties of the `detail` object will contain the response from the authentication server. It will contain the original parameteres but also camel case of the parameters.  So for example 'implicit' will be in the response as well as `accessToken` with the same value. The puropse of this is to support JS application that has strict formatting rules and disallow using '_' in property names. Like ARC. | __none__ |
+# oauth1-authorization
+
+An element to perform OAuth1 authorization and to sign auth requests.
+
+Note that the OAuth1 authorization wasn't designed for browser. Most existing
+OAuth1 implementation deisallow browsers to perform the authorization by
+not allowing POST requests to authorization server. Therefore receiving token
+may not be possible without using browser extensions to alter HTTP request to
+enable CORS.
+If the server disallow obtaining authorization token and secret from clients
+then your application has to listen for `oauth1-token-requested` custom event
+and perform authorization on the server side.
+
+When auth token and secret is available and the user is to perform a HTTP request,
+the request panel sends `before-request` cutom event. This element handles the event
+and apllies authorization header with generated signature to the request.
+
+## OAuth 1 configuration object
+
+Both authorization or request signing requires detailed configuration object.
+This is handled by the request panel. It sets OAuth1 configuration in the `request.auth`
+property.
+
+| Property | Type | Description |
+| ----------------|-------------|---------- |
+| `signatureMethod` | `String` | One of `PLAINTEXT`, `HMAC-SHA1`, `RSA-SHA1` |
+| `requestTokenUrl` | `String` | Token request URI. Optional for before request. Required for authorization |
+| `accessTokenUrl` | `String` | Access token request URI. Optional for before request. Required for authorization |
+| `authorizationUrl` | `String` | User dialog URL. |
+| `consumerKey` | `String` | Consumer key to be used to generate the signature. Optional for before request. |
+| `consumerSecret` | `String` | Consumer secret to be used to generate the signature. Optional for before request. |
+| `redirectUrl` | `String` | Redirect URI for the authorization. Optional for before request. |
+| `authParamsLocation` | `String` | Optional. Location of the authorization parameters. Default to `authorization` meaning it creates an authorization header. Any other value means query parameters |
+| `authTokenMethod` | `String` | Token request HTTP method. Default to `POST`. Optional for before request. |
+| `version` | `String` | Oauth1 protocol version. Default to `1.0` |
+| `nonceSize` | `Number` | Size of the nonce word to generate. Default to 32. Unused if `nonce` is set. |
+| `nonce` | `String` | Nonce to be used to generate signature. |
+| `timestamp` | `Number` | Request timestamp. If not set it sets current timestamp |
+| `customHeaders` | `Object` | Map of custom headers to set with authorization request |
+| `type` | `String` | Must be set to `oauth1` or during before-request this object will be ignored. |
+| `oauth_token` | `String` | Required for signing requests. Received OAuth token |
+| `oauth_token_secret` | `String` | Required for signing requests. Received OAuth token secret |
+
+## Error codes
+
+-  `params-error` Oauth1 parameters are invalid
+-  `oauth1-error` OAuth popup is blocked.
+-  `token-request-error` HTTP request to the authorization server failed
+-  `no-response` No response recorded.
+
+## Acknowledgements
+
+- This element uses [jsrsasign](https://github.com/kjur/jsrsasign) library distributed
+under MIT licence.
+- This element uses [crypto-js](https://code.google.com/archive/p/crypto-js/) library
+distributed under BSD license.
+
+
+
+### Events
+| Name | Description | Params |
+| --- | --- | --- |
+| oauth1-error | Fired when authorization is unsuccessful | message **String** - Human readable error message |
+code **String** - Error code associated with the error. See description of the element fo code mening. |
+| oauth1-token-response | Fired when the authorization is successful and token and secret are ready. | oauth_token **String** - Received OAuth1 token |
+oauth_token_secret **String** - Received OAuth1 token secret |
