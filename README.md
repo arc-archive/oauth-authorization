@@ -115,8 +115,8 @@ property.
 | `timestamp` | `Number` | Request timestamp. If not set it sets current timestamp |
 | `customHeaders` | `Object` | Map of custom headers to set with authorization request |
 | `type` | `String` | Must be set to `oauth1` or during before-request this object will be ignored. |
-| `oauth_token` | `String` | Required for signing requests. Received OAuth token |
-| `oauth_token_secret` | `String` | Required for signing requests. Received OAuth token secret |
+| `token` | `String` | Required for signing requests. Received OAuth token |
+| `tokenSecret` | `String` | Required for signing requests. Received OAuth token secret |
 
 ## Error codes
 

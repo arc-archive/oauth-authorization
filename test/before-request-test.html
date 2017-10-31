@@ -52,8 +52,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         authTokenMethod: 'POST',
         nonce: 'abcdefg',
         timestamp: 1509402152,
-        oauth_token: 'tWfvyFw7anQYC0Fo',
-        oauth_token_secret: 'kOZA2NjIVQ1c8pUZ6Ku2c2Rs16aGeYnJHlZL7Kg2jFAfmigL1uFSUHNO5zLkkIru',
+        token: 'tWfvyFw7anQYC0Fo',
+        tokenSecret: 'kOZA2NjIVQ1c8pUZ6Ku2c2Rs16aGeYnJHlZL7Kg2jFAfmigL1uFSUHNO5zLkkIru',
         type: 'oauth1'
       };
     });
@@ -92,7 +92,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       assert.equal(params.oauth_nonce, auth.nonce);
       assert.equal(params.oauth_signature_method, auth.signatureMethod);
       assert.equal(params.oauth_timestamp, auth.timestamp);
-      assert.equal(params.oauth_token, auth.oauth_token);
+      assert.equal(params.oauth_token, auth.token);
       assert.equal(params.oauth_version, '1.0');
       assert.equal(params.oauth_signature, '4huy8JcLkX8bch540ZTXiwH%2B4Vc%3D');
     });

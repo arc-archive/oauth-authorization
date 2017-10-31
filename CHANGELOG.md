@@ -1,3 +1,18 @@
+<a name="0.2.2"></a>
+## [0.2.2](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.1...0.2.2) (2017-10-31)
+
+
+### Fix
+
+* Fixed test for before-request event ([aa5047a68fddf86d2f85248bc8785a6fbdd177e9](https://github.com/advanced-rest-client/oauth-authorization/commit/aa5047a68fddf86d2f85248bc8785a6fbdd177e9))
+
+### Update
+
+* Updated before-request event properties. ([649ad67ea80c90b1b26d6036f12209d2be5e3b05](https://github.com/advanced-rest-client/oauth-authorization/commit/649ad67ea80c90b1b26d6036f12209d2be5e3b05))
+* Updated before-request event properties. ([19b9b85cf9688ef34181b556d42b0fcf6ddcfdfb](https://github.com/advanced-rest-client/oauth-authorization/commit/19b9b85cf9688ef34181b556d42b0fcf6ddcfdfb))
+
+
+
 <a name="0.2.1"></a>
 ## [0.2.1](https://github.com/advanced-rest-client/oauth-authorization/compare/0.1.7...0.2.1) (2017-10-31)
 
