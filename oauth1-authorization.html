@@ -13,7 +13,8 @@ the License.
 -->
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../cryptojs-lib/cryptojs-lib.html">
-<link ref="import" href="../iron-meta/iron-meta.html">
+<link rel="import" href="../iron-meta/iron-meta.html">
+<link rel="import" href="../url-parser/url-parser.html">
 <link rel="import" href="jsrsasign-import.html">
 <!--
 An element to perform OAuth1 authorization and to sign auth requests.
@@ -75,8 +76,10 @@ distributed under BSD license.
 @element oauth-authorization
 -->
 <script>
+window.forceJURL = true;
 // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
 // jscs:disable requireDotNotation
+/* global UrlParser */
 (function() {
   'use strict';
 
@@ -496,11 +499,15 @@ distributed under BSD license.
      * @return {String} URL to use with the request
      */
     _buildAuthorizationQueryStirng: function(url, orderedParameters) {
-      var urlParser = new URL(url);
-      var sParams = urlParser.searchParams;
-      orderedParameters.forEach(function(param) {
-        sParams.append(param[0], param[1]);
+      var urlParser = new UrlParser(url);
+      orderedParameters = orderedParameters.map(function(item) {
+        return [
+          encodeURIComponent(item[0]),
+          encodeURIComponent(item[1])
+        ];
       });
+      var params = urlParser.searchParams.concat(orderedParameters);
+      urlParser.searchParams = params;
       url = urlParser.toString();
       return url;
     },
@@ -585,18 +592,14 @@ distributed under BSD license.
      * first element as a name of the parameter and second element as a value.
      */
     _listQueryParameters: function(url) {
-      var result = [];
-      var parsedUrl = new URL(url);
-      var iterator = parsedUrl.searchParams.entries();
-      while (true) {
-        var item = iterator.next();
-        if (item.done) {
-          break;
-        }
-        var _param = item.value;
-        result.push([_param[0], _param[1]]);
-      }
-      return result;
+      var parsedUrl = new UrlParser(url);
+      return parsedUrl.searchParams.map(function(item) {
+        return [
+          this.decodeData(item[0]),
+          this.decodeData(item[1])
+        ];
+      }, this);
+
     },
     /**
      * Computes array of parameters from the entity body.

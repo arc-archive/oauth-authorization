@@ -28,6 +28,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </test-fixture>
   <script>
   /* global fixture, assert */
+  // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+  // jscs:disable requireDotNotation
   suite('Signature generator', function() {
 
     suite('_listQueryParameters()', function() {
@@ -333,7 +335,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         };
         var url = 'http://term.ie/oauth/example/request_token.php';
         var base = element.createSignatureBase('POST', url, oauthParams);
-        var compare = 'POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_token.php&oauth_callback%3Dhttp%253A%252F%252F192.168.1.16%253A8081%252Fcomponents%252Fauth-methods%252Fdemo%252Foauth1.html%26oauth_consumer_key%3Dkey%26oauth_nonce%3DKoirwhdQhaHOuviMm1YydjVlcOZxJvOr%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1500143520%26oauth_version%3D1.0';
+        var compare = 'POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_' +
+          'token.php&oauth_callback%3Dhttp%253A%252F%252F192.168.1.16%253A808' +
+          '1%252Fcomponents%252Fauth-methods%252Fdemo%252Foauth1.html%26oauth' +
+          '_consumer_key%3Dkey%26oauth_nonce%3DKoirwhdQhaHOuviMm1YydjVlcOZxJv' +
+          'Or%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D150014' +
+          '3520%26oauth_version%3D1.0';
         assert.equal(base, compare);
       });
     });
