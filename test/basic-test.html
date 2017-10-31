@@ -15,6 +15,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
   <script src="../../web-component-tester/browser.js"></script>
+  <script src="../../iron-test-helpers/test-helpers.js"></script>
   <link rel="import" href="../oauth1-authorization.html">
 </head>
 
@@ -25,8 +26,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </template>
   </test-fixture>
   <script>
-  /* global fixture, assert */
+  /* global fixture, assert, TestHelpers */
   suite('Basic', function() {
+
+    function isNotTooOld() {
+      return !!Object.assign;
+    }
 
     suite('_defaultHeaders()', function() {
       var element;
@@ -67,7 +72,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         };
       });
 
-      test('Sets default values', function() {
+      test('Sets default values', TestHelpers.skipUnless(isNotTooOld, function() {
         var s = Object.assign({}, settings);
         delete s.authParamsLocation;
         delete s.authTokenMethod;
@@ -80,7 +85,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         assert.equal(element._version, '1.0', '_version is set');
         assert.equal(element._nonceSize, 32, '_nonceSize is set');
         assert.typeOf(element._headers, 'object', '_headers is set');
-      });
+      }));
 
       test('Sets values on the element', function() {
         element._prepareOauth(settings);
@@ -102,13 +107,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         assert.equal(element._oauthParameterSeperator, ',', '_oauthParameterSeperator is set');
       });
 
-      test('Throws an error when auth signature is not supported', function() {
+      test('Throws an error when auth signature is not supported',
+        TestHelpers.skipUnless(isNotTooOld, function() {
         assert.throws(function() {
           var s = Object.assign({}, settings);
           s.signatureMethod = 'test';
           element._prepareOauth(s);
         });
-      });
+      }));
     });
     suite('getTimestamp()', function() {
       var element;

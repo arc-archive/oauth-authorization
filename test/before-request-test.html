@@ -59,7 +59,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     });
 
     function fire() {
-      var detail = Object.assign({}, request);
+      var detail = Object.assign ? Object.assign({}, request) : request;
       detail.auth = auth;
       var event = new CustomEvent('before-request', {
         detail: detail,
