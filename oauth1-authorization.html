@@ -55,8 +55,8 @@ property.
 | `timestamp` | `Number` | Request timestamp. If not set it sets current timestamp |
 | `customHeaders` | `Object` | Map of custom headers to set with authorization request |
 | `type` | `String` | Must be set to `oauth1` or during before-request this object will be ignored. |
-| `oauth_token` | `String` | Required for signing requests. Received OAuth token |
-| `oauth_token_secret` | `String` | Required for signing requests. Received OAuth token secret |
+| `token` | `String` | Required for signing requests. Received OAuth token |
+| `tokenSecret` | `String` | Required for signing requests. Received OAuth token secret |
 
 ## Error codes
 
@@ -197,8 +197,8 @@ window.forceJURL = true;
         return;
       }
 
-      var token = auth.oauth_token || this.lastIssuedToken.oauth_token;
-      var tokenSecret = auth.oauth_token_secret || this.lastIssuedToken.oauth_token_secret;
+      var token = auth.token || this.lastIssuedToken.oauth_token;
+      var tokenSecret = auth.tokenSecret || this.lastIssuedToken.oauth_token_secret;
 
       var method = request.method || 'GET';
       method = method.toUpperCase();
