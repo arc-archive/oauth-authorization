@@ -10,7 +10,8 @@
   ],
   "private": true,
   "main": [
-    "oauth2-authorization.html"
+    "oauth2-authorization.html",
+    "oauth1-authorization.html"
   ],
   "repository": {
     "type": "git",
