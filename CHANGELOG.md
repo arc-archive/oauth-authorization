@@ -1,3 +1,13 @@
+<a name="0.2.4"></a>
+## [0.2.4](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.3...0.2.4) (2017-11-22)
+
+
+### Fix
+
+* Fixes settings acces from password and client credentials type. ([19124cbf3dab5bc781a8e7e2fbffcdfa7b357efe](https://github.com/advanced-rest-client/oauth-authorization/commit/19124cbf3dab5bc781a8e7e2fbffcdfa7b357efe))
+
+
+
 <a name="0.2.3"></a>
 ## [0.2.3](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.2...0.2.3) (2017-10-31)
 
