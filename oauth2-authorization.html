@@ -409,7 +409,7 @@ Polymer({
   },
 
   _authorizePassword: function(settings) {
-    var url = this._settings.accessTokenUrl;
+    var url = settings.accessTokenUrl;
     var body = this._getPasswordBody(settings);
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
@@ -443,7 +443,7 @@ Polymer({
   },
 
   _authorizeClientCredential: function(settings) {
-    var url = this._settings.accessTokenUrl;
+    var url = settings.accessTokenUrl;
     var body = this._getClientCredentialBody(settings);
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
