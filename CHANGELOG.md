@@ -1,3 +1,9 @@
+<a name="0.2.7"></a>
+## [0.2.7](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.6...0.2.7) (2017-11-29)
+
+
+
+
 <a name="0.2.6"></a>
 ## [0.2.6](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.5...0.2.6) (2017-11-29)
 
