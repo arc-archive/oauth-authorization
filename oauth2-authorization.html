@@ -318,6 +318,16 @@ Polymer({
   _tokenCodeRequest: function(url, body) {
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
+      var status = e.target.status;
+      if (status === 404) {
+        return this._handleTokenCodeError(new Error('Authorization URI is invalid.'));
+      } else if (status >= 400 && status < 500) {
+        return this._handleTokenCodeError(
+          new Error('Server does not support this method. Response code is ' + status));
+      } else if (status >= 500) {
+        return this._handleTokenCodeError(
+          new Error('Authorization server error. Response code is ' + status));
+      }
       try {
         this._handleTokenCodeResponse(e.target.response,
           e.target.getResponseHeader('content-type'));
@@ -328,10 +338,21 @@ Polymer({
         });
       }
     }.bind(this));
-    xhr.addEventListener('error', this._handleTokenCodeError.bind(this));
+    xhr.addEventListener('error', function(e) {
+      var status = e.target.status;
+      var message = 'The request to the authorization server failed.';
+      if (status) {
+        message += ' Response code is: ' + status;
+      }
+      this._handleTokenCodeError(new Error(message));
+    }.bind(this));
     xhr.open('POST', url);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.send(body);
+    try {
+      xhr.send(body);
+    } catch (e) {
+      this._handleTokenCodeError(new Error('Client request error: ' + e.message));
+    }
   },
 
   // Decode token information from the response body.
@@ -413,6 +434,16 @@ Polymer({
     var body = this._getPasswordBody(settings);
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
+      var status = e.target.status;
+      if (status === 404) {
+        return this._handleTokenCodeError(new Error('Access token URI is invalid.'));
+      } else if (status >= 400 && status < 500) {
+        return this._handleTokenCodeError(
+          new Error('Server does not support this method. Response code is ' + status));
+      } else if (status >= 500) {
+        return this._handleTokenCodeError(
+          new Error('Authorization server error. Response code is ' + status));
+      }
       try {
         this._handleTokenCodeResponse(e.target.response,
           e.target.getResponseHeader('content-type'));
@@ -423,10 +454,21 @@ Polymer({
         });
       }
     }.bind(this));
-    xhr.addEventListener('error', this._handleTokenCodeError.bind(this));
+    xhr.addEventListener('error', function(e) {
+      var status = e.target.status;
+      var message = 'The request to the authorization server failed.';
+      if (status) {
+        message += ' Response code is: ' + status;
+      }
+      this._handleTokenCodeError(new Error(message));
+    }.bind(this));
     xhr.open('POST', url);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.send(body);
+    try {
+      xhr.send(body);
+    } catch (e) {
+      this._handleTokenCodeError(new Error('Client request error: ' + e.message));
+    }
   },
 
   _getPasswordBody: function(settings) {
@@ -447,6 +489,16 @@ Polymer({
     var body = this._getClientCredentialBody(settings);
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
+      var status = e.target.status;
+      if (status === 404) {
+        return this._handleTokenCodeError(new Error('Access token URI is invalid.'));
+      } else if (status >= 400 && status < 500) {
+        return this._handleTokenCodeError(
+          new Error('Server does not support this method. Response code is ' + status));
+      } else if (status >= 500) {
+        return this._handleTokenCodeError(
+          new Error('Authorization server error. Response code is ' + status));
+      }
       try {
         this._handleTokenCodeResponse(e.target.response,
           e.target.getResponseHeader('content-type'));
@@ -457,10 +509,21 @@ Polymer({
         });
       }
     }.bind(this));
-    xhr.addEventListener('error', this._handleTokenCodeError.bind(this));
+    xhr.addEventListener('error', function(e) {
+      var status = e.target.status;
+      var message = 'The request to the authorization server failed.';
+      if (status) {
+        message += ' Response code is: ' + status;
+      }
+      this._handleTokenCodeError(new Error(message));
+    }.bind(this));
     xhr.open('POST', url);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.send(body);
+    try {
+      xhr.send(body);
+    } catch (e) {
+      this._handleTokenCodeError(new Error('Client request error: ' + e.message));
+    }
   },
 
   _getClientCredentialBody: function(settings) {

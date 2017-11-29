@@ -1,3 +1,13 @@
+<a name="0.2.6"></a>
+## [0.2.6](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.5...0.2.6) (2017-11-29)
+
+
+### Update
+
+* Added better error handling with proper messages. ([5c525bebc08d288e575fcfd2bf7d6d76998c4183](https://github.com/advanced-rest-client/oauth-authorization/commit/5c525bebc08d288e575fcfd2bf7d6d76998c4183))
+
+
+
 <a name="0.2.5"></a>
 ## [0.2.5](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.4...0.2.5) (2017-11-22)
 
