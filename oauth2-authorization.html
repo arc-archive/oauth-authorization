@@ -217,7 +217,9 @@ Polymer({
     if (settings.redirectUrl) {
       url += 'redirect_uri=' + encodeURIComponent(settings.redirectUrl) + '&';
     }
-    url += 'scope=' + encodeURIComponent(settings.scopes.join(' '));
+    if (settings.scopes && settings.scopes.length) {
+      url += 'scope=' + encodeURIComponent(settings.scopes.join(' '));
+    }
     url += '&state=' + encodeURIComponent(this._state);
     return url;
   },
