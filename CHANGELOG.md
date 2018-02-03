@@ -1,3 +1,22 @@
+<a name="0.2.8"></a>
+## [0.2.8](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.7...0.2.8) (2018-02-03)
+
+
+### Fix
+
+* Fixes #2 - scope as an optional parameter ([c3533edcd42ec700d4808c9c36780fad1e77d540](https://github.com/advanced-rest-client/oauth-authorization/commit/c3533edcd42ec700d4808c9c36780fad1e77d540)), closes [#2](https://github.com/advanced-rest-client/oauth-authorization/issues/2)
+
+### New
+
+* Adding `interactive` setting to `code` and `implicit` types. ([deb1a3fdeb636c4f1503495b12b4e10ed9c705dc](https://github.com/advanced-rest-client/oauth-authorization/commit/deb1a3fdeb636c4f1503495b12b4e10ed9c705dc))
+
+### Update
+
+* Added state property to the response events ([a489b97aac26c31c396a7637198fab075175966d](https://github.com/advanced-rest-client/oauth-authorization/commit/a489b97aac26c31c396a7637198fab075175966d))
+* The element will now read the response from popups from different domains. ([06b695f331b4bc2fa9b51a1a11d91a88be8262de](https://github.com/advanced-rest-client/oauth-authorization/commit/06b695f331b4bc2fa9b51a1a11d91a88be8262de))
+
+
+
 <a name="0.2.7"></a>
 ## [0.2.7](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.6...0.2.7) (2017-11-29)
 

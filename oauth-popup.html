@@ -14,6 +14,7 @@
     var $ = function(selector, target) {
       return (target || document).querySelector(selector);
     };
+    var messageTarget = (window.opener || window.top);
 
     var Auth = {
       init: function() {
@@ -27,6 +28,7 @@
 
       handleResponse: function(data) {
         var params = {
+          'oauth2response': true,
           'tokenTime': Date.now()
         };
         data.split('&').forEach(function(p) {
@@ -46,18 +48,18 @@
         });
         var origin;
         try {
-          if ('origin' in window.opener.location) {
-            origin = window.opener.location.origin;
+          if ('origin' in messageTarget.location) {
+            origin = messageTarget.location.origin;
           }
         } catch (e) {
-          // This will happend when the popup is in different domain
+          // This will happen when the popup is in different domain
           // (port, host, scheme)
           origin = '*';
         }
-        window.opener.postMessage(params, origin);
+        messageTarget.postMessage(params, origin);
       }
     };
-    if (!window.opener || !window.opener.postMessage) {
+    if (!messageTarget || !messageTarget.postMessage) {
       var elm = $('#general-error');
       elm.removeAttribute('hidden');
     } else {
