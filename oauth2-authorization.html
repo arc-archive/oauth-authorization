@@ -245,11 +245,14 @@ Polymer({
    * request came from an event, a `tokenValue` property fill be set on the event target.
    */
   _listenPopup: function(e) {
-    if (!location || !e.source || !this._popup || e.origin !== location.origin ||
-      e.source.location.href !== this._popup.location.href) {
+    if (!location || !e.source || !this._popup) {
       return;
     }
     var tokenInfo = e.data;
+    if (!tokenInfo || !tokenInfo.tokenTime) {
+      // Possibly a message in the authorization info, not the popup.
+      return;
+    }
     if (tokenInfo.state !== this._state) {
       this.fire('oauth2-error', {
         'message': 'Invalid state returned by the oauth server.',
