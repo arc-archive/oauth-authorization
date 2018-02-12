@@ -212,6 +212,7 @@ Polymer({
         this._authorize(this._constructPopupUrl(settings, 'token'), settings);
         break;
       case 'authorization_code':
+        this._settings = settings;
         this._authorize(this._constructPopupUrl(settings, 'code'), settings);
         break;
       case 'client_credentials':
