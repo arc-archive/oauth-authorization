@@ -1,3 +1,13 @@
+<a name="0.2.10"></a>
+## [0.2.10](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.9...0.2.10) (2018-02-12)
+
+
+### Fix
+
+* Setting `_settings` property for authorization code. ([6fd0266620b53c54e4a7b3f887d608d6d97dfc78](https://github.com/advanced-rest-client/oauth-authorization/commit/6fd0266620b53c54e4a7b3f887d608d6d97dfc78))
+
+
+
 <a name="0.2.9"></a>
 ## [0.2.9](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.8...0.2.9) (2018-02-03)
 
