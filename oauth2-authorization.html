@@ -336,10 +336,32 @@ Polymer({
       url += 'redirect_uri=' + encodeURIComponent(settings.redirectUrl) + '&';
     }
     if (settings.scopes && settings.scopes.length) {
-      url += 'scope=' + encodeURIComponent(settings.scopes.join(' '));
+      url += 'scope=' + this.computeScope(settings.scopes);
     }
     url += '&state=' + encodeURIComponent(this._state);
+    if (settings.includeGrantedScopes) {
+      url += '&include_granted_scopes=true';
+    }
+    if (settings.loginHint) {
+      url += '&login_hint=' + encodeURIComponent(settings.loginHint);
+    }
+    if (settings.interactive === false) {
+      url += '&prompt=none';
+    }
     return url;
+  },
+  /**
+   * Computes `scope` URL parameter from scopes array.
+   *
+   * @param {Array<String>} scopes List of scopes to use with the request.
+   * @return {String} Computed scope value.
+   */
+  _computeScope: function(scopes) {
+    if (!scopes) {
+      return '';
+    }
+    var scope = scopes.join(' ');
+    return encodeURIComponent(scope);
   },
   /**
    * Listen for a message from the popup.
