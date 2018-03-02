@@ -1,3 +1,13 @@
+<a name="0.2.12"></a>
+## [0.2.12](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.11...0.2.12) (2018-03-02)
+
+
+### New
+
+* Adding Google specific url parameters. ([d3a87ba428afb72d8774390f1c7a2f672f57a66a](https://github.com/advanced-rest-client/oauth-authorization/commit/d3a87ba428afb72d8774390f1c7a2f672f57a66a))
+
+
+
 <a name="0.2.11"></a>
 ## [0.2.11](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.10...0.2.11) (2018-02-12)
 
