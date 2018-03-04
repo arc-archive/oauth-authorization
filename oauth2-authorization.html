@@ -190,13 +190,17 @@ Polymer({
     this._state = undefined;
     this._cleanupFrame();
   },
-
-  _tokenRequestedHandler: function(e, detail) {
+  /**
+   * Handler for the `oauth2-token-requested` custom event.
+   *
+   * @param {CustomEvent} e
+   */
+  _tokenRequestedHandler: function(e) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     this._eventSource = e.target;
-    this.authorize(detail);
+    this.authorize(e.detail);
   },
 
   /**
