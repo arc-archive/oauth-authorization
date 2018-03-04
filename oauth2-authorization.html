@@ -336,7 +336,7 @@ Polymer({
       url += 'redirect_uri=' + encodeURIComponent(settings.redirectUrl) + '&';
     }
     if (settings.scopes && settings.scopes.length) {
-      url += 'scope=' + this.computeScope(settings.scopes);
+      url += 'scope=' + this._computeScope(settings.scopes);
     }
     url += '&state=' + encodeURIComponent(this._state);
     if (settings.includeGrantedScopes) {
