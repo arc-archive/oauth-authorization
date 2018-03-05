@@ -410,6 +410,9 @@ Polymer({
       // Possibly a message in the authorization info, not the popup.
       return;
     }
+    if (!this._settings) {
+      this._settings = {};
+    }
     if (tokenInfo.state !== this._state) {
       this.fire('oauth2-error', {
         message: 'Invalid state returned by the OAuth server.',
