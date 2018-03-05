@@ -14,7 +14,7 @@
     var $ = function(selector, target) {
       return (target || document).querySelector(selector);
     };
-    var messageTarget = (window.opener || window.top);
+    var messageTarget = (window.opener || window.parent);
 
     var Auth = {
       init: function() {
@@ -62,6 +62,7 @@
     if (!messageTarget || !messageTarget.postMessage) {
       var elm = $('#general-error');
       elm.removeAttribute('hidden');
+      console.error('Cannot post message to target window.');
     } else {
       Auth.init();
     }
