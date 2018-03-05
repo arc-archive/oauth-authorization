@@ -46,17 +46,7 @@
           params[name] = decodeURIComponent(item[1]);
           params[origName] = decodeURIComponent(item[1]);
         });
-        var origin;
-        try {
-          if ('origin' in messageTarget.location) {
-            origin = messageTarget.location.origin;
-          }
-        } catch (e) {
-          // This will happen when the popup is in different domain
-          // (port, host, scheme)
-          origin = '*';
-        }
-        messageTarget.postMessage(params, origin);
+        messageTarget.postMessage(params, '*');
       }
     };
     if (!messageTarget || !messageTarget.postMessage) {
