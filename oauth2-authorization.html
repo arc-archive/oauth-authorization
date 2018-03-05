@@ -657,11 +657,15 @@ Polymer({
       url += '&client_id=' + encodeURIComponent(settings.clientId);
     }
     if (settings.scopes && settings.scopes.length) {
-      url += 'scope=' + encodeURIComponent(settings.scopes.join(' '));
+      url += '&scope=' + encodeURIComponent(settings.scopes.join(' '));
     }
     return url;
   },
-
+  /**
+   * Requests a token for `client_credentials` request type.
+   *
+   * @param {Object} settings Settings passed to the `authorize()` function.
+   */
   _authorizeClientCredential: function(settings) {
     var url = settings.accessTokenUrl;
     var body = this._getClientCredentialBody(settings);
