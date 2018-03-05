@@ -186,9 +186,21 @@ Polymer({
   },
 
   clear: function() {
-    this._popup = undefined;
     this._state = undefined;
+    this._settings = undefined;
     this._cleanupFrame();
+    this._cleanupPopup();
+  },
+  /**
+   * Clean up popup reference and closes the window if not yet closed.
+   */
+  _cleanupPopup: function() {
+    if (this._popup) {
+      if (!this._popup.closed) {
+        this._popup.close();
+      }
+      this._popup = undefined;
+    }
   },
   /**
    * Handler for the `oauth2-token-requested` custom event.
@@ -211,12 +223,13 @@ Polymer({
     this._setTokenInfo(undefined);
     this._type = settings.type;
     this._state = settings.state || this.randomString(6);
+    this._settings = settings;
+    this._errored = false;
     switch (settings.type) {
       case 'implicit':
         this._authorize(this._constructPopupUrl(settings, 'token'), settings);
         break;
       case 'authorization_code':
-        this._settings = settings;
         this._authorize(this._constructPopupUrl(settings, 'code'), settings);
         break;
       case 'client_credentials':
@@ -240,6 +253,8 @@ Polymer({
    * @param {Object} settings Passed user settings
    */
   _authorize: function(authUrl, settings) {
+    this._settings = settings;
+    this._errored = false;
     if (settings.interactive === false) {
       this._authorizeTokenNonInteractive(authUrl);
     } else {
@@ -297,11 +312,20 @@ Polymer({
     }
     this._iframe.removeEventListener('error', this._frameLoadErrorHandler);
     this._iframe.removeEventListener('load', this._frameLoadHandler);
-    document.body.removeChild(this._iframe);
+    try {
+      document.body.removeChild(this._iframe);
+    } catch (e) {
+      console.warn('Tried to remove a frame that is not in the DOM');
+    }
     this._iframe = undefined;
   },
-
+  /**
+   * Handler for `error` event dispatched by oauth iframe.
+   */
   _frameLoadErrorHandler: function() {
+    if (this._errored) {
+      return;
+    }
     this.fire('oauth2-token-response', {
       interactive: false,
       code: 'iframe_load_error',
@@ -309,10 +333,12 @@ Polymer({
     });
     this.clear();
   },
-
+  /**
+   * Handler for iframe `load` event.
+   */
   _frameLoadHandler: function() {
     this.debounce('frame-load-info', function() {
-      if (!this.tokenInfo) {
+      if (!this.tokenInfo && !this._errored) {
         this.fire('oauth2-token-response', {
           interactive: false,
           code: 'not_authorized',
@@ -386,38 +412,32 @@ Polymer({
     }
     if (tokenInfo.state !== this._state) {
       this.fire('oauth2-error', {
-        'message': 'Invalid state returned by the oauth server.',
-        'code': 'invalid_state',
-        'state': this._state
+        message: 'Invalid state returned by the OAuth server.',
+        code: 'invalid_state',
+        state: this._state,
+        serverState: tokenInfo.state,
+        interactive: this._settings.interactive
       });
-      this.clear();
-      this._eventSource = undefined;
-      return;
-    }
-
-    if ('error' in tokenInfo) {
+      this._errored = true;
+    } else if ('error' in tokenInfo) {
       this.fire('oauth2-error', {
-        'message': tokenInfo.errorDescription || 'The request is invalid.',
-        'code': tokenInfo.error,
-        'state': this._state
+        message: tokenInfo.errorDescription || 'The request is invalid.',
+        code: tokenInfo.error || 'oauth_error',
+        state: this._state,
+        interactive: this._settings.interactive
       });
-    } else {
-      if (this._type === 'implicit') {
-        this._setTokenInfo(tokenInfo);
-        if (this._eventSource) {
-          this._eventSource.tokenValue = tokenInfo.accessToken;
-        }
-        this.fire('oauth2-token-response', tokenInfo);
-        this._eventSource = undefined;
-      } else if (this._type === 'authorization_code') {
-        this._exchangeCodeValue = tokenInfo.code;
-        this._exchangeCode(tokenInfo.code);
+      this._errored = true;
+    } else if (this._type === 'implicit') {
+      this._setTokenInfo(tokenInfo);
+      if (this._eventSource) {
+        this._eventSource.tokenValue = tokenInfo.accessToken;
       }
-    }
-    if (this._popup) {
-      this._popup.close();
-    } else {
-      this._cleanupFrame();
+      tokenInfo.interactive = this._settings.interactive;
+      this.fire('oauth2-token-response', tokenInfo);
+      this._eventSource = undefined;
+    } else if (this._type === 'authorization_code') {
+      this._exchangeCodeValue = tokenInfo.code;
+      this._exchangeCode(tokenInfo.code);
     }
     this.clear();
   },
