@@ -321,13 +321,13 @@ Polymer({
     }, 700);
   },
 
-
   // Observer if the popup has been closed befor the data has been received.
   _observePopupState: function() {
     var context = this;
-    var popupCheckInterval = setInterval(function() {
+    this.__popupCheckInterval = setInterval(function() {
       if (!context._popup || context._popup.closed) {
-        clearInterval(popupCheckInterval);
+        clearInterval(context.__popupCheckInterval);
+        context.__popupCheckInterval = undefined;
         context._beforePopupUnloadHandler();
       }
     }, 250);
