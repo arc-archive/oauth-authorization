@@ -403,8 +403,8 @@ the License.
       element._authorizePopup(url);
     });
 
-    test('Calls _listenPopup() when popup send message', function(done) {
-      element._listenPopup = function(e) {
+    test('Calls _popupMessageHandler() when popup send message', function(done) {
+      element._popupMessageHandler = function(e) {
         assert.equal(e.data.param, 'value');
         done();
       };
@@ -713,7 +713,7 @@ the License.
     });
   });
 
-  suite('_listenPopup()', function() {
+  suite('_popupMessageHandler()', function() {
     var element;
     setup(function() {
       element = fixture('basic');
@@ -741,7 +741,7 @@ the License.
         assert.typeOf(e.detail.message, 'string', 'Message is set');
         done();
       });
-      element._listenPopup(e);
+      element._popupMessageHandler(e);
     });
 
     test('Reports error when error in response', function(done) {
@@ -757,7 +757,7 @@ the License.
         assert.equal(ev.detail.message, e.data.errorDescription, 'Message is set');
         done();
       });
-      element._listenPopup(e);
+      element._popupMessageHandler(e);
     });
 
     test('Reports token data', function(done) {
@@ -772,7 +772,7 @@ the License.
         assert.equal(ev.detail.expiresIn, e.data.expiresIn);
         done();
       });
-      element._listenPopup(e);
+      element._popupMessageHandler(e);
     });
 
     test('Sets tokenInfo property', function() {
@@ -781,7 +781,7 @@ the License.
       e.data.state = 'test-state';
       e.data.accessToken = 'testToken';
       e.data.expiresIn = 3600;
-      element._listenPopup(e);
+      element._popupMessageHandler(e);
       assert.equal(element.tokenInfo.accessToken, e.data.accessToken);
       assert.equal(element.tokenInfo.expiresIn, e.data.expiresIn);
     });
@@ -793,7 +793,7 @@ the License.
       e.data.accessToken = 'testToken';
       e.data.expiresIn = 3600;
       element._eventSource = {};
-      element._listenPopup(e);
+      element._popupMessageHandler(e);
       assert.isUndefined(element._eventSource);
     });
 
@@ -808,7 +808,7 @@ the License.
           called = true;
         }
       };
-      element._listenPopup(e);
+      element._popupMessageHandler(e);
       assert.isTrue(called);
       assert.isUndefined(element._popup);
     });
@@ -820,7 +820,7 @@ the License.
       e.data.code = 'testCode';
       element._type = 'authorization_code';
       element._exchangeCode = noop;
-      element._listenPopup(e);
+      element._popupMessageHandler(e);
       assert.equal(element._exchangeCodeValue, e.data.code);
     });
 
@@ -834,7 +834,7 @@ the License.
         assert.equal(code, e.data.code);
         done();
       };
-      element._listenPopup(e);
+      element._popupMessageHandler(e);
     });
   });
 

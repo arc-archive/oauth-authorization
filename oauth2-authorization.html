@@ -177,12 +177,12 @@ Polymer({
 
   attached: function() {
     this.listen(window, 'oauth2-token-requested', '_tokenRequestedHandler');
-    this.listen(window, 'message', '_listenPopup');
+    this.listen(window, 'message', '_popupMessageHandler');
   },
 
   detached: function() {
     this.unlisten(window, 'oauth2-token-requested', '_tokenRequestedHandler');
-    this.unlisten(window, 'message', '_listenPopup');
+    this.unlisten(window, 'message', '_popupMessageHandler');
   },
 
   clear: function() {
@@ -401,12 +401,12 @@ Polymer({
    * Token will be extracted and `oauth2-token-response` will be fired. Also, if the initial
    * request came from an event, a `tokenValue` property fill be set on the event target.
    */
-  _listenPopup: function(e) {
+  _popupMessageHandler: function(e) {
     if (!this._popup && !this._iframe) {
       return;
     }
     var tokenInfo = e.data;
-    if (!tokenInfo || !tokenInfo.tokenTime) {
+    if (!tokenInfo || !tokenInfo.oauth2response) {
       // Possibly a message in the authorization info, not the popup.
       return;
     }
