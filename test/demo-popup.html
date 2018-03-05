@@ -1,0 +1,57 @@
+<!doctype html>
+<!--
+@license
+Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+</head>
+<body>
+  <h1>Test demo popup</h1>
+  <script>
+  var messageTarget = (window.opener || window.top);
+  var data = location.search.substr(1);
+  var params = {
+    'autoClose': false
+  };
+  data.split('&').forEach(function(p) {
+    var item = p.split('=');
+    var name = item[0];
+    var origName = name;
+    var i = 0;
+    var l;
+    while ((l = name[i])) {
+      if ((l === '_' || l === '-') && i + 1 < name.length) {
+        name = name.substr(0, i) + name[i + 1].toUpperCase() + name.substr(i + 2);
+      }
+      i++;
+    }
+    params[name] = decodeURIComponent(item[1]);
+    params[origName] = decodeURIComponent(item[1]);
+  });
+  var origin;
+  try {
+    if ('origin' in messageTarget.location) {
+      origin = messageTarget.location.origin;
+    }
+  } catch (e) {
+    origin = '*';
+  }
+  messageTarget.postMessage(params, origin);
+  if (params.autoClose && params.autoClose !== 'false') {
+    window.close();
+  }
+  </script>
+</body>
+</head>
