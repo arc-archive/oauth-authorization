@@ -282,6 +282,8 @@ Polymer({
     iframe.style.overflow = 'hidden';
     iframe.addEventListener('error', this._frameLoadErrorHandler);
     iframe.addEventListener('load', this._frameLoadHandler);
+    iframe.id = 'oauth2-authorization-frame';
+    iframe.setAttribute('data-owner', 'arc-oauth-authorization');
     document.body.appendChild(iframe);
     iframe.src = url;
     this._iframe = iframe;
