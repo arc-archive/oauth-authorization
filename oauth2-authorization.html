@@ -369,14 +369,12 @@ Polymer({
   },
   /**
    * Listen for a message from the popup.
-   * The message from the popup will be accepted only if following conditions are met:
-   * - origin of the event is the same as current origin
-   * - event's source location is the same as opened popup location.
+   *
    * Token will be extracted and `oauth2-token-response` will be fired. Also, if the initial
    * request came from an event, a `tokenValue` property fill be set on the event target.
    */
   _listenPopup: function(e) {
-    if (!location || !e.source || !(this._popup || this._iframe)) {
+    if (!this._popup && !this._iframe) {
       return;
     }
     var tokenInfo = e.data;
