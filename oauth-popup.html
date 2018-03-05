@@ -14,7 +14,7 @@
     var $ = function(selector, target) {
       return (target || document).querySelector(selector);
     };
-    var messageTarget = (window.opener || window.parent);
+    var messageTarget = (window.opener || window.parent || window.top);
 
     var Auth = {
       init: function() {
