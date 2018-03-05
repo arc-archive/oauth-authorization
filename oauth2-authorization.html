@@ -563,7 +563,10 @@ Polymer({
     this._eventSource = undefined;
     this._exchangeCodeValue = undefined;
   },
-
+  /**
+   * Handler fore an error that happened during code exchange.
+   * @param {Error} e
+   */
   _handleTokenCodeError: function(e) {
     this.fire('oauth2-error', {
       'message': 'Couldn\'t connect to the server. ' + e.message,
@@ -573,7 +576,12 @@ Polymer({
     this._settings = undefined;
     this._eventSource = undefined;
   },
-
+  /**
+   * Replaces `-` or `_` with camel case.
+   * @param {String} name The string to process
+   * @return {String|undefined} Camel cased string or `undefined` if not
+   * transformed.
+   */
   _camel: function(name) {
     var i = 0;
     var l;
@@ -587,7 +595,11 @@ Polymer({
     }
     return changed ? name : undefined;
   },
-
+  /**
+   * Requests a token for `password` request type.
+   *
+   * @param {Object} settings Settings passed to the `authorize()` function.
+   */
   _authorizePassword: function(settings) {
     var url = settings.accessTokenUrl;
     var body = this._getPasswordBody(settings);
@@ -630,7 +642,13 @@ Polymer({
       this._handleTokenCodeError(new Error('Client request error: ' + e.message));
     }
   },
-
+  /**
+   * Generates a payload message for password authorization.
+   *
+   * @param {Object} settings Settings object passed to the `authorize()`
+   * function
+   * @return {String} Message body as defined in OAuth2 spec.
+   */
   _getPasswordBody: function(settings) {
     var url = 'grant_type=password';
     url += '&username=' + encodeURIComponent(settings.username);
@@ -686,17 +704,23 @@ Polymer({
       this._handleTokenCodeError(new Error('Client request error: ' + e.message));
     }
   },
-
+  /**
+   * Generates a payload message for client credentials.
+   *
+   * @param {Object} settings Settings object passed to the `authorize()`
+   * function
+   * @return {String} Message body as defined in OAuth2 spec.
+   */
   _getClientCredentialBody: function(settings) {
     var url = 'grant_type=client_credentials';
     if (settings.clientId) {
       url += '&client_id=' + encodeURIComponent(settings.clientId);
     }
     if (settings.clientSecret) {
-      url += '&client_secret=' + settings.clientSecret;
+      url += '&client_secret=' + encodeURIComponent(settings.clientSecret);
     }
     if (settings.scopes && settings.scopes.length) {
-      url += 'scope=' + encodeURIComponent(settings.scopes.join(' '));
+      url += '&scope=' + this._computeScope(settings.scopes);
     }
     return url;
   }
