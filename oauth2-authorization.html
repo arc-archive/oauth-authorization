@@ -177,26 +177,42 @@ Polymer({
 
   attached: function() {
     this.listen(window, 'oauth2-token-requested', '_tokenRequestedHandler');
-    this.listen(window, 'message', '_listenPopup');
+    this.listen(window, 'message', '_popupMessageHandler');
   },
 
   detached: function() {
     this.unlisten(window, 'oauth2-token-requested', '_tokenRequestedHandler');
-    this.unlisten(window, 'message', '_listenPopup');
+    this.unlisten(window, 'message', '_popupMessageHandler');
   },
 
   clear: function() {
-    this._popup = undefined;
     this._state = undefined;
+    this._settings = undefined;
     this._cleanupFrame();
+    this._cleanupPopup();
   },
-
-  _tokenRequestedHandler: function(e, detail) {
+  /**
+   * Clean up popup reference and closes the window if not yet closed.
+   */
+  _cleanupPopup: function() {
+    if (this._popup) {
+      if (!this._popup.closed) {
+        this._popup.close();
+      }
+      this._popup = undefined;
+    }
+  },
+  /**
+   * Handler for the `oauth2-token-requested` custom event.
+   *
+   * @param {CustomEvent} e
+   */
+  _tokenRequestedHandler: function(e) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     this._eventSource = e.target;
-    this.authorize(detail);
+    this.authorize(e.detail);
   },
 
   /**
@@ -207,12 +223,13 @@ Polymer({
     this._setTokenInfo(undefined);
     this._type = settings.type;
     this._state = settings.state || this.randomString(6);
+    this._settings = settings;
+    this._errored = false;
     switch (settings.type) {
       case 'implicit':
         this._authorize(this._constructPopupUrl(settings, 'token'), settings);
         break;
       case 'authorization_code':
-        this._settings = settings;
         this._authorize(this._constructPopupUrl(settings, 'code'), settings);
         break;
       case 'client_credentials':
@@ -236,6 +253,8 @@ Polymer({
    * @param {Object} settings Passed user settings
    */
   _authorize: function(authUrl, settings) {
+    this._settings = settings;
+    this._errored = false;
     if (settings.interactive === false) {
       this._authorizeTokenNonInteractive(authUrl);
     } else {
@@ -278,6 +297,8 @@ Polymer({
     iframe.style.overflow = 'hidden';
     iframe.addEventListener('error', this._frameLoadErrorHandler);
     iframe.addEventListener('load', this._frameLoadHandler);
+    iframe.id = 'oauth2-authorization-frame';
+    iframe.setAttribute('data-owner', 'arc-oauth-authorization');
     document.body.appendChild(iframe);
     iframe.src = url;
     this._iframe = iframe;
@@ -291,11 +312,20 @@ Polymer({
     }
     this._iframe.removeEventListener('error', this._frameLoadErrorHandler);
     this._iframe.removeEventListener('load', this._frameLoadHandler);
-    document.body.removeChild(this._iframe);
+    try {
+      document.body.removeChild(this._iframe);
+    } catch (e) {
+      console.warn('Tried to remove a frame that is not in the DOM');
+    }
     this._iframe = undefined;
   },
-
+  /**
+   * Handler for `error` event dispatched by oauth iframe.
+   */
   _frameLoadErrorHandler: function() {
+    if (this._errored) {
+      return;
+    }
     this.fire('oauth2-token-response', {
       interactive: false,
       code: 'iframe_load_error',
@@ -303,10 +333,12 @@ Polymer({
     });
     this.clear();
   },
-
+  /**
+   * Handler for iframe `load` event.
+   */
   _frameLoadHandler: function() {
     this.debounce('frame-load-info', function() {
-      if (!this.tokenInfo) {
+      if (!this.tokenInfo && !this._errored) {
         this.fire('oauth2-token-response', {
           interactive: false,
           code: 'not_authorized',
@@ -317,16 +349,16 @@ Polymer({
     }, 700);
   },
 
-
   // Observer if the popup has been closed befor the data has been received.
   _observePopupState: function() {
     var context = this;
-    var popupCheckInterval = setInterval(function() {
+    this.__popupCheckInterval = setInterval(function() {
       if (!context._popup || context._popup.closed) {
-        clearInterval(popupCheckInterval);
+        clearInterval(context.__popupCheckInterval);
+        context.__popupCheckInterval = undefined;
         context._beforePopupUnloadHandler();
       }
-    }, 500);
+    }, 250);
   },
   // Browser or server flow: open the initial popup.
   _constructPopupUrl: function(settings, type) {
@@ -336,7 +368,7 @@ Polymer({
       url += 'redirect_uri=' + encodeURIComponent(settings.redirectUrl) + '&';
     }
     if (settings.scopes && settings.scopes.length) {
-      url += 'scope=' + this.computeScope(settings.scopes);
+      url += 'scope=' + this._computeScope(settings.scopes);
     }
     url += '&state=' + encodeURIComponent(this._state);
     if (settings.includeGrantedScopes) {
@@ -365,55 +397,50 @@ Polymer({
   },
   /**
    * Listen for a message from the popup.
-   * The message from the popup will be accepted only if following conditions are met:
-   * - origin of the event is the same as current origin
-   * - event's source location is the same as opened popup location.
+   *
    * Token will be extracted and `oauth2-token-response` will be fired. Also, if the initial
    * request came from an event, a `tokenValue` property fill be set on the event target.
    */
-  _listenPopup: function(e) {
-    if (!location || !e.source || !(this._popup || this._iframe)) {
+  _popupMessageHandler: function(e) {
+    if (!this._popup && !this._iframe) {
       return;
     }
     var tokenInfo = e.data;
-    if (!tokenInfo || !tokenInfo.tokenTime) {
+    if (!tokenInfo || !tokenInfo.oauth2response) {
       // Possibly a message in the authorization info, not the popup.
       return;
     }
+    if (!this._settings) {
+      this._settings = {};
+    }
     if (tokenInfo.state !== this._state) {
       this.fire('oauth2-error', {
-        'message': 'Invalid state returned by the oauth server.',
-        'code': 'invalid_state',
-        'state': this._state
+        message: 'Invalid state returned by the OAuth server.',
+        code: 'invalid_state',
+        state: this._state,
+        serverState: tokenInfo.state,
+        interactive: this._settings.interactive
       });
-      this.clear();
-      this._eventSource = undefined;
-      return;
-    }
-
-    if ('error' in tokenInfo) {
+      this._errored = true;
+    } else if ('error' in tokenInfo) {
       this.fire('oauth2-error', {
-        'message': tokenInfo.errorDescription || 'The request is invalid.',
-        'code': tokenInfo.error,
-        'state': this._state
+        message: tokenInfo.errorDescription || 'The request is invalid.',
+        code: tokenInfo.error || 'oauth_error',
+        state: this._state,
+        interactive: this._settings.interactive
       });
-    } else {
-      if (this._type === 'implicit') {
-        this._setTokenInfo(tokenInfo);
-        if (this._eventSource) {
-          this._eventSource.tokenValue = tokenInfo.accessToken;
-        }
-        this.fire('oauth2-token-response', tokenInfo);
-        this._eventSource = undefined;
-      } else if (this._type === 'authorization_code') {
-        this._exchangeCodeValue = tokenInfo.code;
-        this._exchangeCode(tokenInfo.code);
+      this._errored = true;
+    } else if (this._type === 'implicit') {
+      this._setTokenInfo(tokenInfo);
+      if (this._eventSource) {
+        this._eventSource.tokenValue = tokenInfo.accessToken;
       }
-    }
-    if (this._popup) {
-      this._popup.close();
-    } else {
-      this._cleanupFrame();
+      tokenInfo.interactive = this._settings.interactive;
+      this.fire('oauth2-token-response', tokenInfo);
+      this._eventSource = undefined;
+    } else if (this._type === 'authorization_code') {
+      this._exchangeCodeValue = tokenInfo.code;
+      this._exchangeCode(tokenInfo.code);
     }
     this.clear();
   },
@@ -559,7 +586,10 @@ Polymer({
     this._eventSource = undefined;
     this._exchangeCodeValue = undefined;
   },
-
+  /**
+   * Handler fore an error that happened during code exchange.
+   * @param {Error} e
+   */
   _handleTokenCodeError: function(e) {
     this.fire('oauth2-error', {
       'message': 'Couldn\'t connect to the server. ' + e.message,
@@ -569,7 +599,12 @@ Polymer({
     this._settings = undefined;
     this._eventSource = undefined;
   },
-
+  /**
+   * Replaces `-` or `_` with camel case.
+   * @param {String} name The string to process
+   * @return {String|undefined} Camel cased string or `undefined` if not
+   * transformed.
+   */
   _camel: function(name) {
     var i = 0;
     var l;
@@ -583,7 +618,11 @@ Polymer({
     }
     return changed ? name : undefined;
   },
-
+  /**
+   * Requests a token for `password` request type.
+   *
+   * @param {Object} settings Settings passed to the `authorize()` function.
+   */
   _authorizePassword: function(settings) {
     var url = settings.accessTokenUrl;
     var body = this._getPasswordBody(settings);
@@ -626,7 +665,13 @@ Polymer({
       this._handleTokenCodeError(new Error('Client request error: ' + e.message));
     }
   },
-
+  /**
+   * Generates a payload message for password authorization.
+   *
+   * @param {Object} settings Settings object passed to the `authorize()`
+   * function
+   * @return {String} Message body as defined in OAuth2 spec.
+   */
   _getPasswordBody: function(settings) {
     var url = 'grant_type=password';
     url += '&username=' + encodeURIComponent(settings.username);
@@ -635,11 +680,15 @@ Polymer({
       url += '&client_id=' + encodeURIComponent(settings.clientId);
     }
     if (settings.scopes && settings.scopes.length) {
-      url += 'scope=' + encodeURIComponent(settings.scopes.join(' '));
+      url += '&scope=' + encodeURIComponent(settings.scopes.join(' '));
     }
     return url;
   },
-
+  /**
+   * Requests a token for `client_credentials` request type.
+   *
+   * @param {Object} settings Settings passed to the `authorize()` function.
+   */
   _authorizeClientCredential: function(settings) {
     var url = settings.accessTokenUrl;
     var body = this._getClientCredentialBody(settings);
@@ -682,17 +731,23 @@ Polymer({
       this._handleTokenCodeError(new Error('Client request error: ' + e.message));
     }
   },
-
+  /**
+   * Generates a payload message for client credentials.
+   *
+   * @param {Object} settings Settings object passed to the `authorize()`
+   * function
+   * @return {String} Message body as defined in OAuth2 spec.
+   */
   _getClientCredentialBody: function(settings) {
     var url = 'grant_type=client_credentials';
     if (settings.clientId) {
       url += '&client_id=' + encodeURIComponent(settings.clientId);
     }
     if (settings.clientSecret) {
-      url += '&client_secret=' + settings.clientSecret;
+      url += '&client_secret=' + encodeURIComponent(settings.clientSecret);
     }
     if (settings.scopes && settings.scopes.length) {
-      url += 'scope=' + encodeURIComponent(settings.scopes.join(' '));
+      url += '&scope=' + this._computeScope(settings.scopes);
     }
     return url;
   }
