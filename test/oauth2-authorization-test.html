@@ -630,6 +630,13 @@ the License.
       var result = element._constructPopupUrl(settings, defaultType);
       assert.equal(result.indexOf('login_hint='), -1);
     });
+
+    test('Do not inserts "?" when auth url already contains it', function() {
+      var settings = Object.assign({}, baseSettings);
+      settings.authorizationUrl = 'http://test.com/auth?custom=value';
+      var result = element._constructPopupUrl(settings, defaultType);
+      assert.equal(result.indexOf('http://test.com/auth?custom=value&response_type'), 0);
+    });
   });
 
   suite('randomString()', function() {
