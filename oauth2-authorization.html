@@ -362,7 +362,13 @@ Polymer({
   },
   // Browser or server flow: open the initial popup.
   _constructPopupUrl: function(settings, type) {
-    var url = settings.authorizationUrl + '?response_type=' + type + '&';
+    var url = settings.authorizationUrl;
+    if (url.indexOf('?') === -1) {
+      url += '?';
+    } else {
+      url += '&';
+    }
+    url += 'response_type=' + type + '&';
     url += 'client_id=' + encodeURIComponent(settings.clientId) + '&';
     if (settings.redirectUrl) {
       url += 'redirect_uri=' + encodeURIComponent(settings.redirectUrl) + '&';
