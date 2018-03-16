@@ -36,6 +36,7 @@ the License.
   var popupUrl = location.href.substr(0, location.href.lastIndexOf('/')).replace('/test', '');
   popupUrl += '/oauth-popup.html';
   var testState = 'test-state';
+  var popupsBlocked = false;
   function noop() {}
   suite('Implicit token', function() {
     suite('Popup', function() {
@@ -59,6 +60,11 @@ the License.
           errorFn = function(e) {
             element.removeEventListener('oauth2-error', errorFn);
             element.removeEventListener('oauth2-token-response', responseFn);
+            if (e.detail.code === 'popup_blocked') {
+              popupsBlocked = true;
+              done();
+              return;
+            }
             assert.equal(e.detail.code, eCode);
             assert.equal(e.detail.state, testState);
             assert.equal(e.detail.message, eMessage);
@@ -75,6 +81,10 @@ the License.
         });
 
         test('Dispatches oauth2-error for state mismatch', function(done) {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
           var url = popupUrl + '#state=invalid&error=&error_message=';
           var errorFn;
           var responseFn;
@@ -107,11 +117,14 @@ the License.
         });
 
         test('Dispatches oauth2-token-response', function(done) {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
           var token = 'token1234';
           var expiresIn = 1234;
           var url = popupUrl + '#state=' + testState + '&access_token=';
           url += token + '&expires_in=' + expiresIn;
-
           var errorFn;
           var responseFn;
           errorFn = function() {
@@ -151,6 +164,10 @@ the License.
         });
 
         test('Dispatches oauth2-error for error response', function(done) {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
           var eCode = 'test_error';
           var eMessage = 'test message';
           var url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
@@ -158,6 +175,11 @@ the License.
           element._authorize(url, settings);
           element.addEventListener('oauth2-error', function clb(e) {
             element.removeEventListener('oauth2-error', clb);
+            if (e.detail.code === 'popup_blocked') {
+              popupsBlocked = true;
+              done();
+              return;
+            }
             assert.equal(e.detail.code, eCode);
             assert.equal(e.detail.state, testState);
             assert.equal(e.detail.message, eMessage);
@@ -167,6 +189,10 @@ the License.
         });
 
         test('Does not dispatches oauth2-token-response event for error response', function(done) {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
           var eCode = 'test_error';
           var eMessage = 'test message';
           var url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
@@ -181,6 +207,10 @@ the License.
         });
 
         test('Dispatches oauth2-error for state mismatch', function(done) {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
           var url = popupUrl + '#state=invalid&error=&error_message=';
           element._authorize(url, settings);
           element.addEventListener('oauth2-error', function clb(e) {
@@ -193,6 +223,10 @@ the License.
         });
 
         test('Does not dispatches oauth2-token-response event for state mismatch', function(done) {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
           var url = popupUrl + '#state=invalid&error=&error_message=';
           element._authorize(url, settings);
           var spy = sinon.spy();
@@ -204,6 +238,10 @@ the License.
         });
 
         test('Dispatches oauth2-token-response for lack of response', function(done) {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
           // main docs page
           element._authorize(popupUrl.replace('oauth-popup.html', 'test/empty-popup.html'), settings);
           element.addEventListener('oauth2-token-response', function clb(e) {
