@@ -360,7 +360,12 @@ Polymer({
       }
     }, 250);
   },
-  // Browser or server flow: open the initial popup.
+  /**
+   * Browser or server flow: open the initial popup.
+   * @param {Object} settings Settings passed to the authorize function.
+   * @param {String} type `token` or `code`
+   * @return {String} Full URL for the endpoint.
+   */
   _constructPopupUrl: function(settings, type) {
     var url = settings.authorizationUrl;
     if (url.indexOf('?') === -1) {
@@ -369,7 +374,7 @@ Polymer({
       url += '&';
     }
     url += 'response_type=' + type + '&';
-    url += 'client_id=' + encodeURIComponent(settings.clientId) + '&';
+    url += 'client_id=' + encodeURIComponent(settings.clientId || '') + '&';
     if (settings.redirectUrl) {
       url += 'redirect_uri=' + encodeURIComponent(settings.redirectUrl) + '&';
     }
@@ -386,6 +391,35 @@ Polymer({
     if (settings.interactive === false) {
       url += '&prompt=none';
     }
+    // custom query parameters
+    if (settings.customData) {
+      var key = type === 'token' ? 'auth' : 'token';
+      var cs = settings.customData[key];
+      if (cs) {
+        url = this._applyCustomSettingsQuery(url, cs);
+      }
+    }
+    return url;
+  },
+  /**
+   * Applies custom properties defined in the OAuth settings object to the URL.
+   *
+   * @param {String} url Generated URL for an endpoint.
+   * @param {?Object} data `customData.[type]` property from the settings object.
+   * The type is either `auth` or `token`.
+   * @return {String}
+   */
+  _applyCustomSettingsQuery: function(url, data) {
+    if (!data || !data.parameters) {
+      return url;
+    }
+    url += '&' + data.parameters.map(function(item) {
+      var value = item.value;
+      if (value) {
+        value = encodeURIComponent(value);
+      }
+      return encodeURIComponent(item.name) + '=' + value;
+    }).join('&');
     return url;
   },
   /**
@@ -487,7 +521,13 @@ Polymer({
     var body = this._getCodeEchangeBody(this._settings, code);
     this._tokenCodeRequest(url, body);
   },
-
+  /**
+   * Returns a body value for the code exchange request.
+   * @param {Object} settings Initial settings object.
+   * @param {String} code Authorization code value returned by the authorization
+   * server.
+   * @return {String} Request body.
+   */
   _getCodeEchangeBody: function(settings, code) {
     var url = 'grant_type=authorization_code&';
     url += 'client_id=' + encodeURIComponent(settings.clientId) + '&';
@@ -496,7 +536,32 @@ Polymer({
     }
     url += 'code=' + encodeURIComponent(code) + '&';
     url += 'client_secret=' + settings.clientSecret;
+    // custom body params
+    if (settings.customData) {
+      url = this._applyCustomSettingsBody(url, settings.customData);
+    }
     return url;
+  },
+  /**
+   * Applies custom body properties from the settings to the body value.
+   *
+   * @param {String} body Already computed body for OAuth request. Custom
+   * properties are appended at the end of OAuth string.
+   * @param {Object} data Value of settings' `customData` property
+   * @return {String} Request body
+   */
+  _applyCustomSettingsBody: function(body, data) {
+    if (!data || !data.token || !data.token.body) {
+      return body;
+    }
+    body += '&' + data.token.body.map(function(item) {
+      var value = item.value;
+      if (value) {
+        value = encodeURIComponent(value);
+      }
+      return encodeURIComponent(item.name) + '=' + value;
+    }).join('&');
+    return body;
   },
 
   _tokenCodeRequest: function(url, body) {
@@ -533,6 +598,9 @@ Polymer({
     }.bind(this));
     xhr.open('POST', url);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    if (this._settings.customData) {
+      this._applyCustomSettingsHeaders(xhr, this._settings.customData);
+    }
     try {
       xhr.send(body);
     } catch (e) {
@@ -631,6 +699,13 @@ Polymer({
    */
   _authorizePassword: function(settings) {
     var url = settings.accessTokenUrl;
+    // custom query parameters
+    if (settings.customData) {
+      var cs = settings.customData.token;
+      if (cs) {
+        url = this._applyCustomSettingsQuery(url, cs);
+      }
+    }
     var body = this._getPasswordBody(settings);
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
@@ -665,6 +740,10 @@ Polymer({
     }.bind(this));
     xhr.open('POST', url);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    // custom headers
+    if (settings.customData) {
+      this._applyCustomSettingsHeaders(xhr, settings.customData);
+    }
     try {
       xhr.send(body);
     } catch (e) {
@@ -688,6 +767,10 @@ Polymer({
     if (settings.scopes && settings.scopes.length) {
       url += '&scope=' + encodeURIComponent(settings.scopes.join(' '));
     }
+    // custom body params
+    if (settings.customData) {
+      url = this._applyCustomSettingsBody(url, settings.customData);
+    }
     return url;
   },
   /**
@@ -697,6 +780,14 @@ Polymer({
    */
   _authorizeClientCredential: function(settings) {
     var url = settings.accessTokenUrl;
+    // custom query parameters
+    if (settings.customData) {
+      var cs = settings.customData.token;
+      if (cs) {
+        url = this._applyCustomSettingsQuery(url, cs);
+      }
+    }
+
     var body = this._getClientCredentialBody(settings);
     var xhr = new XMLHttpRequest();
     xhr.addEventListener('load', function(e) {
@@ -731,6 +822,9 @@ Polymer({
     }.bind(this));
     xhr.open('POST', url);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    if (settings.customData) {
+      this._applyCustomSettingsHeaders(xhr, settings.customData);
+    }
     try {
       xhr.send(body);
     } catch (e) {
@@ -755,7 +849,29 @@ Polymer({
     if (settings.scopes && settings.scopes.length) {
       url += '&scope=' + this._computeScope(settings.scopes);
     }
+    // custom body params
+    if (settings.customData) {
+      url = this._applyCustomSettingsBody(url, settings.customData);
+    }
     return url;
+  },
+  /**
+   * Applies custom headers from the settings object
+   *
+   * @param {XMLHttpRequest} xhr Instance of the request object.
+   * @param {Object} data Value of settings' `customData` property
+   */
+  _applyCustomSettingsHeaders: function(xhr, data) {
+    if (!data || !data.token || !data.token.headers) {
+      return;
+    }
+    data.token.headers.forEach(function(item) {
+      try {
+        xhr.setRequestHeader(item.name, item.name);
+      } catch (e) {
+        console.warn('Unable to set custom header value.');
+      }
+    });
   }
 });
 </script>
