@@ -34,6 +34,7 @@ the License.
   // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
   // jscs:disable requireDotNotation
   function noop() {}
+  var popupsAllowed = true;
   suite('Basic', function() {
     var element;
     setup(function() {
@@ -389,12 +390,18 @@ the License.
       window.focus();
     });
 
-    test('Sets popup property', function() {
+    test('Sets popup property (checks for popup block)', function() {
       element._authorizePopup(popupUrl);
-      assert.ok(element._popup);
+      if (!element._popup) {
+        popupsAllowed = false;
+      }
     });
 
     test('Calls _beforePopupUnloadHandler when popup is closed', function(done) {
+      if (!popupsAllowed) {
+        done();
+        return;
+      }
       element._beforePopupUnloadHandler = function() {
         done();
       };
@@ -404,6 +411,10 @@ the License.
     });
 
     test('Calls _popupMessageHandler() when popup send message', function(done) {
+      if (!popupsAllowed) {
+        done();
+        return;
+      }
       element._popupMessageHandler = function(e) {
         assert.equal(e.data.param, 'value');
         done();
@@ -963,6 +974,132 @@ the License.
       var result = element._getClientCredentialBody(params);
       assert.notEqual(result.indexOf('&scope=one%20two'), -1);
     });
+  });
+
+  suite('Custom OAuth data', function() {
+    var element;
+    var params = {
+      type: 'custom_grant',
+      clientId: 'test',
+      clientSecret: 'test',
+      authorizationUrl: 'https://auth.domain.com',
+      username: 'user-test',
+      password: 'pass-test',
+      customData: {
+        auth: {
+          parameters: [{
+            name: 'aqp1',
+            value: 'aqpv1'
+          }]
+        },
+        token: {
+          parameters: [{
+            name: 'tqp1',
+            value: 'tqpv1'
+          }],
+          headers: [{
+            name: 'th1',
+            value: 'thv1'
+          }],
+          body: [{
+            name: 'tb1',
+            value: 'tbv1'
+          }]
+        }
+      }
+    };
+    suiteSetup(function() {
+      element = fixture('basic');
+      element._settting = params;
+      element._state = 'test-state';
+    });
+
+    suite('_applyCustomSettingsQuery()', function() {
+      test('returns a string', function() {
+        var result = element._applyCustomSettingsQuery('', params.customData.auth);
+        assert.typeOf(result, 'string');
+      });
+
+      test('returns the same string when no settings', function() {
+        var result = element._applyCustomSettingsQuery('', {});
+        assert.equal(result, '');
+      });
+
+      test('returns params in query string.', function() {
+        var result = element._applyCustomSettingsQuery('', params.customData.auth);
+        assert.equal(result, '&aqp1=aqpv1');
+      });
+    });
+
+    suite('_constructPopupUrl()', function() {
+      test('Applies params to the url for implicit type', function() {
+        var result = element._constructPopupUrl(params, 'token');
+        var compare = 'https://auth.domain.com?response_type=token&client_id=';
+        compare += 'test&&state=test-state&aqp1=aqpv1';
+        assert.equal(result, compare);
+      });
+      test('Applies params to the url for authorization_code type', function() {
+        var result = element._constructPopupUrl(params, 'code');
+        var compare = 'https://auth.domain.com?response_type=code&client_id=';
+        compare += 'test&&state=test-state&tqp1=tqpv1';
+        assert.equal(result, compare);
+      });
+    });
+
+    suite('_applyCustomSettingsBody()', function() {
+      test('returns a string', function() {
+        var result = element._applyCustomSettingsBody('', params.customData);
+        assert.typeOf(result, 'string');
+      });
+
+      test('returns the same string when no settings', function() {
+        var result = element._applyCustomSettingsBody('', {});
+        assert.equal(result, '');
+      });
+
+      test('returns params in query string.', function() {
+        var result = element._applyCustomSettingsBody('', params.customData);
+        assert.equal(result, '&tb1=tbv1');
+      });
+    });
+
+    suite('_getPasswordBody()', function() {
+      test('returns a string', function() {
+        var result = element._getPasswordBody(params);
+        assert.typeOf(result, 'string');
+      });
+
+      test('returns params in body string.', function() {
+        var result = element._getPasswordBody(params);
+        var compare = 'grant_type=password&username=user-test&password=pass-test';
+        compare += '&client_id=test&tb1=tbv1';
+        assert.equal(result, compare);
+      });
+    });
+
+    suite('_getClientCredentialBody()', function() {
+      test('returns a string', function() {
+        var result = element._getClientCredentialBody(params);
+        assert.typeOf(result, 'string');
+      });
+
+      test('returns params in body string.', function() {
+        var result = element._getClientCredentialBody(params);
+        var compare = 'grant_type=client_credentials&client_id=test';
+        compare += '&client_secret=test&tb1=tbv1';
+        assert.equal(result, compare);
+      });
+    });
+
+    suite('_getCodeEchangeBody()', function() {
+      test('Applies params to the body', function() {
+        var result = element._getCodeEchangeBody(params, 'test');
+        var compare = 'grant_type=authorization_code&client_id=test';
+        compare += '&code=test&client_secret=test&tb1=tbv1';
+        assert.equal(result, compare);
+      });
+    });
+
   });
   </script>
 </body>
