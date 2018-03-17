@@ -28,12 +28,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   /* global fixture, assert */
   // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
   // jscs:disable requireDotNotation
-  suite('Before request', function() {
-
-    var element;
-    var request;
-    var auth;
-    setup(function() {
+  suite('Before request - OAuth1', () => {
+    let element;
+    let request;
+    let auth;
+    setup((done) => {
       element = fixture('basic');
       request = {
         url: 'http://domain.com/endpoint/?param=value',
@@ -56,35 +55,40 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         tokenSecret: 'kOZA2NjIVQ1c8pUZ6Ku2c2Rs16aGeYnJHlZL7Kg2jFAfmigL1uFSUHNO5zLkkIru',
         type: 'oauth1'
       };
+      // Event listeners are deffered. It must account for this
+      Polymer.RenderStatus.afterNextRender(this, () => {
+        setTimeout(() => done(), 1);
+      });
     });
 
     function fire() {
-      var detail = Object.assign ? Object.assign({}, request) : request;
+      const detail = Object.assign ? Object.assign({}, request) : request;
       detail.auth = auth;
-      var event = new CustomEvent('before-request', {
+      const event = new CustomEvent('before-request', {
         detail: detail,
-        bubbles: true
+        bubbles: true,
+        composed: true
       });
       document.body.dispatchEvent(event);
       return event;
     }
 
-    test('Handles before-request event', function() {
-      var event = fire();
-      var headers = event.detail.headers;
+    test('Handles before-request event', () => {
+      const event = fire();
+      const headers = event.detail.headers;
       assert.typeOf(headers, 'string');
       assert.isTrue(headers.toLowerCase().indexOf('authorization') !== -1);
     });
 
-    test('Generates signature', function() {
-      var event = fire();
-      var headers = event.detail.headers;
-      var index = headers.indexOf('authorization');
-      var value = headers.substr(index + 15 + 6);
-      var params = {};
+    test('Generates signature', () => {
+      let event = fire();
+      let headers = event.detail.headers;
+      let index = headers.indexOf('authorization');
+      let value = headers.substr(index + 15 + 6);
+      let params = {};
       value.split(', ').forEach(function(line) {
-        var parts = line.split('=');
-        var _value = parts[1].substr(1);
+        let parts = line.split('=');
+        let _value = parts[1].substr(1);
         _value = _value.substr(0, _value.length - 1);
         params[parts[0]] = _value;
       });

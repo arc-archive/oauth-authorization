@@ -27,17 +27,16 @@
     "iron-meta": "PolymerElements/iron-meta#^2.0.0",
     "kjur-jsrsasign": "jsrsasign#^8.0.3",
     "headers-parser-behavior": "advanced-rest-client/headers-parser-behavior#^2.0.0",
-    "url-parser": "advanced-rest-client/url-parser#^2.0.0"
+    "url-parser": "advanced-rest-client/url-parser#^2.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^2.0.0"
   },
   "devDependencies": {
-    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^2.0.0",
     "web-component-tester": "Polymer/web-component-tester#^6.0.0",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0",
     "iron-component-page": "PolymerElements/iron-component-page#^3.0.1"
   },
   "ignore": [
     "**/.*",
-    "dependencyci.yml",
     "node_modules",
     "bower_components",
     "test",
