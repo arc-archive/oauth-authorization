@@ -23,8 +23,5 @@
   "bugs": {
     "url": "https://github.com/advanced-rest-client/oauth-authorization/issues",
     "email": "arc@mulesoft.com"
-  },
-  "dependencies": {
-    "http-proxy": "^1.16.2"
   }
 }
