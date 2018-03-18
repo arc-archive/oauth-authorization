@@ -1,6 +1,6 @@
 {
   "name": "@api-components/oauth-authorization",
-  "version": "2.0.0-preview",
+  "version": "2.0.0",
   "description": "A set of elements that perform oauth authorization",
   "license": "Apache-2.0",
   "devDependencies": {
