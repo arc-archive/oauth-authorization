@@ -1,0 +1,136 @@
+<!doctype html>
+<!--
+@license
+Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+  <link rel="import" href="../oauth2-authorization.html">
+</head>
+
+<body>
+  <test-fixture id="basic">
+    <template>
+      <oauth2-authorization></oauth2-authorization>
+    </template>
+  </test-fixture>
+  <script>
+  suite('Request body generators', () => {
+    let params = {
+      type: 'custom_grant',
+      clientId: 'test client id',
+      clientSecret: 'test client secret',
+      authorizationUri: 'https://auth.domain.com',
+      username: 'test username',
+      password: 'test password',
+      scopes: ['one', 'two']
+    };
+
+    let element;
+    suiteSetup(() => {
+      element = fixture('basic');
+    });
+
+    suite('_getCodeEchangeBody()', () => {
+      test('Applies params to the body', () => {
+        let result = element._getCodeEchangeBody(params, 'test code');
+        let compare = 'grant_type=authorization_code&client_id=test%20client%20id';
+        compare += '&code=test%20code&client_secret=test%20client%20secret';
+        assert.equal(result, compare);
+      });
+    });
+
+    suite('_getClientCredentialsBody()', () => {
+      test('grant_type is set', () => {
+        let result = element._getClientCredentialsBody({});
+        assert.equal(result.indexOf('grant_type=client_credentials'), 0);
+      });
+
+      test('Skips client_id is not set', () => {
+        let result = element._getClientCredentialsBody({});
+        assert.equal(result.indexOf('client_id='), -1);
+      });
+
+      test('Skips client_secret is not set', () => {
+        let result = element._getClientCredentialsBody({});
+        assert.equal(result.indexOf('client_secret='), -1);
+      });
+
+      test('Skips scope is not set', () => {
+        let result = element._getClientCredentialsBody({});
+        assert.equal(result.indexOf('scope='), -1);
+      });
+
+      test('client_id is set', () => {
+        let result = element._getClientCredentialsBody(params);
+        assert.notEqual(result.indexOf('&client_id=test%20client%20id'), -1);
+      });
+
+      test('client_secret is set', () => {
+        let result = element._getClientCredentialsBody(params);
+        assert.notEqual(result.indexOf('&client_secret=test%20client%20secret'), -1);
+      });
+
+      test('scope is set', () => {
+        let result = element._getClientCredentialsBody(params);
+        assert.notEqual(result.indexOf('&scope=one%20two'), -1);
+      });
+    });
+
+    suite('_getPasswordBody()', () => {
+      test('grant_type is set', () => {
+        let result = element._getPasswordBody(params);
+        assert.equal(result.indexOf('grant_type=password'), 0);
+      });
+
+      test('username is set', () => {
+        let result = element._getPasswordBody(params);
+        assert.notEqual(result.indexOf('&username=test%20username'), -1);
+      });
+
+      test('password is set', () => {
+        let result = element._getPasswordBody(params);
+        assert.notEqual(result.indexOf('&password=test%20password'), -1);
+      });
+
+      test('Skips client_id is not set', () => {
+        const copy = Object.assign({}, params);
+        delete copy.clientId;
+        let result = element._getPasswordBody(copy);
+        assert.equal(result.indexOf('client_id='), -1);
+      });
+
+      test('Skips scope is not set', () => {
+        const copy = Object.assign({}, params);
+        delete copy.scopes;
+        let result = element._getPasswordBody(copy);
+        assert.equal(result.indexOf('scope='), -1);
+      });
+
+      test('client_id is set', () => {
+        let result = element._getPasswordBody(params);
+        assert.notEqual(result.indexOf('&client_id=test%20client%20id'), -1);
+      });
+
+      test('scope is set', () => {
+        let result = element._getPasswordBody(params);
+        assert.notEqual(result.indexOf('&scope=one%20two'), -1);
+      });
+    });
+  });
+  </script>
+</body>
+</html>

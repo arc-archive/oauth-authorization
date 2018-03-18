@@ -8,10 +8,6 @@
     "sauce": {
       "disabled": true,
       "browsers": [{
-        "browserName": "internet explorer",
-        "platform": "Windows 7",
-        "version": "11.0"
-      }, {
         "browserName": "microsoftedge",
         "platform": "Windows 10",
         "version": ""

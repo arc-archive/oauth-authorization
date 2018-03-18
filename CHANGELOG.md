@@ -1,3 +1,38 @@
+<a name="0.3.1"></a>
+## [0.3.1](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.14...0.3.1) (2018-03-16)
+
+
+
+
+<a name="0.2.15"></a>
+## [0.2.15](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.14...0.2.15) (2018-03-06)
+
+
+
+
+<a name="0.2.14"></a>
+## [0.2.14](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.13...0.2.14) (2018-03-05)
+
+
+### Docs
+
+* Updated element documentation. ([4da0829a78febeaa2ed02ea4a46a9bd2f133da18](https://github.com/advanced-rest-client/oauth-authorization/commit/4da0829a78febeaa2ed02ea4a46a9bd2f133da18))
+* Updated method documentation ([1a7c4b8cd4b4ba5ba1101d707d9cab2dcdef2e81](https://github.com/advanced-rest-client/oauth-authorization/commit/1a7c4b8cd4b4ba5ba1101d707d9cab2dcdef2e81))
+
+### Fix
+
+* Fixed method name. ([6d04697c5dafbe7c493b365b0043599177c38109](https://github.com/advanced-rest-client/oauth-authorization/commit/6d04697c5dafbe7c493b365b0043599177c38109))
+* Fixed tests ([d6edf70ebf9d6680f8a992a1a306eb2d5759726b](https://github.com/advanced-rest-client/oauth-authorization/commit/d6edf70ebf9d6680f8a992a1a306eb2d5759726b))
+* Fixing scope body property value ([9f8558ae8aec0de9b2f50e4de5d1e43e64ebd70c](https://github.com/advanced-rest-client/oauth-authorization/commit/9f8558ae8aec0de9b2f50e4de5d1e43e64ebd70c))
+
+### Update
+
+* Added more browsers to test ([c1498839e53787da508396056760921b74eb1839](https://github.com/advanced-rest-client/oauth-authorization/commit/c1498839e53787da508396056760921b74eb1839))
+* Exposed popup interval property ([bdce3d658c223b804fa923efa7075d8beed297c6](https://github.com/advanced-rest-client/oauth-authorization/commit/bdce3d658c223b804fa923efa7075d8beed297c6))
+* Reduced popup state timeout to 250ms. ([dbd87055888d249e71c548d9ace27b14fdaaa98e](https://github.com/advanced-rest-client/oauth-authorization/commit/dbd87055888d249e71c548d9ace27b14fdaaa98e))
+
+
+
 <a name="0.2.13"></a>
 ## [0.2.13](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.12...0.2.13) (2018-03-02)
 
