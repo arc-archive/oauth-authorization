@@ -299,23 +299,6 @@ the License.
         element.authorize(baseSettings);
       });
     });
-
-    suite('Unknown method', () => {
-      let baseSettings = {
-        state: 'test-state',
-        type: 'non-existing'
-      };
-
-      setup(() => {
-        element = fixture('basic');
-      });
-
-      test('Throws error for unknown method', () => {
-        assert.throws(() => {
-          element.authorize(baseSettings);
-        });
-      });
-    });
   });
 
   suite('_authorize()', () => {
