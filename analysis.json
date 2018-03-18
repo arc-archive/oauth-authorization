@@ -2787,7 +2787,7 @@
               "column": 2
             },
             "end": {
-              "line": 244,
+              "line": 245,
               "column": 3
             }
           },
@@ -2806,11 +2806,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 255,
+              "line": 256,
               "column": 2
             },
             "end": {
-              "line": 263,
+              "line": 264,
               "column": 3
             }
           },
@@ -2834,11 +2834,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 269,
+              "line": 270,
               "column": 2
             },
             "end": {
-              "line": 284,
+              "line": 285,
               "column": 3
             }
           },
@@ -2855,11 +2855,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 292,
+              "line": 293,
               "column": 2
             },
             "end": {
-              "line": 305,
+              "line": 306,
               "column": 3
             }
           },
@@ -2876,11 +2876,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 309,
+              "line": 310,
               "column": 2
             },
             "end": {
-              "line": 321,
+              "line": 322,
               "column": 3
             }
           },
@@ -2893,11 +2893,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 325,
+              "line": 326,
               "column": 2
             },
             "end": {
-              "line": 335,
+              "line": 336,
               "column": 3
             }
           },
@@ -2910,11 +2910,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 339,
+              "line": 340,
               "column": 2
             },
             "end": {
-              "line": 355,
+              "line": 356,
               "column": 3
             }
           },
@@ -2927,11 +2927,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 358,
+              "line": 359,
               "column": 2
             },
             "end": {
-              "line": 360,
+              "line": 361,
               "column": 3
             }
           },
@@ -2944,11 +2944,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 366,
+              "line": 367,
               "column": 2
             },
             "end": {
-              "line": 372,
+              "line": 373,
               "column": 3
             }
           },
@@ -2961,11 +2961,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 379,
+              "line": 380,
               "column": 2
             },
             "end": {
-              "line": 413,
+              "line": 414,
               "column": 3
             }
           },
@@ -2993,11 +2993,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 420,
+              "line": 421,
               "column": 2
             },
             "end": {
-              "line": 426,
+              "line": 427,
               "column": 3
             }
           },
@@ -3020,11 +3020,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 433,
+              "line": 434,
               "column": 2
             },
             "end": {
-              "line": 470,
+              "line": 471,
               "column": 3
             }
           },
@@ -3041,11 +3041,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 472,
+              "line": 473,
               "column": 2
             },
             "end": {
-              "line": 475,
+              "line": 476,
               "column": 3
             }
           },
@@ -3062,11 +3062,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 481,
+              "line": 482,
               "column": 2
             },
             "end": {
-              "line": 493,
+              "line": 494,
               "column": 3
             }
           },
@@ -3079,11 +3079,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 505,
+              "line": 506,
               "column": 2
             },
             "end": {
-              "line": 511,
+              "line": 512,
               "column": 3
             }
           },
@@ -3106,11 +3106,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 519,
+              "line": 520,
               "column": 2
             },
             "end": {
-              "line": 532,
+              "line": 533,
               "column": 3
             }
           },
@@ -3138,11 +3138,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 544,
+              "line": 545,
               "column": 2
             },
             "end": {
-              "line": 567,
+              "line": 568,
               "column": 3
             }
           },
@@ -3175,11 +3175,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 577,
+              "line": 578,
               "column": 2
             },
             "end": {
-              "line": 601,
+              "line": 602,
               "column": 3
             }
           },
@@ -3208,11 +3208,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 609,
+              "line": 610,
               "column": 2
             },
             "end": {
-              "line": 616,
+              "line": 617,
               "column": 3
             }
           },
@@ -3236,11 +3236,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 625,
+              "line": 626,
               "column": 2
             },
             "end": {
-              "line": 650,
+              "line": 651,
               "column": 3
             }
           },
@@ -3268,11 +3268,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 660,
+              "line": 661,
               "column": 2
             },
             "end": {
-              "line": 676,
+              "line": 677,
               "column": 3
             }
           },
@@ -3295,11 +3295,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 681,
+              "line": 682,
               "column": 2
             },
             "end": {
-              "line": 690,
+              "line": 691,
               "column": 3
             }
           },
@@ -3317,11 +3317,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 697,
+              "line": 698,
               "column": 2
             },
             "end": {
-              "line": 709,
+              "line": 710,
               "column": 3
             }
           },
@@ -3344,11 +3344,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 717,
+              "line": 718,
               "column": 2
             },
             "end": {
-              "line": 724,
+              "line": 725,
               "column": 3
             }
           },
@@ -3371,11 +3371,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 732,
+              "line": 733,
               "column": 2
             },
             "end": {
-              "line": 743,
+              "line": 744,
               "column": 3
             }
           },
@@ -3398,11 +3398,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 751,
+              "line": 752,
               "column": 2
             },
             "end": {
-              "line": 758,
+              "line": 759,
               "column": 3
             }
           },
@@ -3425,11 +3425,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 766,
+              "line": 767,
               "column": 2
             },
             "end": {
-              "line": 778,
+              "line": 779,
               "column": 3
             }
           },
@@ -3447,16 +3447,69 @@
           }
         },
         {
-          "name": "_applyCustomSettingsQuery",
-          "description": "Applies custom properties defined in the OAuth settings object to the URL.",
-          "privacy": "protected",
+          "name": "authorizeCustomGrant",
+          "description": "Performs authorization on custom grant type.\nThis extension is described in OAuth 2.0 spec.",
+          "privacy": "public",
           "sourceRange": {
             "start": {
               "line": 787,
               "column": 2
             },
             "end": {
-              "line": 800,
+              "line": 794,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "settings",
+              "type": "Object",
+              "description": "Settings object as for `authorize()` function."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a token info object."
+          }
+        },
+        {
+          "name": "_getCustomGrantBody",
+          "description": "Creates a body for custom gran type.\nIt does not assume any parameter to be required.\nIt applies all known OAuth 2.0 parameters and then custom parameters",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 803,
+              "column": 2
+            },
+            "end": {
+              "line": 827,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "settings",
+              "type": "Object"
+            }
+          ],
+          "return": {
+            "type": "String",
+            "desc": "Request body."
+          }
+        },
+        {
+          "name": "_applyCustomSettingsQuery",
+          "description": "Applies custom properties defined in the OAuth settings object to the URL.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 836,
+              "column": 2
+            },
+            "end": {
+              "line": 849,
               "column": 3
             }
           },
@@ -3483,11 +3536,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 807,
+              "line": 856,
               "column": 2
             },
             "end": {
-              "line": 818,
+              "line": 867,
               "column": 3
             }
           },
@@ -3511,11 +3564,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 827,
+              "line": 876,
               "column": 2
             },
             "end": {
-              "line": 839,
+              "line": 888,
               "column": 3
             }
           },
@@ -3543,11 +3596,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 845,
+              "line": 894,
               "column": 2
             },
             "end": {
-              "line": 852,
+              "line": 901,
               "column": 3
             }
           },
@@ -3566,11 +3619,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 858,
+              "line": 907,
               "column": 2
             },
             "end": {
-              "line": 865,
+              "line": 914,
               "column": 3
             }
           },
@@ -4527,7 +4580,7 @@
           "column": 0
         },
         "end": {
-          "line": 893,
+          "line": 942,
           "column": 1
         }
       },
