@@ -10,11 +10,9 @@
 
 /// <reference path="../polymer/types/polymer.d.ts" />
 /// <reference path="../polymer/types/lib/utils/render-status.d.ts" />
-/// <reference path="../cryptojs-lib/cryptojs-lib.d.ts" />
 /// <reference path="../iron-meta/iron-meta.d.ts" />
 /// <reference path="../url-parser/url-parser.d.ts" />
 /// <reference path="../headers-parser-behavior/headers-parser-behavior.d.ts" />
-/// <reference path="jsrsasign-import.d.ts" />
 
 /**
  * An element to perform OAuth1 authorization and to sign auth requests.
@@ -42,11 +40,11 @@
  * | ----------------|-------------|---------- |
  * | `signatureMethod` | `String` | One of `PLAINTEXT`, `HMAC-SHA1`, `RSA-SHA1` |
  * | `requestTokenUrl` | `String` | Token request URI. Optional for before request. Required for authorization |
- * | `accessTokenUrl` | `String` | Access token request URI. Optional for before request. Required for authorization |
- * | `authorizationUrl` | `String` | User dialog URL. |
+ * | `accessTokenUri` | `String` | Access token request URI. Optional for before request. Required for authorization |
+ * | `authorizationUri` | `String` | User dialog URL. |
  * | `consumerKey` | `String` | Consumer key to be used to generate the signature. Optional for before request. |
  * | `consumerSecret` | `String` | Consumer secret to be used to generate the signature. Optional for before request. |
- * | `redirectUrl` | `String` | Redirect URI for the authorization. Optional for before request. |
+ * | `redirectUri` | `String` | Redirect URI for the authorization. Optional for before request. |
  * | `authParamsLocation` | `String` | Optional. Location of the authorization parameters. Default to `authorization` meaning it creates an authorization header. Any other value means query parameters |
  * | `authTokenMethod` | `String` | Token request HTTP method. Default to `POST`. Optional for before request. |
  * | `version` | `String` | Oauth1 protocol version. Default to `1.0` |
@@ -71,6 +69,14 @@
  * under MIT licence.
  * - This element uses [crypto-js](https://code.google.com/archive/p/crypto-js/) library
  * distributed under BSD license.
+ *
+ * ## Changes in version 2
+ *
+ * - replaced `redirectUrl` property with `redirectUri`
+ * - replaced `authorizationUrl` property with `authorizationUri`
+ * - replaced `accessTokenUrl` property with `accessTokenUri`
+ * - **CryptoJS library is no longer included by default**. Use `advanced-rest-client/cryptojs-lib` or own veresion of the library. This component uses `CryptoJS.HmacSHA1` and `CryptoJS.enc.Base64` from the library.
+ * - **RSAKey library is no longer included by default**. Include `https://github.com/kjur/jsrsasign` library if needed.
  */
 declare class OAuth1Authorization extends Polymer.Element {
 
@@ -103,7 +109,7 @@ declare class OAuth1Authorization extends Polymer.Element {
   /**
    * Oauth 1 token exchange endpoint
    */
-  accessTokenUrl: string|null|undefined;
+  accessTokenUri: string|null|undefined;
 
   /**
    * Oauth 1 consumer key to use with auth request

@@ -36,8 +36,8 @@
  * const settings = {
  *   type: 'implicit',
  *   clientId: 'CLIENT ID',
- *   redirectUrl: 'https://example.com/auth-popup.html',
- *   authorizationUrl: 'https://auth.example.com/token'
+ *   redirectUri: 'https://example.com/auth-popup.html',
+ *   authorizationUri: 'https://auth.example.com/token'
  *   scopes: ['email'],
  *   state: 'Optional string'
  * };
@@ -105,8 +105,8 @@
  *   interactive: false,
  *   type: 'implicit',
  *   clientId: 'CLIENT ID',
- *   redirectUrl: 'https://example.com/auth-popup.html',
- *   authorizationUrl: 'https://auth.example.com/token'
+ *   redirectUri: 'https://example.com/auth-popup.html',
+ *   authorizationUri: 'https://auth.example.com/token'
  *   state: '1234'
  * };
  * const event = new CustomEvent('oauth2-token-requested', { 'detail': settings, bubbles: true });
@@ -127,6 +127,16 @@
  *
  * ## Demo
  * See `auth-methods` > `auth-method-oauth2` element for the demo.
+ *
+ * ## Changes in version 2
+ *
+ * - event source is no longer processed. The component will not set `tokenValue`
+ * on the event source.
+ * - client credentials, password and custom grant types returns `Promise` with
+ * token info. It also dispatches response or error events.
+ * - replaced `redirectUrl` property with `redirectUri`
+ * - replaced `authorizationUrl` property with `authorizationUri`
+ * - replaced `accessTokenUrl` property with `accessTokenUri`
  */
 declare class OAuth2Authorization extends Polymer.Element {
 
@@ -136,6 +146,10 @@ declare class OAuth2Authorization extends Polymer.Element {
   readonly tokenInfo: object|null|undefined;
   connectedCallback(): void;
   disconnectedCallback(): void;
+
+  /**
+   * Clears the state of the element.
+   */
   clear(): void;
 
   /**
@@ -150,9 +164,13 @@ declare class OAuth2Authorization extends Polymer.Element {
 
   /**
    * Authorize the user using provided settings.
-   * See `auth-methods/auth-method-oauth2` element for more information about settings.
+   *
+   * @param settings Map of authorization settings.
+   * - type {String} Authorization grant type. Can be `implicit`,
+   * `authorization_code`, `client_credentials`, `password` or custom value
+   * as OAuth 2.0 allows extensions to grant type.
    */
-  authorize(settings: any): void;
+  authorize(settings: {[key: String|null]: String|null}): void;
 
   /**
    * Authorizes the user in the OAuth authorization endpoint.
@@ -199,6 +217,13 @@ declare class OAuth2Authorization extends Polymer.Element {
   _observePopupState(): void;
 
   /**
+   * Function called in the interval.
+   * Observer popup state and calls `_beforePopupUnloadHandler()`
+   * when popup is no longer opened.
+   */
+  _popupObserver(): void;
+
+  /**
    * Browser or server flow: open the initial popup.
    *
    * @param settings Settings passed to the authorize function.
@@ -206,15 +231,6 @@ declare class OAuth2Authorization extends Polymer.Element {
    * @returns Full URL for the endpoint.
    */
   _constructPopupUrl(settings: object|null, type: String|null): String|null;
-
-  /**
-   * Applies custom properties defined in the OAuth settings object to the URL.
-   *
-   * @param url Generated URL for an endpoint.
-   * @param data `customData.[type]` property from the settings object.
-   * The type is either `auth` or `token`.
-   */
-  _applyCustomSettingsQuery(url: String|null, data: object|null): String|null;
 
   /**
    * Computes `scope` URL parameter from scopes array.
@@ -236,6 +252,12 @@ declare class OAuth2Authorization extends Polymer.Element {
    * http://stackoverflow.com/a/10727155/1127848
    */
   randomString(len: any): any;
+
+  /**
+   * Popup is closed by this element so if data is not yet set it means that the
+   * user closed the window - probably some error.
+   * The UI state is reset if needed.
+   */
   _beforePopupUnloadHandler(): void;
 
   /**
@@ -247,8 +269,9 @@ declare class OAuth2Authorization extends Polymer.Element {
    * present on client side.
    *
    * @param code Returned code from the authorization endpoint.
+   * @returns Promise with token information.
    */
-  _exchangeCode(code: String|null): void;
+  _exchangeCode(code: String|null): Promise<any>|null;
 
   /**
    * Returns a body value for the code exchange request.
@@ -261,20 +284,56 @@ declare class OAuth2Authorization extends Polymer.Element {
   _getCodeEchangeBody(settings: object|null, code: String|null): String|null;
 
   /**
-   * Applies custom body properties from the settings to the body value.
+   * Requests for token from the authorization server for `code`, `password`,
+   * `client_credentials` and custom grant types.
    *
-   * @param body Already computed body for OAuth request. Custom
-   * properties are appended at the end of OAuth string.
-   * @param data Value of settings' `customData` property
-   * @returns Request body
+   * @param url Base URI of the endpoint. Custom properties will be
+   * applied to the final URL.
+   * @param body Generated body for given type. Custom properties will
+   * be applied to the final body.
+   * @param settings Settings object passed to the `authorize()` function
+   * @returns Promise resolved to the response string.
    */
-  _applyCustomSettingsBody(body: String|null, data: object|null): String|null;
-  _tokenCodeRequest(url: any, body: any): void;
+  _requestToken(url: String|null, body: String|null, settings: object|null): Promise<any>|null;
 
   /**
-   * Decode token information from the response body.
+   * Handler for the code request load event.
+   * Processes the response and either rejects the promise with an error
+   * or resolves it to token info object.
+   *
+   * @param e XHR load event.
+   * @param resolve Resolve function
+   * @param reject Reject function
    */
-  _handleTokenCodeResponse(data: any, contentType: any): void;
+  _processTokenResponseHandler(e: Event|null, resolve: Function|null, reject: Function|null): void;
+
+  /**
+   * Handler for the code request error event.
+   * Rejects the promise with error description.
+   *
+   * @param e XHR error event
+   * @param reject Promise's reject function.
+   */
+  _processTokenResponseErrorHandler(e: Event|null, reject: Function|null): void;
+
+  /**
+   * Processes token request body and produces map of values.
+   *
+   * @param body Body received in the response.
+   * @param contentType Response content type.
+   * @returns Response as an object.
+   */
+  _processCodeResponse(body: String|null, contentType: String|null): object|null;
+
+  /**
+   * Processes token info object when it's ready.
+   * Sets `tokenInfo` property, notifies listeners about the response
+   * and cleans up.
+   *
+   * @param tokenInfo Token info returned from the server.
+   * @returns The same tokenInfo, used for Promise return value.
+   */
+  _handleTokenInfo(tokenInfo: object|null): object|null;
 
   /**
    * Handler fore an error that happened during code exchange.
@@ -293,9 +352,11 @@ declare class OAuth2Authorization extends Polymer.Element {
   /**
    * Requests a token for `password` request type.
    *
-   * @param settings Settings passed to the `authorize()` function.
+   * @param settings The same settings as passed to `authorize()`
+   * function.
+   * @returns Promise resolved to token info.
    */
-  _authorizePassword(settings: object|null): void;
+  authorizePassword(settings: object|null): Promise<any>|null;
 
   /**
    * Generates a payload message for password authorization.
@@ -309,9 +370,11 @@ declare class OAuth2Authorization extends Polymer.Element {
   /**
    * Requests a token for `client_credentials` request type.
    *
-   * @param settings Settings passed to the `authorize()` function.
+   * @param settings The same settings as passed to `authorize()`
+   * function.
+   * @returns Promise resolved to a token info object.
    */
-  _authorizeClientCredential(settings: object|null): void;
+  authorizeClientCredentials(settings: object|null): Promise<any>|null;
 
   /**
    * Generates a payload message for client credentials.
@@ -320,7 +383,34 @@ declare class OAuth2Authorization extends Polymer.Element {
    * function
    * @returns Message body as defined in OAuth2 spec.
    */
-  _getClientCredentialBody(settings: object|null): String|null;
+  _getClientCredentialsBody(settings: object|null): String|null;
+
+  /**
+   * Performs authorization on custom grant type.
+   * This extension is described in OAuth 2.0 spec.
+   *
+   * @param settings Settings object as for `authorize()` function.
+   * @returns Promise resolved to a token info object.
+   */
+  authorizeCustomGrant(settings: object|null): Promise<any>|null;
+
+  /**
+   * Creates a body for custom gran type.
+   * It does not assume any parameter to be required.
+   * It applies all known OAuth 2.0 parameters and then custom parameters
+   *
+   * @returns Request body.
+   */
+  _getCustomGrantBody(settings: object|null): String|null;
+
+  /**
+   * Applies custom properties defined in the OAuth settings object to the URL.
+   *
+   * @param url Generated URL for an endpoint.
+   * @param data `customData.[type]` property from the settings object.
+   * The type is either `auth` or `token`.
+   */
+  _applyCustomSettingsQuery(url: String|null, data: object|null): String|null;
 
   /**
    * Applies custom headers from the settings object
@@ -329,6 +419,16 @@ declare class OAuth2Authorization extends Polymer.Element {
    * @param data Value of settings' `customData` property
    */
   _applyCustomSettingsHeaders(xhr: XMLHttpRequest|null, data: object|null): void;
+
+  /**
+   * Applies custom body properties from the settings to the body value.
+   *
+   * @param body Already computed body for OAuth request. Custom
+   * properties are appended at the end of OAuth string.
+   * @param data Value of settings' `customData` property
+   * @returns Request body
+   */
+  _applyCustomSettingsBody(body: String|null, data: object|null): String|null;
 
   /**
    * Dispatches an error event that propagates through the DOM.
