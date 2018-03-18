@@ -1,24 +1,20 @@
 {
-  "name": "oauth-authorization",
-  "version": "0.3.1",
-  "license": "Apache-2.0 OR CC-BY-4.0",
+  "name": "@api-components/oauth-authorization",
+  "version": "2.0.1",
   "description": "A set of elements that perform oauth authorization",
+  "license": "Apache-2.0",
   "devDependencies": {
-    "bower": "^1.8.0",
-    "polymer-cli": "^1.2.0"
+    "@polymer/gen-typescript-declarations": "^1.1.1",
+    "bower": "^1.8.0"
   },
   "private": false,
-  "main": [
-    "outh-authorization.html"
-  ],
+  "main": "outh-authorization.html",
   "author": "The Advanced REST client authors <arc@mulesoft.com>",
   "scripts": {
-    "serve": "node_modules/.bin/polymer serve",
-    "lint": "node_modules/.bin/polymer lint oauth-authorization.html oauth1-authorization.html --rules polymer-1",
+    "lint": "node_modules/.bin/polymer lint oauth-authorization.html oauth1-authorization.html",
     "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"oauth-authorization:local-test\"",
     "test": "node_modules/.bin/polymer test --plugin local",
-    "deps": "npm install --quiet && bower install --quiet",
-    "update-deps": "npm update --quiet && bower update --quiet"
+    "update-types": "gen-typescript-declarations --deleteExisting --outDir ."
   },
   "repository": {
     "type": "git",
@@ -27,8 +23,5 @@
   "bugs": {
     "url": "https://github.com/advanced-rest-client/oauth-authorization/issues",
     "email": "arc@mulesoft.com"
-  },
-  "dependencies": {
-    "http-proxy": "^1.16.2"
   }
 }

@@ -1,47 +1,45 @@
 {
   "name": "oauth-authorization",
-  "description": "A set of elements that perform oauth authorization",
+  "description": "A set of elements to perform OAuth authorization",
+  "version": "2.0.1",
   "authors": [
+    "Pawel Psztyc",
     "The Advanced REST client authors <arc@mulesoft.com>"
   ],
+  "license": "Apache-2.0",
   "keywords": [
     "web-components",
-    "polymer"
+    "polymer",
+    "oauth",
+    "oauth2",
+    "authorization"
   ],
   "private": true,
-  "main": [
-    "oauth2-authorization.html",
-    "oauth1-authorization.html"
-  ],
+  "main": "outh-authorization.html",
   "repository": {
     "type": "git",
     "url": "git@github.com:advanced-rest-client/oauth-authorization.git"
   },
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.0.0",
-    "cryptojs-lib": "advanced-rest-client/cryptojs-lib#^0.1.1",
-    "bytes-counter": "advanced-rest-client/bytes-counter#^0.1.1",
-    "iron-meta": "PolymerElements/iron-meta#<2",
-    "kjur-jsrsasign": "jsrsasign#^8.0.3",
-    "headers-parser-behavior": "advanced-rest-client/headers-parser-behavior#^0.1.3",
-    "url-parser": "advanced-rest-client/url-parser#^0.1.1"
+    "polymer": "Polymer/polymer#^2.0.0",
+    "bytes-counter": "advanced-rest-client/bytes-counter#^2.0.0",
+    "iron-meta": "PolymerElements/iron-meta#^2.0.0",
+    "headers-parser-behavior": "advanced-rest-client/headers-parser-behavior#^2.0.0",
+    "url-parser": "advanced-rest-client/url-parser#^2.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^2.0.0"
   },
   "devDependencies": {
-    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
-    "web-component-tester": "^4.0.0",
-    "paper-styles": "polymerelements/paper-styles#^1.0.2",
-    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
-    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.0.0",
-    "test-fixture": "PolymerElements/test-fixture#^1.0.0",
-    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+    "web-component-tester": "Polymer/web-component-tester#^6.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0",
+    "iron-component-page": "PolymerElements/iron-component-page#^3.0.1",
+    "cryptojs-lib": "advanced-rest-client/cryptojs-lib#^0.1.1",
+    "kjur-jsrsasign": "jsrsasign#^8.0.3"
   },
   "ignore": [
     "**/.*",
-    "dependencyci.yml",
     "node_modules",
     "bower_components",
     "test",
     "tasks"
-  ],
-  "version": "0.3.1"
+  ]
 }
