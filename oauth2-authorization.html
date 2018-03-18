@@ -240,7 +240,8 @@ class OAuth2Authorization extends Polymer.Element {
         .catch(() => {});
         break;
       default:
-        throw new Error('Unknown authorization method ' + settings.type);
+        this.authorizeCustomGrant(settings)
+        .catch(() => {});
     }
   }
   /**
@@ -518,16 +519,16 @@ class OAuth2Authorization extends Polymer.Element {
    * @return {String} Request body.
    */
   _getCodeEchangeBody(settings, code) {
-    let url = 'grant_type=authorization_code&';
-    url += 'client_id=' + encodeURIComponent(settings.clientId) + '&';
+    let url = 'grant_type=authorization_code';
+    url += '&client_id=' + encodeURIComponent(settings.clientId);
     if (settings.redirectUri) {
-      url += 'redirect_uri=' + encodeURIComponent(settings.redirectUri) + '&';
+      url += '&redirect_uri=' + encodeURIComponent(settings.redirectUri);
     }
-    url += 'code=' + encodeURIComponent(code) + '&';
+    url += '&code=' + encodeURIComponent(code);
     if (settings.clientSecret) {
-      url += 'client_secret=' + encodeURIComponent(settings.clientSecret);
+      url += '&client_secret=' + encodeURIComponent(settings.clientSecret);
     } else {
-      url += 'client_secret=';
+      url += '&client_secret=';
     }
     return url;
   }
@@ -719,7 +720,7 @@ class OAuth2Authorization extends Polymer.Element {
     this._settings = settings;
     const url = settings.accessTokenUri;
     const body = this._getPasswordBody(settings);
-    return this._requestToken(url, body, this._settings)
+    return this._requestToken(url, body, settings)
     .then((tokenInfo) => this._handleTokenInfo(tokenInfo))
     .catch((cause) => this._handleTokenCodeError(cause));
   }
@@ -753,7 +754,7 @@ class OAuth2Authorization extends Polymer.Element {
     this._settings = settings;
     const url = settings.accessTokenUri;
     const body = this._getClientCredentialsBody(settings);
-    return this._requestToken(url, body, this._settings)
+    return this._requestToken(url, body, settings)
     .then((tokenInfo) => this._handleTokenInfo(tokenInfo))
     .catch((cause) => this._handleTokenCodeError(cause));
   }
@@ -774,6 +775,54 @@ class OAuth2Authorization extends Polymer.Element {
     }
     if (settings.scopes && settings.scopes.length) {
       url += '&scope=' + this._computeScope(settings.scopes);
+    }
+    return url;
+  }
+  /**
+   * Performs authorization on custom grant type.
+   * This extension is described in OAuth 2.0 spec.
+   *
+   * @param {Object} settings Settings object as for `authorize()` function.
+   * @return {Promise} Promise resolved to a token info object.
+   */
+  authorizeCustomGrant(settings) {
+    this._settings = settings;
+    const url = settings.accessTokenUri;
+    const body = this._getCustomGrantBody(settings);
+    return this._requestToken(url, body, settings)
+    .then((tokenInfo) => this._handleTokenInfo(tokenInfo))
+    .catch((cause) => this._handleTokenCodeError(cause));
+  }
+  /**
+   * Creates a body for custom gran type.
+   * It does not assume any parameter to be required.
+   * It applies all known OAuth 2.0 parameters and then custom parameters
+   *
+   * @param {Object} settings
+   * @return {String} Request body.
+   */
+  _getCustomGrantBody(settings) {
+    let url = 'grant_type=' + encodeURIComponent(settings.type);
+    if (settings.clientId) {
+      url += '&client_id=' + encodeURIComponent(settings.clientId);
+    }
+    if (settings.clientSecret) {
+      url += '&client_secret=' + encodeURIComponent(settings.clientSecret);
+    }
+    if (settings.scopes && settings.scopes.length) {
+      url += '&scope=' + this._computeScope(settings.scopes);
+    }
+    if (settings.redirectUri) {
+      url += '&redirect_uri=' + encodeURIComponent(settings.redirectUri);
+    }
+    if (settings.clientSecret) {
+      url += '&client_secret=' + encodeURIComponent(settings.clientSecret);
+    }
+    if (settings.username) {
+      url += '&username=' + encodeURIComponent(settings.username);
+    }
+    if (settings.password) {
+      url += '&password=' + encodeURIComponent(settings.password);
     }
     return url;
   }
