@@ -13,11 +13,9 @@ the License.
 -->
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../polymer/lib/utils/render-status.html">
-<link rel="import" href="../cryptojs-lib/cryptojs-lib.html">
 <link rel="import" href="../iron-meta/iron-meta.html">
 <link rel="import" href="../url-parser/url-parser.html">
 <link rel="import" href="../headers-parser-behavior/headers-parser-behavior.html">
-<link rel="import" href="jsrsasign-import.html">
 <!--
 An element to perform OAuth1 authorization and to sign auth requests.
 
@@ -79,6 +77,8 @@ distributed under BSD license.
 - replaced `redirectUrl` property with `redirectUri`
 - replaced `authorizationUrl` property with `authorizationUri`
 - replaced `accessTokenUrl` property with `accessTokenUri`
+- **CryptoJS library is no longer included by default**. Use `advanced-rest-client/cryptojs-lib` or own veresion of the library. This component uses `CryptoJS.HmacSHA1` and `CryptoJS.enc.Base64` from the library.
+- **RSAKey library is no longer included by default**. Include `https://github.com/kjur/jsrsasign` library if needed.
 
 @customElement
 @polymer
