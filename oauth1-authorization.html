@@ -44,11 +44,11 @@ property.
 | ----------------|-------------|---------- |
 | `signatureMethod` | `String` | One of `PLAINTEXT`, `HMAC-SHA1`, `RSA-SHA1` |
 | `requestTokenUrl` | `String` | Token request URI. Optional for before request. Required for authorization |
-| `accessTokenUrl` | `String` | Access token request URI. Optional for before request. Required for authorization |
-| `authorizationUrl` | `String` | User dialog URL. |
+| `accessTokenUri` | `String` | Access token request URI. Optional for before request. Required for authorization |
+| `authorizationUri` | `String` | User dialog URL. |
 | `consumerKey` | `String` | Consumer key to be used to generate the signature. Optional for before request. |
 | `consumerSecret` | `String` | Consumer secret to be used to generate the signature. Optional for before request. |
-| `redirectUrl` | `String` | Redirect URI for the authorization. Optional for before request. |
+| `redirectUri` | `String` | Redirect URI for the authorization. Optional for before request. |
 | `authParamsLocation` | `String` | Optional. Location of the authorization parameters. Default to `authorization` meaning it creates an authorization header. Any other value means query parameters |
 | `authTokenMethod` | `String` | Token request HTTP method. Default to `POST`. Optional for before request. |
 | `version` | `String` | Oauth1 protocol version. Default to `1.0` |
@@ -73,6 +73,12 @@ property.
 under MIT licence.
 - This element uses [crypto-js](https://code.google.com/archive/p/crypto-js/) library
 distributed under BSD license.
+
+## Changes in version 2
+
+- replaced `redirectUrl` property with `redirectUri`
+- replaced `authorizationUrl` property with `authorizationUri`
+- replaced `accessTokenUrl` property with `accessTokenUri`
 
 @customElement
 @polymer
@@ -108,7 +114,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
       /**
        * Oauth 1 token exchange endpoint
        */
-      accessTokenUrl: String,
+      accessTokenUri: String,
       /**
        * Oauth 1 consumer key to use with auth request
        */
@@ -273,10 +279,10 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     this.getOAuthRequestToken()
     .then((temporaryCredentials) => {
       this.temporaryCredentials = temporaryCredentials;
-      const authorizationUrl = settings.authorizationUrl + '?oauth_token=' +
+      const authorizationUri = settings.authorizationUri + '?oauth_token=' +
         temporaryCredentials.oauth_token;
       this.popupClosedProperly = undefined;
-      this._popup = window.open(authorizationUrl, 'api-console-oauth1');
+      this._popup = window.open(authorizationUri, 'api-console-oauth1');
       if (!this._popup) {
         // popup blocked.
         this._dispatchError('Authorization popup is blocked', 'popup-blocked');
@@ -312,8 +318,8 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     if (params.requestTokenUrl) {
       this.requestTokenUrl = params.requestTokenUrl;
     }
-    if (params.accessTokenUrl) {
-      this.accessTokenUrl = params.accessTokenUrl;
+    if (params.accessTokenUri) {
+      this.accessTokenUri = params.accessTokenUri;
     }
     if (params.consumerKey) {
       this.consumerKey = params.consumerKey;
@@ -321,8 +327,8 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     if (params.consumerSecret) {
       this.consumerSecret = params.consumerSecret;
     }
-    if (params.redirectUrl) {
-      this._authorizeCallback = params.redirectUrl;
+    if (params.redirectUri) {
+      this._authorizeCallback = params.redirectUri;
     }
     if (params.authParamsLocation) {
       this.authParamsLocation = params.authParamsLocation;
@@ -938,7 +944,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
       extraParams.oauth_verifier = verifier;
     }
     const method = this.authTokenMethod;
-    return this._performRequest(token, secret, method, this.accessTokenUrl, extraParams)
+    return this._performRequest(token, secret, method, this.accessTokenUri, extraParams)
     .then((response) => {
       if (!response.response) {
         let message = 'Couldn\'t exchange token. ';

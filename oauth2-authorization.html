@@ -38,8 +38,8 @@ parameters. If it fails, than it fail on the server side.
 const settings = {
   type: 'implicit',
   clientId: 'CLIENT ID',
-  redirectUrl: 'https://example.com/auth-popup.html',
-  authorizationUrl: 'https://auth.example.com/token'
+  redirectUri: 'https://example.com/auth-popup.html',
+  authorizationUri: 'https://auth.example.com/token'
   scopes: ['email'],
   state: 'Optional string'
 };
@@ -107,8 +107,8 @@ const settings = {
   interactive: false,
   type: 'implicit',
   clientId: 'CLIENT ID',
-  redirectUrl: 'https://example.com/auth-popup.html',
-  authorizationUrl: 'https://auth.example.com/token'
+  redirectUri: 'https://example.com/auth-popup.html',
+  authorizationUri: 'https://auth.example.com/token'
   state: '1234'
 };
 const event = new CustomEvent('oauth2-token-requested', { 'detail': settings, bubbles: true });
@@ -129,6 +129,16 @@ document.body.addEventListener('oauth2-token-response', (e) => {
 
 ## Demo
 See `auth-methods` > `auth-method-oauth2` element for the demo.
+
+## Changes in version 2
+
+- event source is no longer processed. The component will not set `tokenValue`
+on the event source.
+- client credentials, password and custom grant types returns `Promise` with
+token info. It also dispatches response or error events.
+- replaced `redirectUrl` property with `redirectUri`
+- replaced `authorizationUrl` property with `authorizationUri`
+- replaced `accessTokenUrl` property with `accessTokenUri`
 
 @customElement
 @polymer
@@ -153,6 +163,7 @@ class OAuth2Authorization extends Polymer.Element {
     this._frameLoadHandler = this._frameLoadHandler.bind(this);
     this._tokenRequestedHandler = this._tokenRequestedHandler.bind(this);
     this._popupMessageHandler = this._popupMessageHandler.bind(this);
+    this._popupObserver = this._popupObserver.bind(this);
   }
 
   connectedCallback() {
@@ -168,7 +179,9 @@ class OAuth2Authorization extends Polymer.Element {
     window.removeEventListener('oauth2-token-requested', this._tokenRequestedHandler);
     window.removeEventListener('message', this._popupMessageHandler);
   }
-
+  /**
+   * Clears the state of the element.
+   */
   clear() {
     this._state = undefined;
     this._settings = undefined;
@@ -195,13 +208,15 @@ class OAuth2Authorization extends Polymer.Element {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    this._eventSource = e.target;
     this.authorize(e.detail);
   }
-
   /**
    * Authorize the user using provided settings.
-   * See `auth-methods/auth-method-oauth2` element for more information about settings.
+   *
+   * @param {Object<String, String>} settings Map of authorization settings.
+   * - type {String} Authorization grant type. Can be `implicit`,
+   * `authorization_code`, `client_credentials`, `password` or custom value
+   * as OAuth 2.0 allows extensions to grant type.
    */
   authorize(settings) {
     this._setTokenInfo(undefined);
@@ -217,10 +232,12 @@ class OAuth2Authorization extends Polymer.Element {
         this._authorize(this._constructPopupUrl(settings, 'code'), settings);
         break;
       case 'client_credentials':
-        this._authorizeClientCredential(settings);
+        this.authorizeClientCredentials(settings)
+        .catch(() => {});
         break;
       case 'password':
-        this._authorizePassword(settings);
+        this.authorizePassword(settings)
+        .catch(() => {});
         break;
       default:
         throw new Error('Unknown authorization method ' + settings.type);
@@ -245,7 +262,6 @@ class OAuth2Authorization extends Polymer.Element {
       this._authorizePopup(authUrl);
     }
   }
-
   /**
    * Creates and opens auth popup.
    *
@@ -257,9 +273,10 @@ class OAuth2Authorization extends Polymer.Element {
     if (!this._popup) {
       // popup blocked.
       this._dispatchError({
-        'message': 'Authorization popup is being blocked.',
-        'code': 'popup_blocked',
-        'state': this._state
+        message: 'Authorization popup is being blocked.',
+        code: 'popup_blocked',
+        state: this._state,
+        interactive: this._settings.interactive
       });
       return;
     }
@@ -340,13 +357,19 @@ class OAuth2Authorization extends Polymer.Element {
 
   // Observer if the popup has been closed befor the data has been received.
   _observePopupState() {
-    this.__popupCheckInterval = setInterval(() => {
-      if (!this._popup || this._popup.closed) {
-        clearInterval(this.__popupCheckInterval);
-        this.__popupCheckInterval = undefined;
-        this._beforePopupUnloadHandler();
-      }
-    }, 250);
+    this.__popupCheckInterval = setInterval(this._popupObserver, 250);
+  }
+  /**
+   * Function called in the interval.
+   * Observer popup state and calls `_beforePopupUnloadHandler()`
+   * when popup is no longer opened.
+   */
+  _popupObserver() {
+    if (!this._popup || this._popup.closed) {
+      clearInterval(this.__popupCheckInterval);
+      this.__popupCheckInterval = undefined;
+      this._beforePopupUnloadHandler();
+    }
   }
   /**
    * Browser or server flow: open the initial popup.
@@ -355,7 +378,7 @@ class OAuth2Authorization extends Polymer.Element {
    * @return {String} Full URL for the endpoint.
    */
   _constructPopupUrl(settings, type) {
-    let url = settings.authorizationUrl;
+    let url = settings.authorizationUri;
     if (url.indexOf('?') === -1) {
       url += '?';
     } else {
@@ -363,8 +386,8 @@ class OAuth2Authorization extends Polymer.Element {
     }
     url += 'response_type=' + type + '&';
     url += 'client_id=' + encodeURIComponent(settings.clientId || '') + '&';
-    if (settings.redirectUrl) {
-      url += 'redirect_uri=' + encodeURIComponent(settings.redirectUrl) + '&';
+    if (settings.redirectUri) {
+      url += 'redirect_uri=' + encodeURIComponent(settings.redirectUri) + '&';
     }
     if (settings.scopes && settings.scopes.length) {
       url += 'scope=' + this._computeScope(settings.scopes);
@@ -387,27 +410,6 @@ class OAuth2Authorization extends Polymer.Element {
         url = this._applyCustomSettingsQuery(url, cs);
       }
     }
-    return url;
-  }
-  /**
-   * Applies custom properties defined in the OAuth settings object to the URL.
-   *
-   * @param {String} url Generated URL for an endpoint.
-   * @param {?Object} data `customData.[type]` property from the settings object.
-   * The type is either `auth` or `token`.
-   * @return {String}
-   */
-  _applyCustomSettingsQuery(url, data) {
-    if (!data || !data.parameters) {
-      return url;
-    }
-    url += '&' + data.parameters.map((item) => {
-      let value = item.value;
-      if (value) {
-        value = encodeURIComponent(value);
-      }
-      return encodeURIComponent(item.name) + '=' + value;
-    }).join('&');
     return url;
   }
   /**
@@ -459,16 +461,11 @@ class OAuth2Authorization extends Polymer.Element {
       });
       this._errored = true;
     } else if (this._type === 'implicit') {
-      this._setTokenInfo(tokenInfo);
-      if (this._eventSource) {
-        this._eventSource.tokenValue = tokenInfo.accessToken;
-      }
-      tokenInfo.interactive = this._settings.interactive;
-      this._dispatchResponse(tokenInfo);
-      this._eventSource = undefined;
+      this._handleTokenInfo(tokenInfo);
     } else if (this._type === 'authorization_code') {
       this._exchangeCodeValue = tokenInfo.code;
-      this._exchangeCode(tokenInfo.code);
+      this._exchangeCode(tokenInfo.code)
+      .catch(() => {});
     }
     this.clear();
   }
@@ -477,23 +474,24 @@ class OAuth2Authorization extends Polymer.Element {
     return Math.round((Math.pow(36, len + 1) - Math.random() * Math.pow(36, len)))
       .toString(36).slice(1);
   }
-
+  /**
+   * Popup is closed by this element so if data is not yet set it means that the
+   * user closed the window - probably some error.
+   * The UI state is reset if needed.
+   */
   _beforePopupUnloadHandler() {
-    // Popup is closed by this element so if data is not yet set it means that the
-    // user closed the window - probably some error.
-    // The UI state should reset if needed.
     if (this.tokenInfo || (this._type === 'authorization_code' && this._exchangeCodeValue)) {
       return;
     }
-    this._eventSource = undefined;
+    const settings = this._settings || {};
     this._dispatchError({
-      'message': 'No response has been recorded.',
-      'code': 'no_response',
-      'state': this._state
+      message: 'No response has been recorded.',
+      code: 'no_response',
+      state: this._state,
+      interactive: settings.interactive
     });
     this.clear();
   }
-
   /**
    * Exchange code for token.
    * One note here. This element is intened to use with applications that test endpoints.
@@ -503,11 +501,14 @@ class OAuth2Authorization extends Polymer.Element {
    * present on client side.
    *
    * @param {String} code Returned code from the authorization endpoint.
+   * @return {Promise} Promise with token information.
    */
   _exchangeCode(code) {
-    const url = this._settings.accessTokenUrl;
+    const url = this._settings.accessTokenUri;
     const body = this._getCodeEchangeBody(this._settings, code);
-    this._tokenCodeRequest(url, body);
+    return this._requestToken(url, body, this._settings)
+    .then((tokenInfo) => this._handleTokenInfo(tokenInfo))
+    .catch((cause) => this._handleTokenCodeError(cause));
   }
   /**
    * Returns a body value for the code exchange request.
@@ -519,109 +520,125 @@ class OAuth2Authorization extends Polymer.Element {
   _getCodeEchangeBody(settings, code) {
     let url = 'grant_type=authorization_code&';
     url += 'client_id=' + encodeURIComponent(settings.clientId) + '&';
-    if (settings.redirectUrl) {
-      url += 'redirect_uri=' + encodeURIComponent(settings.redirectUrl) + '&';
+    if (settings.redirectUri) {
+      url += 'redirect_uri=' + encodeURIComponent(settings.redirectUri) + '&';
     }
     url += 'code=' + encodeURIComponent(code) + '&';
-    url += 'client_secret=' + settings.clientSecret;
-    // custom body params
-    if (settings.customData) {
-      url = this._applyCustomSettingsBody(url, settings.customData);
+    if (settings.clientSecret) {
+      url += 'client_secret=' + encodeURIComponent(settings.clientSecret);
+    } else {
+      url += 'client_secret=';
     }
     return url;
   }
   /**
-   * Applies custom body properties from the settings to the body value.
+   * Requests for token from the authorization server for `code`, `password`,
+   * `client_credentials` and custom grant types.
    *
-   * @param {String} body Already computed body for OAuth request. Custom
-   * properties are appended at the end of OAuth string.
-   * @param {Object} data Value of settings' `customData` property
-   * @return {String} Request body
+   * @param {String} url Base URI of the endpoint. Custom properties will be
+   * applied to the final URL.
+   * @param {String} body Generated body for given type. Custom properties will
+   * be applied to the final body.
+   * @param {Object} settings Settings object passed to the `authorize()` function
+   * @return {Promise} Promise resolved to the response string.
    */
-  _applyCustomSettingsBody(body, data) {
-    if (!data || !data.token || !data.token.body) {
-      return body;
-    }
-    body += '&' + data.token.body.map(function(item) {
-      let value = item.value;
-      if (value) {
-        value = encodeURIComponent(value);
+  _requestToken(url, body, settings) {
+    if (settings.customData) {
+      const cs = settings.customData.token;
+      if (cs) {
+        url = this._applyCustomSettingsQuery(url, cs);
       }
-      return encodeURIComponent(item.name) + '=' + value;
-    }).join('&');
-    return body;
-  }
-
-  _tokenCodeRequest(url, body) {
-    const xhr = new XMLHttpRequest();
-    xhr.addEventListener('load', function(e) {
-      const status = e.target.status;
-      if (status === 404) {
-        return this._handleTokenCodeError(new Error('Authorization URI is invalid.'));
-      } else if (status >= 400 && status < 500) {
-        return this._handleTokenCodeError(
-          new Error('Server does not support this method. Response code is ' + status));
-      } else if (status >= 500) {
-        return this._handleTokenCodeError(
-          new Error('Authorization server error. Response code is ' + status));
+      body = this._applyCustomSettingsBody(body, settings.customData);
+    }
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.addEventListener('load', (e) => this._processTokenResponseHandler(e, resolve, reject));
+      xhr.addEventListener('error', (e) => this._processTokenResponseErrorHandler(e, reject));
+      xhr.open('POST', url);
+      xhr.setRequestHeader('content-type', 'application/x-www-form-urlencoded');
+      if (settings.customData) {
+        this._applyCustomSettingsHeaders(xhr, settings.customData);
       }
       try {
-        this._handleTokenCodeResponse(e.target.response,
-          e.target.getResponseHeader('content-type'));
+        xhr.send(body);
       } catch (e) {
-        this._dispatchError({
-          'message': e.message || 'App error while decoding the token.',
-          'code': 0,
-          'state': this._state
-        });
+        reject(new Error('Client request error: ' + e.message));
       }
     });
-    xhr.addEventListener('error', (e) => {
-      const status = e.target.status;
-      let message = 'The request to the authorization server failed.';
-      if (status) {
-        message += ' Response code is: ' + status;
-      }
-      this._handleTokenCodeError(new Error(message));
-    });
-    xhr.open('POST', url);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    if (this._settings.customData) {
-      this._applyCustomSettingsHeaders(xhr, this._settings.customData);
-    }
-    try {
-      xhr.send(body);
-    } catch (e) {
-      this._handleTokenCodeError(new Error('Client request error: ' + e.message));
-    }
   }
-
-  // Decode token information from the response body.
-  _handleTokenCodeResponse(data, contentType) {
+  /**
+   * Handler for the code request load event.
+   * Processes the response and either rejects the promise with an error
+   * or resolves it to token info object.
+   *
+   * @param {Event} e XHR load event.
+   * @param {Function} resolve Resolve function
+   * @param {Function} reject Reject function
+   */
+  _processTokenResponseHandler(e, resolve, reject) {
+    const status = e.target.status;
+    const srvResponse = e.target.response;
+    if (status === 404) {
+      let message = 'Authorization URI is invalid. Received status 404.';
+      reject(new Error(message));
+      return;
+    } else if (status >= 400 && status < 500) {
+      let message = 'Client error: ' + srvResponse;
+      reject(new Error(message));
+      return;
+    } else if (status >= 500) {
+      let message = 'Authorization server error. Response code is ' + status;
+      reject(new Error(message));
+      return;
+    }
+    let tokenInfo;
+    try {
+      tokenInfo = this._processCodeResponse(srvResponse, e.target.getResponseHeader('content-type'));
+    } catch (e) {
+      reject(new Error(e.message));
+      return;
+    }
+    resolve(tokenInfo);
+  }
+  /**
+   * Handler for the code request error event.
+   * Rejects the promise with error description.
+   *
+   * @param {Event} e XHR error event
+   * @param {Function} reject Promise's reject function.
+   */
+  _processTokenResponseErrorHandler(e, reject) {
+    const status = e.target.status;
+    let message = 'The request to the authorization server failed.';
+    if (status) {
+      message += ' Response code is: ' + status;
+    }
+    reject(new Error(message));
+  }
+  /**
+   * Processes token request body and produces map of values.
+   *
+   * @param {String} body Body received in the response.
+   * @param {String} contentType Response content type.
+   * @return {Object} Response as an object.
+   * @throws {Error} Exception when body is invalid.
+   */
+  _processCodeResponse(body, contentType) {
+    if (!body) {
+      throw new Error('Code response body is empty.');
+    }
     let tokenInfo;
     if (contentType.indexOf('json') !== -1) {
-      try {
-        tokenInfo = JSON.parse(data);
-        for (let name in tokenInfo) {
-          const camelName = this._camel(name);
-          if (camelName) {
-            tokenInfo[camelName] = tokenInfo[name];
-          }
+      tokenInfo = JSON.parse(body);
+      for (let name in tokenInfo) {
+        const camelName = this._camel(name);
+        if (camelName) {
+          tokenInfo[camelName] = tokenInfo[name];
         }
-      } catch (e) {
-        this._dispatchError({
-          'message': 'The response could not be parsed. ' + e.message,
-          'code': 'response_parse',
-          'state': this._state
-        });
-        this._settings = undefined;
-        this._eventSource = undefined;
-        this._exchangeCodeValue = undefined;
-        return;
       }
     } else {
       tokenInfo = {};
-      data.split('&').forEach((p) => {
+      body.split('&').forEach((p) => {
         const item = p.split('=');
         const name = item[0];
         const camelName = this._camel(name);
@@ -630,23 +647,33 @@ class OAuth2Authorization extends Polymer.Element {
         tokenInfo[camelName] = value;
       });
     }
+    return tokenInfo;
+  }
+
+  /**
+   * Processes token info object when it's ready.
+   * Sets `tokenInfo` property, notifies listeners about the response
+   * and cleans up.
+   *
+   * @param {Object} tokenInfo Token info returned from the server.
+   * @return {Object} The same tokenInfo, used for Promise return value.
+   */
+  _handleTokenInfo(tokenInfo) {
     this._setTokenInfo(tokenInfo);
+    tokenInfo.interactive = this._settings.interactive;
     if ('error' in tokenInfo) {
       this._dispatchError({
-        'message': tokenInfo.errorDescription || 'The request is invalid.',
-        'code': tokenInfo.error,
-        'state': this._state
+        message: tokenInfo.errorDescription || 'The request is invalid.',
+        code: tokenInfo.error,
+        state: this._state,
+        interactive: this._settings.interactive
       });
     } else {
-      if (this._eventSource) {
-        this._eventSource.tokenValue = tokenInfo.accessToken;
-      }
       this._dispatchResponse(tokenInfo);
     }
-
     this._settings = undefined;
-    this._eventSource = undefined;
     this._exchangeCodeValue = undefined;
+    return tokenInfo;
   }
   /**
    * Handler fore an error that happened during code exchange.
@@ -654,12 +681,13 @@ class OAuth2Authorization extends Polymer.Element {
    */
   _handleTokenCodeError(e) {
     this._dispatchError({
-      'message': 'Couldn\'t connect to the server. ' + e.message,
-      'code': 'request_error',
-      'state': this._state
+      message: 'Couldn\'t connect to the server. ' + e.message,
+      code: 'request_error',
+      state: this._state,
+      interactive: this._settings.interactive
     });
     this._settings = undefined;
-    this._eventSource = undefined;
+    throw e;
   }
   /**
    * Replaces `-` or `_` with camel case.
@@ -683,60 +711,17 @@ class OAuth2Authorization extends Polymer.Element {
   /**
    * Requests a token for `password` request type.
    *
-   * @param {Object} settings Settings passed to the `authorize()` function.
+   * @param {Object} settings The same settings as passed to `authorize()`
+   * function.
+   * @return {Promise} Promise resolved to token info.
    */
-  _authorizePassword(settings) {
-    let url = settings.accessTokenUrl;
-    // custom query parameters
-    if (settings.customData) {
-      const cs = settings.customData.token;
-      if (cs) {
-        url = this._applyCustomSettingsQuery(url, cs);
-      }
-    }
+  authorizePassword(settings) {
+    this._settings = settings;
+    const url = settings.accessTokenUri;
     const body = this._getPasswordBody(settings);
-    const xhr = new XMLHttpRequest();
-    xhr.addEventListener('load', (e) => {
-      const status = e.target.status;
-      if (status === 404) {
-        return this._handleTokenCodeError(new Error('Access token URI is invalid.'));
-      } else if (status >= 400 && status < 500) {
-        return this._handleTokenCodeError(
-          new Error('Server does not support this method. Response code is ' + status));
-      } else if (status >= 500) {
-        return this._handleTokenCodeError(
-          new Error('Authorization server error. Response code is ' + status));
-      }
-      try {
-        this._handleTokenCodeResponse(e.target.response,
-          e.target.getResponseHeader('content-type'));
-      } catch (e) {
-        this._dispatchError({
-          'message': e.message || 'App error while decoding the token.',
-          'code': 0,
-          'state': this._state
-        });
-      }
-    });
-    xhr.addEventListener('error', (e) => {
-      const status = e.target.status;
-      let message = 'The request to the authorization server failed.';
-      if (status) {
-        message += ' Response code is: ' + status;
-      }
-      this._handleTokenCodeError(new Error(message));
-    });
-    xhr.open('POST', url);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    // custom headers
-    if (settings.customData) {
-      this._applyCustomSettingsHeaders(xhr, settings.customData);
-    }
-    try {
-      xhr.send(body);
-    } catch (e) {
-      this._handleTokenCodeError(new Error('Client request error: ' + e.message));
-    }
+    return this._requestToken(url, body, this._settings)
+    .then((tokenInfo) => this._handleTokenInfo(tokenInfo))
+    .catch((cause) => this._handleTokenCodeError(cause));
   }
   /**
    * Generates a payload message for password authorization.
@@ -755,68 +740,22 @@ class OAuth2Authorization extends Polymer.Element {
     if (settings.scopes && settings.scopes.length) {
       url += '&scope=' + encodeURIComponent(settings.scopes.join(' '));
     }
-    // custom body params
-    if (settings.customData) {
-      url = this._applyCustomSettingsBody(url, settings.customData);
-    }
     return url;
   }
   /**
    * Requests a token for `client_credentials` request type.
    *
-   * @param {Object} settings Settings passed to the `authorize()` function.
+   * @param {Object} settings The same settings as passed to `authorize()`
+   * function.
+   * @return {Promise} Promise resolved to a token info object.
    */
-  _authorizeClientCredential(settings) {
-    let url = settings.accessTokenUrl;
-    // custom query parameters
-    if (settings.customData) {
-      const cs = settings.customData.token;
-      if (cs) {
-        url = this._applyCustomSettingsQuery(url, cs);
-      }
-    }
-    const body = this._getClientCredentialBody(settings);
-    const xhr = new XMLHttpRequest();
-    xhr.addEventListener('load', (e) => {
-      const status = e.target.status;
-      if (status === 404) {
-        return this._handleTokenCodeError(new Error('Access token URI is invalid.'));
-      } else if (status >= 400 && status < 500) {
-        return this._handleTokenCodeError(
-          new Error('Server does not support this method. Response code is ' + status));
-      } else if (status >= 500) {
-        return this._handleTokenCodeError(
-          new Error('Authorization server error. Response code is ' + status));
-      }
-      try {
-        this._handleTokenCodeResponse(e.target.response,
-          e.target.getResponseHeader('content-type'));
-      } catch (e) {
-        this._dispatchError({
-          'message': e.message || 'App error while decoding the token.',
-          'code': 0,
-          'state': this._state
-        });
-      }
-    });
-    xhr.addEventListener('error', (e) => {
-      const status = e.target.status;
-      let message = 'The request to the authorization server failed.';
-      if (status) {
-        message += ' Response code is: ' + status;
-      }
-      this._handleTokenCodeError(new Error(message));
-    });
-    xhr.open('POST', url);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    if (settings.customData) {
-      this._applyCustomSettingsHeaders(xhr, settings.customData);
-    }
-    try {
-      xhr.send(body);
-    } catch (e) {
-      this._handleTokenCodeError(new Error('Client request error: ' + e.message));
-    }
+  authorizeClientCredentials(settings) {
+    this._settings = settings;
+    const url = settings.accessTokenUri;
+    const body = this._getClientCredentialsBody(settings);
+    return this._requestToken(url, body, this._settings)
+    .then((tokenInfo) => this._handleTokenInfo(tokenInfo))
+    .catch((cause) => this._handleTokenCodeError(cause));
   }
   /**
    * Generates a payload message for client credentials.
@@ -825,7 +764,7 @@ class OAuth2Authorization extends Polymer.Element {
    * function
    * @return {String} Message body as defined in OAuth2 spec.
    */
-  _getClientCredentialBody(settings) {
+  _getClientCredentialsBody(settings) {
     let url = 'grant_type=client_credentials';
     if (settings.clientId) {
       url += '&client_id=' + encodeURIComponent(settings.clientId);
@@ -836,10 +775,28 @@ class OAuth2Authorization extends Polymer.Element {
     if (settings.scopes && settings.scopes.length) {
       url += '&scope=' + this._computeScope(settings.scopes);
     }
-    // custom body params
-    if (settings.customData) {
-      url = this._applyCustomSettingsBody(url, settings.customData);
+    return url;
+  }
+  /**
+   * Applies custom properties defined in the OAuth settings object to the URL.
+   *
+   * @param {String} url Generated URL for an endpoint.
+   * @param {?Object} data `customData.[type]` property from the settings object.
+   * The type is either `auth` or `token`.
+   * @return {String}
+   */
+  _applyCustomSettingsQuery(url, data) {
+    if (!data || !data.parameters) {
+      return url;
     }
+    const char = url.indexOf('?') === -1 ? '?' : '&';
+    url += char + data.parameters.map((item) => {
+      let value = item.value;
+      if (value) {
+        value = encodeURIComponent(value);
+      }
+      return encodeURIComponent(item.name) + '=' + value;
+    }).join('&');
     return url;
   }
   /**
@@ -854,11 +811,32 @@ class OAuth2Authorization extends Polymer.Element {
     }
     data.token.headers.forEach((item) => {
       try {
-        xhr.setRequestHeader(item.name, item.name);
+        xhr.setRequestHeader(item.name, item.value);
       } catch (e) {
         console.warn('Unable to set custom header value.');
       }
     });
+  }
+  /**
+   * Applies custom body properties from the settings to the body value.
+   *
+   * @param {String} body Already computed body for OAuth request. Custom
+   * properties are appended at the end of OAuth string.
+   * @param {Object} data Value of settings' `customData` property
+   * @return {String} Request body
+   */
+  _applyCustomSettingsBody(body, data) {
+    if (!data || !data.token || !data.token.body) {
+      return body;
+    }
+    body += '&' + data.token.body.map(function(item) {
+      let value = item.value;
+      if (value) {
+        value = encodeURIComponent(value);
+      }
+      return encodeURIComponent(item.name) + '=' + value;
+    }).join('&');
+    return body;
   }
   /**
    * Dispatches an error event that propagates through the DOM.

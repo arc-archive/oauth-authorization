@@ -20,7 +20,6 @@ the License.
   <script src="../../web-component-tester/browser.js"></script>
   <script src="../../iron-test-helpers/test-helpers.js"></script>
   <link rel="import" href="../oauth2-authorization.html">
-  <!-- <link rel="import" href="../../arc-polyfills/arc-polyfills.html"> -->
 </head>
 
 <body>
@@ -34,6 +33,7 @@ the License.
   // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
   // jscs:disable requireDotNotation
   function noop() {}
+  function nooPromise() { return Promise.resolve(); }
   let popupsAllowed = true;
   suite('Basic', () => {
     let element;
@@ -51,10 +51,6 @@ the License.
 
     test('_state is undefined', () => {
       assert.isUndefined(element._state);
-    });
-
-    test('_eventSource is undefined', () => {
-      assert.isUndefined(element._eventSource);
     });
   });
 
@@ -84,13 +80,6 @@ the License.
       assert.isTrue(stub1.called);
       assert.isTrue(stub2.called);
       assert.isTrue(stub3.called);
-    });
-
-    test('Sets _eventSource property', () => {
-      element.authorize = noop;
-      let copy = Object.assign({}, ev);
-      element._tokenRequestedHandler(copy);
-      assert.isTrue(element._eventSource === copy.target);
     });
 
     test('Calls authorize function', () => {
@@ -261,8 +250,8 @@ the License.
         assert.typeOf(element._state, 'string');
       });
 
-      test('Calls _authorizeClientCredential()', (done) => {
-        element._authorizeClientCredential = function(detail) {
+      test('Calls authorizeClientCredentials()', (done) => {
+        element.authorizeClientCredentials = function(detail) {
           assert.isTrue(detail === baseSettings);
           done();
         };
@@ -302,8 +291,8 @@ the License.
         assert.typeOf(element._state, 'string');
       });
 
-      test('Calls _authorizeClientCredential()', (done) => {
-        element._authorizePassword = function(detail) {
+      test('Calls authorizePassword()', (done) => {
+        element.authorizePassword = function(detail) {
           assert.isTrue(detail === baseSettings);
           done();
         };
@@ -391,6 +380,7 @@ the License.
     });
 
     test('Sets popup property (checks for popup block)', () => {
+      element._settings = {};
       element._authorizePopup(popupUrl);
       if (!element._popup) {
         popupsAllowed = false;
@@ -406,6 +396,7 @@ the License.
         done();
       };
       element._state = 'test-state';
+      element._settings = {};
       let url = popupUrl + '?autoClose=true';
       element._authorizePopup(url);
     });
@@ -419,6 +410,7 @@ the License.
         assert.equal(e.data.param, 'value');
         done();
       };
+      element._settings = {};
       let url = popupUrl + '?auto-close=true&param=value';
       element._authorizePopup(url);
     });
@@ -448,11 +440,13 @@ the License.
     });
 
     test('Sets _iframe property', () => {
+      element._settings = {};
       element._authorizeTokenNonInteractive(iframeUrl);
       assert.ok(element._iframe);
     });
 
     test('Appends iframe to the body', () => {
+      element._settings = {};
       element._authorizeTokenNonInteractive(iframeUrl);
       let frame = document.body.querySelector('iframe[data-owner="arc-oauth-authorization"]');
       assert.ok(frame);
@@ -467,6 +461,7 @@ the License.
         done();
       });
       element._state = 'test-state';
+      element._settings = {};
       element._authorizeTokenNonInteractive(iframeUrl + '/test');
     });
   });
@@ -559,9 +554,9 @@ the License.
       element = fixture('basic');
     });
     let baseSettings = {
-      authorizationUrl: 'http://test.com/auth',
+      authorizationUri: 'http://test.com/auth',
       clientId: 'test client id',
-      redirectUrl: 'http://test.com/redirect',
+      redirectUri: 'http://test.com/redirect',
       scopes: ['one', 'two'],
       includeGrantedScopes: true,
       loginHint: 'email@domain.com',
@@ -609,7 +604,7 @@ the License.
 
     test('Skips redirect_uri if not set', () => {
       let settings = Object.assign({}, baseSettings);
-      settings.redirectUrl = undefined;
+      settings.redirectUri = undefined;
       let result = element._constructPopupUrl(settings, defaultType);
       assert.equal(result.indexOf('redirect_uri='), -1);
     });
@@ -644,7 +639,7 @@ the License.
 
     test('Do not inserts "?" when auth url already contains it', () => {
       let settings = Object.assign({}, baseSettings);
-      settings.authorizationUrl = 'http://test.com/auth?custom=value';
+      settings.authorizationUri = 'http://test.com/auth?custom=value';
       let result = element._constructPopupUrl(settings, defaultType);
       assert.equal(result.indexOf('http://test.com/auth?custom=value&response_type'), 0);
     });
@@ -709,6 +704,7 @@ the License.
         done();
       });
       element._state = 'test-state';
+      element._settings = {};
       element._beforePopupUnloadHandler();
     });
 
@@ -716,6 +712,7 @@ the License.
       let spy = sinon.spy();
       element.addEventListener('oauth2-error', spy);
       element._state = 'test-state';
+      element._settings = {};
       element._setTokenInfo('test');
       element._beforePopupUnloadHandler();
       assert.isFalse(spy.called);
@@ -726,6 +723,7 @@ the License.
       element.addEventListener('oauth2-error', spy);
       element._state = 'test-state';
       element._setTokenInfo('test');
+      element._settings = {};
       element._beforePopupUnloadHandler();
       assert.isFalse(spy.called);
     });
@@ -805,17 +803,6 @@ the License.
       assert.equal(element.tokenInfo.expiresIn, e.data.expiresIn);
     });
 
-    test('Clears _eventSource', () => {
-      let e = Object.assign({}, eBase);
-      e.data = Object.assign({}, e.data);
-      e.data.state = 'test-state';
-      e.data.accessToken = 'testToken';
-      e.data.expiresIn = 3600;
-      element._eventSource = {};
-      element._popupMessageHandler(e);
-      assert.isUndefined(element._eventSource);
-    });
-
     test('Clears the popup', () => {
       let e = Object.assign({}, eBase);
       e.data = Object.assign({}, e.data);
@@ -838,7 +825,7 @@ the License.
       e.data.state = 'test-state';
       e.data.code = 'testCode';
       element._type = 'authorization_code';
-      element._exchangeCode = noop;
+      element._exchangeCode = nooPromise;
       element._popupMessageHandler(e);
       assert.equal(element._exchangeCodeValue, e.data.code);
     });
@@ -879,110 +866,13 @@ the License.
     });
   });
 
-  suite('_getPasswordBody()', () => {
-    let element;
-    let base = {
-      username: 'test username',
-      password: 'test password'
-    };
-    suiteSetup(() => {
-      element = fixture('basic');
-    });
-
-    test('grant_type is set', () => {
-      let result = element._getPasswordBody(base);
-      assert.equal(result.indexOf('grant_type=password'), 0);
-    });
-
-    test('username is set', () => {
-      let result = element._getPasswordBody(base);
-      assert.notEqual(result.indexOf('&username=test%20username'), -1);
-    });
-
-    test('password is set', () => {
-      let result = element._getPasswordBody(base);
-      assert.notEqual(result.indexOf('&password=test%20password'), -1);
-    });
-
-    test('Skips client_id is not set', () => {
-      let result = element._getPasswordBody(base);
-      assert.equal(result.indexOf('client_id='), -1);
-    });
-
-    test('Skips scope is not set', () => {
-      let result = element._getPasswordBody(base);
-      assert.equal(result.indexOf('scope='), -1);
-    });
-
-    test('client_id is set', () => {
-      let params = Object.assign({}, base);
-      params.clientId = 'test client id';
-      let result = element._getPasswordBody(params);
-      assert.notEqual(result.indexOf('&client_id=test%20client%20id'), -1);
-    });
-
-    test('scope is set', () => {
-      let params = Object.assign({}, base);
-      params.scopes = ['one', 'two'];
-      let result = element._getPasswordBody(params);
-      assert.notEqual(result.indexOf('&scope=one%20two'), -1);
-    });
-  });
-
-  suite('_getClientCredentialBody()', () => {
-    let element;
-    let params = {
-      clientId: 'test client id',
-      clientSecret: 'test client secret',
-      scopes: ['one', 'two']
-    };
-    suiteSetup(() => {
-      element = fixture('basic');
-    });
-
-    test('grant_type is set', () => {
-      let result = element._getClientCredentialBody({});
-      assert.equal(result.indexOf('grant_type=client_credentials'), 0);
-    });
-
-    test('Skips client_id is not set', () => {
-      let result = element._getClientCredentialBody({});
-      assert.equal(result.indexOf('client_id='), -1);
-    });
-
-    test('Skips client_secret is not set', () => {
-      let result = element._getClientCredentialBody({});
-      assert.equal(result.indexOf('client_secret='), -1);
-    });
-
-    test('Skips scope is not set', () => {
-      let result = element._getClientCredentialBody({});
-      assert.equal(result.indexOf('scope='), -1);
-    });
-
-    test('client_id is set', () => {
-      let result = element._getClientCredentialBody(params);
-      assert.notEqual(result.indexOf('&client_id=test%20client%20id'), -1);
-    });
-
-    test('client_secret is set', () => {
-      let result = element._getClientCredentialBody(params);
-      assert.notEqual(result.indexOf('&client_secret=test%20client%20secret'), -1);
-    });
-
-    test('scope is set', () => {
-      let result = element._getClientCredentialBody(params);
-      assert.notEqual(result.indexOf('&scope=one%20two'), -1);
-    });
-  });
-
   suite('Custom OAuth data', () => {
     let element;
     let params = {
       type: 'custom_grant',
       clientId: 'test',
       clientSecret: 'test',
-      authorizationUrl: 'https://auth.domain.com',
+      authorizationUri: 'https://auth.domain.com',
       username: 'user-test',
       password: 'pass-test',
       customData: {
@@ -1027,7 +917,7 @@ the License.
 
       test('returns params in query string.', () => {
         let result = element._applyCustomSettingsQuery('', params.customData.auth);
-        assert.equal(result, '&aqp1=aqpv1');
+        assert.equal(result, '?aqp1=aqpv1');
       });
     });
 
@@ -1062,44 +952,6 @@ the License.
         assert.equal(result, '&tb1=tbv1');
       });
     });
-
-    suite('_getPasswordBody()', () => {
-      test('returns a string', () => {
-        let result = element._getPasswordBody(params);
-        assert.typeOf(result, 'string');
-      });
-
-      test('returns params in body string.', () => {
-        let result = element._getPasswordBody(params);
-        let compare = 'grant_type=password&username=user-test&password=pass-test';
-        compare += '&client_id=test&tb1=tbv1';
-        assert.equal(result, compare);
-      });
-    });
-
-    suite('_getClientCredentialBody()', () => {
-      test('returns a string', () => {
-        let result = element._getClientCredentialBody(params);
-        assert.typeOf(result, 'string');
-      });
-
-      test('returns params in body string.', () => {
-        let result = element._getClientCredentialBody(params);
-        let compare = 'grant_type=client_credentials&client_id=test';
-        compare += '&client_secret=test&tb1=tbv1';
-        assert.equal(result, compare);
-      });
-    });
-
-    suite('_getCodeEchangeBody()', () => {
-      test('Applies params to the body', () => {
-        let result = element._getCodeEchangeBody(params, 'test');
-        let compare = 'grant_type=authorization_code&client_id=test';
-        compare += '&code=test&client_secret=test&tb1=tbv1';
-        assert.equal(result, compare);
-      });
-    });
-
   });
   </script>
 </body>

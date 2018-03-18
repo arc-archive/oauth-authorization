@@ -56,10 +56,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         settings = {
           signatureMethod: 'RSA-SHA1',
           requestTokenUrl: 'http://request-token-url.com/',
-          accessTokenUrl: 'http://access-token-url.com/',
+          accessTokenUri: 'http://access-token-url.com/',
           consumerKey: 'test-consumer-key',
           consumerSecret: 'test-consumer-secret',
-          redirectUrl: 'http://redirect-url.com/',
+          redirectUri: 'http://redirect-url.com/',
           authParamsLocation: 'url',
           authTokenMethod: 'GET-test',
           version: '1.0a-test',
@@ -90,10 +90,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         assert.equal(element.signatureMethod, settings.signatureMethod, 'Signature method is set');
         assert.equal(element._privateKey, settings.consumerSecret, '_privateKey is set');
         assert.equal(element.requestTokenUrl, settings.requestTokenUrl, 'requestTokenUrl is set');
-        assert.equal(element.accessTokenUrl, settings.accessTokenUrl, 'accessTokenUrl is set');
+        assert.equal(element.accessTokenUri, settings.accessTokenUri, 'accessTokenUri is set');
         assert.equal(element.consumerKey, settings.consumerKey, 'consumerKey is set');
         assert.equal(element.consumerSecret, settings.consumerSecret, 'consumerSecret is set');
-        assert.equal(element._authorizeCallback, settings.redirectUrl, '_authorizeCallback is set');
+        assert.equal(element._authorizeCallback, settings.redirectUri, '_authorizeCallback is set');
         assert.equal(element.authParamsLocation,
           settings.authParamsLocation, 'authParamsLocation is set');
         assert.equal(element.authTokenMethod, settings.authTokenMethod, 'authTokenMethod is set');
