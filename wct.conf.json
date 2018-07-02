@@ -37,7 +37,7 @@
         "version": "10.1"
       }, {
         "browserName": "safari",
-        "platform": "macOS 10.13",
+        "platform": "macOS 10.12",
         "version": "11.0"
       }]
     }
