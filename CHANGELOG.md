@@ -1,3 +1,17 @@
+<a name="2.0.2"></a>
+## [2.0.2](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.14...2.0.2) (2018-07-02)
+
+
+### Fix
+
+* Fixing tests definition ([15d59899a3c9d0ef3dcc59cab0fc35de50622672](https://github.com/advanced-rest-client/oauth-authorization/commit/15d59899a3c9d0ef3dcc59cab0fc35de50622672))
+
+### Update
+
+* Moving test helpers to test dependencies ([68081e64458c836203ecdef74803e36c634ebac5](https://github.com/advanced-rest-client/oauth-authorization/commit/68081e64458c836203ecdef74803e36c634ebac5))
+
+
+
 <a name="2.0.1"></a>
 ## [2.0.1](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.14...2.0.1) (2018-03-18)
 
