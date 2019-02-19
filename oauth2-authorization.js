@@ -1,4 +1,4 @@
-<!--
+/**
 @license
 Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,10 +10,10 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="../polymer/polymer-element.html">
-<link rel="import" href="../polymer/lib/utils/render-status.html">
-<!--
+*/
+import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
+import {afterNextRender} from '../../@polymer/polymer/lib/utils/render-status.js';
+/**
 The `<outh2-authorization>` performs an OAuth2 requests to get a token for given settings.
 
 There are 4 basic token requests flows:
@@ -21,8 +21,6 @@ There are 4 basic token requests flows:
 - Implicit for browser-based or mobile apps (`implicit` type)
 - Password for logging in with a username and password (`password` type)
 - Client credentials for application access (`client_credentials` type)
-
-This element uses them all.
 
 Main function is the `authorize()` function that can be also used via event system.
 This function accepts different set of parameters depending on request type. However it will
@@ -53,14 +51,14 @@ document.dispatchEvent(event);
 
 There is one difference for from using event based approach. When the token has been received
 this will set `tokenValue` property on the target of the event.
-The event will be canceled one it reach this element so other elements will not double the action.
+The event will be cancelled one it reach this element so other elements will not double the action.
 
 An element or app that requesting the token should observe the `oauth2-token-response` and
 `oauth2-error` events to get back the response.
 
 ## Popup in authorization flow
 
-This element conatin a `oauth-popup.html` that can be used to exchange token / code data with
+This element contain a `oauth-popup.html` that can be used to exchange token / code data with
 hosting page. Other page can be used as well. But in must `window.postMessage` back to the
 `window.opener`. The structure of the message if the parsed query or has string to the map
 of parameters. Furthermore it must camel case the parameters. Example script is source code
@@ -82,8 +80,8 @@ one generated before the request.
 
 The state parameter is generated automatically by the element if non provided in
 settings. It is a good idea to use this property to check if the event response
-(either token or error) are comming from your request for token. The app can
-support different oauth clients so you can check later with the token response if
+(either token or error) are coming from your request for token. The app can
+support different OAuth clients so you can check later with the token response if
 this is a response for the same client.
 
 ## Non-interactive authorization (experimental)
@@ -98,7 +96,7 @@ When using `interactive = false` mode then the response event is always
 `oauth2-token-response`, even when there was authorization error or user never
 authorized the application. In this case the response object will not carry
 `accessToken` property and always have `interactive` set to `false` and `code`
-to determine cause of unsuccesful request.
+to determine cause of unsuccessful request.
 
 ### Example
 
@@ -120,33 +118,21 @@ document.body.addEventListener('oauth2-token-response', (e) => {
     return;
   }
   if (info.interactive === false && info.code) {
-    // unsuccesful request
+    // unsuccessful request
     return;
   }
   let token = info.accessToken;
 });
 ```
 
-## Demo
-See `auth-methods` > `auth-method-oauth2` element for the demo.
-
-## Changes in version 2
-
-- event source is no longer processed. The component will not set `tokenValue`
-on the event source.
-- client credentials, password and custom grant types returns `Promise` with
-token info. It also dispatches response or error events.
-- replaced `redirectUrl` property with `redirectUri`
-- replaced `authorizationUrl` property with `authorizationUri`
-- replaced `accessTokenUrl` property with `accessTokenUri`
-
 @customElement
 @polymer
 @memberof LogicElements
--->
-<script>
-class OAuth2Authorization extends Polymer.Element {
-  static get is() { return 'oauth2-authorization'; }
+*/
+export class OAuth2Authorization extends PolymerElement {
+  static get is() {
+    return 'oauth2-authorization';
+  }
   static get properties() {
     return {
       // A full data returned by the authorization endpoint.
@@ -168,7 +154,7 @@ class OAuth2Authorization extends Polymer.Element {
 
   connectedCallback() {
     super.connectedCallback();
-    Polymer.RenderStatus.afterNextRender(this, () => {
+    afterNextRender(this, () => {
       window.addEventListener('oauth2-token-requested', this._tokenRequestedHandler);
       window.addEventListener('message', this._popupMessageHandler);
     });
@@ -266,7 +252,7 @@ class OAuth2Authorization extends Polymer.Element {
   /**
    * Creates and opens auth popup.
    *
-   * @param {String} authUrl Complete authorization url
+   * @param {String} url Complete authorization url
    */
   _authorizePopup(url) {
     const op = 'menubar=no,location=no,resizable=yes,scrollbars=yes,status=no,width=800,height=600';
@@ -289,7 +275,7 @@ class OAuth2Authorization extends Polymer.Element {
    * This method always result in a success response. When there's an error or
    * user is not logged in then the response won't contain auth token info.
    *
-   * @param {String} authUrl Complete authorization url
+   * @param {String} url Complete authorization url
    */
   _authorizeTokenNonInteractive(url) {
     const iframe = document.createElement('iframe');
@@ -343,7 +329,7 @@ class OAuth2Authorization extends Polymer.Element {
       return;
     }
     this.__frameLoadInfo = true;
-    setTimeout(() => {
+    this.__frameLoadTimeout = setTimeout(() => {
       if (!this.tokenInfo && !this._errored) {
         this._dispatchResponse({
           interactive: false,
@@ -385,13 +371,13 @@ class OAuth2Authorization extends Polymer.Element {
     } else {
       url += '&';
     }
-    url += 'response_type=' + type + '&';
-    url += 'client_id=' + encodeURIComponent(settings.clientId || '') + '&';
+    url += 'response_type=' + type;
+    url += '&client_id=' + encodeURIComponent(settings.clientId || '');
     if (settings.redirectUri) {
-      url += 'redirect_uri=' + encodeURIComponent(settings.redirectUri) + '&';
+      url += '&redirect_uri=' + encodeURIComponent(settings.redirectUri);
     }
     if (settings.scopes && settings.scopes.length) {
-      url += 'scope=' + this._computeScope(settings.scopes);
+      url += '&scope=' + this._computeScope(settings.scopes);
     }
     url += '&state=' + encodeURIComponent(this._state);
     if (settings.includeGrantedScopes) {
@@ -431,6 +417,7 @@ class OAuth2Authorization extends Polymer.Element {
    *
    * Token will be extracted and `oauth2-token-response` will be fired. Also, if the initial
    * request came from an event, a `tokenValue` property fill be set on the event target.
+   * @param {Event} e
    */
   _popupMessageHandler(e) {
     if (!this._popup && !this._iframe) {
@@ -453,6 +440,7 @@ class OAuth2Authorization extends Polymer.Element {
         interactive: this._settings.interactive
       });
       this._errored = true;
+      this._clearIframeTimeout();
     } else if ('error' in tokenInfo) {
       this._dispatchError({
         message: tokenInfo.errorDescription || 'The request is invalid.',
@@ -461,14 +449,23 @@ class OAuth2Authorization extends Polymer.Element {
         interactive: this._settings.interactive
       });
       this._errored = true;
+      this._clearIframeTimeout();
     } else if (this._type === 'implicit') {
       this._handleTokenInfo(tokenInfo);
     } else if (this._type === 'authorization_code') {
       this._exchangeCodeValue = tokenInfo.code;
       this._exchangeCode(tokenInfo.code)
       .catch(() => {});
+      this._clearIframeTimeout();
     }
     this.clear();
+  }
+
+  _clearIframeTimeout() {
+    if (this.__frameLoadTimeout) {
+      clearTimeout(this.__frameLoadTimeout);
+      this.__frameLoadTimeout = undefined;
+    }
   }
   // http://stackoverflow.com/a/10727155/1127848
   randomString(len) {
@@ -631,12 +628,12 @@ class OAuth2Authorization extends Polymer.Element {
     let tokenInfo;
     if (contentType.indexOf('json') !== -1) {
       tokenInfo = JSON.parse(body);
-      for (let name in tokenInfo) {
+      Object.keys(tokenInfo).forEach((name) => {
         const camelName = this._camel(name);
         if (camelName) {
           tokenInfo[camelName] = tokenInfo[name];
         }
-      }
+      });
     } else {
       tokenInfo = {};
       body.split('&').forEach((p) => {
@@ -671,6 +668,10 @@ class OAuth2Authorization extends Polymer.Element {
       });
     } else {
       this._dispatchResponse(tokenInfo);
+    }
+    if (this.__frameLoadTimeout) {
+      clearTimeout(this.__frameLoadTimeout);
+      this.__frameLoadTimeout = undefined;
     }
     this._settings = undefined;
     this._exchangeCodeValue = undefined;
@@ -838,8 +839,8 @@ class OAuth2Authorization extends Polymer.Element {
     if (!data || !data.parameters) {
       return url;
     }
-    const char = url.indexOf('?') === -1 ? '?' : '&';
-    url += char + data.parameters.map((item) => {
+    url += url.indexOf('?') === -1 ? '?' : '&';
+    url += data.parameters.map((item) => {
       let value = item.value;
       if (value) {
         value = encodeURIComponent(value);
@@ -942,4 +943,3 @@ class OAuth2Authorization extends Polymer.Element {
    */
 }
 window.customElements.define(OAuth2Authorization.is, OAuth2Authorization);
-</script>

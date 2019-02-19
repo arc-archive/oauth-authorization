@@ -1,4 +1,4 @@
-<!--
+/**
 @license
 Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,13 +10,14 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../polymer/lib/utils/render-status.html">
-<link rel="import" href="../iron-meta/iron-meta.html">
-<link rel="import" href="../url-parser/url-parser.html">
-<link rel="import" href="../headers-parser-behavior/headers-parser-behavior.html">
-<!--
+*/
+import '../../@polymer/polymer/polymer-legacy.js';
+import {afterNextRender} from '../../@polymer/polymer/lib/utils/render-status.js';
+import '../../@polymer/iron-meta/iron-meta.js';
+import {UrlParser} from '../../@advanced-rest-client/url-parser/url-parser.js';
+import {HeadersParserMixin} from '../../@advanced-rest-client/headers-parser-mixin/headers-parser-mixin.js';
+import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
+/**
 An element to perform OAuth1 authorization and to sign auth requests.
 
 Note that the OAuth1 authorization wasn't designed for browser. Most existing
@@ -47,7 +48,7 @@ property.
 | `consumerKey` | `String` | Consumer key to be used to generate the signature. Optional for before request. |
 | `consumerSecret` | `String` | Consumer secret to be used to generate the signature. Optional for before request. |
 | `redirectUri` | `String` | Redirect URI for the authorization. Optional for before request. |
-| `authParamsLocation` | `String` | Optional. Location of the authorization parameters. Default to `authorization` meaning it creates an authorization header. Any other value means query parameters |
+| `authParamsLocation` | `String` | Location of the authorization parameters. Default to `authorization` header |
 | `authTokenMethod` | `String` | Token request HTTP method. Default to `POST`. Optional for before request. |
 | `version` | `String` | Oauth1 protocol version. Default to `1.0` |
 | `nonceSize` | `Number` | Size of the nonce word to generate. Default to 32. Unused if `nonce` is set. |
@@ -72,22 +73,36 @@ under MIT licence.
 - This element uses [crypto-js](https://code.google.com/archive/p/crypto-js/) library
 distributed under BSD license.
 
-## Changes in version 2
+## Required dependencies
 
-- replaced `redirectUrl` property with `redirectUri`
-- replaced `authorizationUrl` property with `authorizationUri`
-- replaced `accessTokenUrl` property with `accessTokenUri`
-- **CryptoJS library is no longer included by default**. Use `advanced-rest-client/cryptojs-lib` or own veresion of the library. This component uses `CryptoJS.HmacSHA1` and `CryptoJS.enc.Base64` from the library.
-- **RSAKey library is no longer included by default**. Include `https://github.com/kjur/jsrsasign` library if needed.
+The `CryptoJS` and `RSAKey` libraries are not included into the element sources.
+If your project do not use this libraries already include it into your project.
+
+```
+npm i cryptojslib jsrsasign
+```
+
+```html
+<script src="../../../cryptojslib/components/core.js"></script>
+<script src="../../../cryptojslib/rollups/sha1.js"></script>
+<script src="../../../cryptojslib/components/enc-base64-min.js"></script>
+<script src="../../../cryptojslib/rollups/md5.js"></script>
+<script src="../../../cryptojslib/rollups/hmac-sha1.js"></script>
+<script src="../../../jsrsasign/lib/jsrsasign-rsa-min.js"></script>
+```
 
 @customElement
 @polymer
 @memberof LogicElements
--->
-<script>
-window.forceJURL = true;
-class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Element) {
-  static get is() { return 'oauth1-authorization'; }
+@appliesMixin HeadersParserMixin
+*/
+if (window) {
+  window.forceJURL = true;
+}
+export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
+  static get is() {
+    return 'oauth1-authorization';
+  }
   static get properties() {
     return {
       // A full data returned by the authorization endpoint.
@@ -172,7 +187,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
 
   connectedCallback() {
     super.connectedCallback();
-    Polymer.RenderStatus.afterNextRender(this, () => {
+    afterNextRender(this, () => {
       window.addEventListener('oauth1-token-requested', this._tokenRequestedHandler);
       window.addEventListener('message', this._listenPopup);
       window.addEventListener('before-request', this._handleRequest);
@@ -190,6 +205,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * Normally `before-request` expects to set a promise on the `detail.promises`
    * object. But because this taks is sync it skips the promise and manipulate
    * request object directly.
+   * @param {CustomEvent} e
    */
   _handleRequest(e) {
     const request = e.detail;
@@ -207,8 +223,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * `auth-methods/oauth1.html` element.
    *
    * @param {Object} request ARC request object
-   * @param {String} token OAuth1 token
-   * @param {String} tokenSecret OAuth1 token secret
+   * @param {String} auth Token request auth object
    */
   _applyBeforeRequestSignature(request, auth) {
     if (!request || !request.method || !request.url) {
@@ -254,6 +269,8 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    *
    * The detail object of the event contains OAuth1 configuration as described
    * in `auth-methods/oauth1.html`element.
+   *
+   * @param {CustomEvent} e
    */
   _tokenRequestedHandler(e) {
     e.preventDefault();
@@ -518,12 +535,12 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * Adds query paramteres with OAuth 1 parameters to the URL
    * as described in https://tools.ietf.org/html/rfc5849#section-3.5.3
    *
+   * @param {String} url
    * @param {Array} orderedParameters Oauth parameters that are already
    * ordered.
    * @return {String} URL to use with the request
    */
   _buildAuthorizationQueryStirng(url, orderedParameters) {
-    /* global UrlParser */
     const urlParser = new UrlParser(url);
     orderedParameters = orderedParameters.map(function(item) {
       return [
@@ -539,7 +556,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
   // Takes an object literal that represents the arguments, and returns an array
   // of argument/value pairs.
   _makeArrayOfArgumentsHash(argumentsHash) {
-    var argumentPairs = [];
+    const argumentPairs = [];
     Object.keys(argumentsHash).forEach(function(key) {
       const value = argumentsHash[key];
       if (Array.isArray(value)) {
@@ -568,6 +585,9 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
   /**
    * Sort function to sort parameters as described in
    * https://tools.ietf.org/html/rfc5849#section-3.4.1.3.2
+   * @param {String} a
+   * @param {String} b
+   * @return {Number}
    */
   _sortParamsFunction(a, b) {
     if (a[0] === b[0]) {
@@ -722,7 +742,6 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    *
    * In this case the signature is the key.
    *
-   * @param {String} baseText Computed signature base text.
    * @param {String} key Computed signature key.
    * @return {String} Computed OAuth1 signature.
    */
@@ -740,13 +759,13 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     /* global RSAKey */
     const rsa = new RSAKey();
     rsa.readPrivateKeyFromPEMString(privateKey);
-    var hSig = rsa.sign(baseText, 'sha1');
+    const hSig = rsa.sign(baseText, 'sha1');
     return this.hex2b64(hSig);
   }
   /**
    * Creates a signature for the HMAC-SHA1 method.
    *
-   * @param {String} signatureBase Computed signature base text.
+   * @param {String} baseText Computed signature base text.
    * @param {String} key Computed signature key.
    * @return {String} Computed OAuth1 signature.
    */
@@ -883,7 +902,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     }
     const headers = {};
     if (this.authParamsLocation === 'authorization') {
-      var authorization = this._buildAuthorizationHeaders(orderedParameters);
+      const authorization = this._buildAuthorizationHeaders(orderedParameters);
       if (this._isEcho) {
         headers['X-Verify-Credentials-Authorization'] = authorization;
       } else {
@@ -937,6 +956,11 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
   /**
    * Exchanges temporary authorization token for authorized token.
    * When ready this function fires `oauth1-token-response`
+   *
+   * @param {String} token
+   * @param {String} secret
+   * @param {String} verifier
+   * @return {Promise}
    */
   getOAuthAccessToken(token, secret, verifier) {
     const extraParams = {};
@@ -1117,6 +1141,9 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * Adds camel case keys to a map of parameters.
    * It adds new keys to the object tranformed from `oauth_token`
    * to `oauthToken`
+   *
+   * @param {Object} obj
+   * @return {Object}
    */
   parseMapKeys(obj) {
     Object.keys(obj).forEach((key) => this._parseParameter(key, obj));
@@ -1129,6 +1156,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    *
    * @param {String} param Key in the `settings` object.
    * @param {Object} settings Parameters.
+   * @return {Object}
    */
   _parseParameter(param, settings) {
     if (!(param in settings)) {
@@ -1183,4 +1211,3 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    */
 }
 window.customElements.define(OAuth1Authorization.is, OAuth1Authorization);
-</script>

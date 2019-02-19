@@ -1,27 +1,48 @@
 {
-  "name": "@api-components/oauth-authorization",
-  "version": "2.0.2",
   "description": "A set of elements that perform oauth authorization",
-  "license": "Apache-2.0",
-  "devDependencies": {
-    "@polymer/gen-typescript-declarations": "^1.1.1",
-    "bower": "^1.8.0"
-  },
-  "private": false,
-  "main": "outh-authorization.html",
-  "author": "The Advanced REST client authors <arc@mulesoft.com>",
-  "scripts": {
-    "lint": "node_modules/.bin/polymer lint oauth-authorization.html oauth1-authorization.html",
-    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"oauth-authorization:local-test\"",
-    "test": "node_modules/.bin/polymer test --plugin local",
-    "update-types": "gen-typescript-declarations --deleteExisting --outDir ."
-  },
+  "keywords": [
+    "web-components",
+    "polymer",
+    "oauth",
+    "oauth2",
+    "authorization"
+  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/advanced-rest-client/oauth-authorization.git"
   },
+  "name": "@api-components/oauth-authorization",
+  "version": "3.0.0-preview.1",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@polymer/gen-typescript-declarations": "^1.6.1",
+    "@polymer/iron-component-page": "^4.0.0",
+    "@polymer/iron-test-helpers": "^3.0.0",
+    "@polymer/test-fixture": "^4.0.2",
+    "@webcomponents/webcomponentsjs": "^2.0.0",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "sinon": "^7.2.3",
+    "wct-mocha": "^1.0.0",
+    "cryptojslib": "^3.1.2",
+    "jsrsasign": "^8.0.12"
+  },
+  "main": "outh-authorization.js",
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "lint": "polymer lint oauth-authorization.html oauth1-authorization.html",
+    "test-sauce": "polymer test --module-resolution=node --npm --plugin sauce --job-name \"oauth-authorization:local-test\"",
+    "test": "polymer test --module-resolution=node --npm --plugin local",
+    "update-types": "gen-typescript-declarations --deleteExisting --outDir ."
+  },
   "bugs": {
     "url": "https://github.com/advanced-rest-client/oauth-authorization/issues",
     "email": "arc@mulesoft.com"
+  },
+  "dependencies": {
+    "@advanced-rest-client/headers-parser-mixin": "^3.0.0-preview.1",
+    "@advanced-rest-client/url-parser": "^3.0.0-preview.1",
+    "@polymer/iron-meta": "^3.0.0",
+    "@polymer/polymer": "^3.0.0"
   }
 }
