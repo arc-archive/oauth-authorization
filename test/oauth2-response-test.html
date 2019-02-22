@@ -12,7 +12,6 @@
   <script src="../node_modules/sinon/pkg/sinon.js"></script>
 
   <script src="../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
-  <script type="module" src="../oauth2-authorization.js"></script>
   <!-- <link rel="import" href="../../arc-polyfills/arc-polyfills.html"> -->
 </head>
 
@@ -23,259 +22,259 @@
     </template>
   </test-fixture>
   <script type="module">
-// import '../oauth2-authorization.js';
-// jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-// jscs:disable requireDotNotation
-let popupUrl = location.href.substr(0, location.href.lastIndexOf('/')).replace('/test', '');
-popupUrl += '/oauth-popup.html';
-const testState = 'test-state';
-let popupsBlocked = false;
-function noop() {}
-suite('Implicit token', () => {
-  suite('Popup', () => {
-    suite('Error response', () => {
-      let element;
-      setup((done) => {
-        element = fixture('basic');
-        element._type = 'implicit';
-        element._state = testState;
-        element._popup = {close: noop};
-        setTimeout(done, 1000);
-      });
+  import '../oauth2-authorization.js';
+  // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+  // jscs:disable requireDotNotation
+  let popupUrl = location.href.substr(0, location.href.lastIndexOf('/')).replace('/test', '');
+  popupUrl += '/oauth-popup.html';
+  const testState = 'test-state';
+  let popupsBlocked = false;
+  function noop() {}
+  suite('Implicit token', () => {
+    suite('Popup', () => {
+      suite('Error response', () => {
+        let element;
+        setup((done) => {
+          element = fixture('basic');
+          element._type = 'implicit';
+          element._state = testState;
+          element._popup = {close: noop};
+          setTimeout(done, 1000);
+        });
 
-      test('Dispatches oauth2-error for error response', (done) => {
-        let eCode = 'test_error';
-        let eMessage = 'test message';
-        let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
-        url += 'error_description=' + encodeURIComponent(eMessage);
-        let errorFn;
-        let responseFn;
-        errorFn = function(e) {
-          element.removeEventListener('oauth2-error', errorFn);
-          element.removeEventListener('oauth2-token-response', responseFn);
-          if (e.detail.code === 'popup_blocked') {
-            popupsBlocked = true;
+        test('Dispatches oauth2-error for error response', (done) => {
+          let eCode = 'test_error';
+          let eMessage = 'test message';
+          let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
+          url += 'error_description=' + encodeURIComponent(eMessage);
+          let errorFn;
+          let responseFn;
+          errorFn = function(e) {
+            element.removeEventListener('oauth2-error', errorFn);
+            element.removeEventListener('oauth2-token-response', responseFn);
+            if (e.detail.code === 'popup_blocked') {
+              popupsBlocked = true;
+              done();
+              return;
+            }
+            assert.equal(e.detail.code, eCode);
+            assert.equal(e.detail.state, testState);
+            assert.equal(e.detail.message, eMessage);
+            done();
+          };
+          responseFn = () => {
+            element.removeEventListener('oauth2-error', errorFn);
+            element.removeEventListener('oauth2-token-response', responseFn);
+            done(new Error('oauth2-token-response should not be dispatched'));
+          };
+          element.addEventListener('oauth2-token-response', responseFn);
+          element.addEventListener('oauth2-error', errorFn);
+          element._authorize(url, {});
+        });
+
+        test('Dispatches oauth2-error for state mismatch', (done) => {
+          if (popupsBlocked) {
             done();
             return;
           }
-          assert.equal(e.detail.code, eCode);
-          assert.equal(e.detail.state, testState);
-          assert.equal(e.detail.message, eMessage);
-          done();
-        };
-        responseFn = () => {
-          element.removeEventListener('oauth2-error', errorFn);
-          element.removeEventListener('oauth2-token-response', responseFn);
-          done(new Error('oauth2-token-response should not be dispatched'));
-        };
-        element.addEventListener('oauth2-token-response', responseFn);
-        element.addEventListener('oauth2-error', errorFn);
-        element._authorize(url, {});
+          let url = popupUrl + '#state=invalid&error=&error_message=';
+          let errorFn;
+          let responseFn;
+          errorFn = function(e) {
+            element.removeEventListener('oauth2-error', errorFn);
+            element.removeEventListener('oauth2-token-response', responseFn);
+            assert.equal(e.detail.code, 'invalid_state');
+            assert.equal(e.detail.state, testState);
+            assert.equal(e.detail.message, 'Invalid state returned by the OAuth server.');
+            done();
+          };
+          responseFn = () => {
+            element.removeEventListener('oauth2-error', errorFn);
+            element.removeEventListener('oauth2-token-response', responseFn);
+            done(new Error('oauth2-token-response should not be dispatched'));
+          };
+          element.addEventListener('oauth2-error', errorFn);
+          element.addEventListener('oauth2-token-response', responseFn);
+          element._authorize(url, {});
+        });
       });
 
-      test('Dispatches oauth2-error for state mismatch', (done) => {
-        if (popupsBlocked) {
-          done();
-          return;
-        }
-        let url = popupUrl + '#state=invalid&error=&error_message=';
-        let errorFn;
-        let responseFn;
-        errorFn = function(e) {
-          element.removeEventListener('oauth2-error', errorFn);
-          element.removeEventListener('oauth2-token-response', responseFn);
-          assert.equal(e.detail.code, 'invalid_state');
-          assert.equal(e.detail.state, testState);
-          assert.equal(e.detail.message, 'Invalid state returned by the OAuth server.');
-          done();
-        };
-        responseFn = () => {
-          element.removeEventListener('oauth2-error', errorFn);
-          element.removeEventListener('oauth2-token-response', responseFn);
-          done(new Error('oauth2-token-response should not be dispatched'));
-        };
-        element.addEventListener('oauth2-error', errorFn);
-        element.addEventListener('oauth2-token-response', responseFn);
-        element._authorize(url, {});
-      });
-    });
+      suite('Token response', () => {
+        let element;
+        setup(() => {
+          element = fixture('basic');
+          element._type = 'implicit';
+          element._state = testState;
+          element._popup = {close: noop};
+        });
 
-    suite('Token response', () => {
-      let element;
-      setup(() => {
-        element = fixture('basic');
-        element._type = 'implicit';
-        element._state = testState;
-        element._popup = {close: noop};
-      });
-
-      test('Dispatches oauth2-token-response', (done) => {
-        if (popupsBlocked) {
-          done();
-          return;
-        }
-        let token = 'token1234';
-        let expiresIn = 1234;
-        let url = popupUrl + '#state=' + testState + '&access_token=';
-        url += token + '&expires_in=' + expiresIn;
-        let errorFn;
-        let responseFn;
-        errorFn = () => {
-          element.removeEventListener('oauth2-error', errorFn);
-          element.removeEventListener('oauth2-token-response', responseFn);
-          done(new Error('oauth2-error should not be dispatched'));
-        };
-
-        responseFn = function(e) {
-          element.removeEventListener('oauth2-error', errorFn);
-          element.removeEventListener('oauth2-token-response', responseFn);
-          assert.isUndefined(e.detail.code, 'code is undefined');
-          assert.equal(e.detail.accessToken, token, 'Camel case accessToken is set');
-          assert.equal(e.detail.access_token, token, 'access_token is set');
-          assert.equal(e.detail.expiresIn, expiresIn, 'Camel case expiresIn is set');
-          assert.equal(e.detail.expires_in, expiresIn, 'expires_in is set');
-          done();
-        };
-        element.addEventListener('oauth2-error', responseFn);
-        element.addEventListener('oauth2-token-response', responseFn);
-        element._authorize(url, {});
-      });
-    });
-  });
-
-  suite('non interactive', () => {
-    let settings = {
-      interactive: false
-    };
-
-    suite('Error response', () => {
-      let element;
-      setup(() => {
-        element = fixture('basic');
-        element._type = 'implicit';
-        element._state = testState;
-      });
-
-      test('Dispatches oauth2-error for error response', (done) => {
-        if (popupsBlocked) {
-          done();
-          return;
-        }
-        const eCode = 'test_error';
-        const eMessage = 'test message error no2';
-        let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
-        url += 'error_description=' + encodeURIComponent(eMessage);
-        element._authorize(url, settings);
-        element.addEventListener('oauth2-error', function clb(e) {
-          element.removeEventListener('oauth2-error', clb);
-          if (e.detail.code === 'popup_blocked') {
-            popupsBlocked = true;
+        test('Dispatches oauth2-token-response', (done) => {
+          if (popupsBlocked) {
             done();
             return;
           }
-          assert.equal(e.detail.code, eCode);
-          assert.equal(e.detail.state, testState);
-          assert.equal(e.detail.message, eMessage);
-          assert.isFalse(e.detail.interactive);
-          done();
-        });
-      });
+          let token = 'token1234';
+          let expiresIn = 1234;
+          let url = popupUrl + '#state=' + testState + '&access_token=';
+          url += token + '&expires_in=' + expiresIn;
+          let errorFn;
+          let responseFn;
+          errorFn = () => {
+            element.removeEventListener('oauth2-error', errorFn);
+            element.removeEventListener('oauth2-token-response', responseFn);
+            done(new Error('oauth2-error should not be dispatched'));
+          };
 
-      test('Do not dispatches oauth2-token-response event for error response', (done) => {
-        if (popupsBlocked) {
-          done();
-          return;
-        }
-        const eCode = 'test_error';
-        const eMessage = 'test message error no3';
-        let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
-        url += 'error_description=' + encodeURIComponent(eMessage);
-        element._authorize(url, settings);
-        let spy = sinon.spy();
-        element.addEventListener('oauth2-token-response', spy);
-        element.addEventListener('oauth2-token-response', () => {
-          debugger
-        });
-        element.addEventListener('oauth2-error', function clb(e) {
-          element.removeEventListener('oauth2-error', clb);
-          assert.isFalse(spy.called);
-          done();
-        });
-      });
-
-      test('Dispatches oauth2-error for state mismatch', (done) => {
-        const eMessage = 'test message error no4';
-        let url = popupUrl + '#state=invalid&error=&';
-        url += 'error_message=' + encodeURIComponent(eMessage);
-        element.addEventListener('oauth2-error', function clb(e) {
-          element.removeEventListener('oauth2-error', clb);
-          assert.equal(e.detail.code, 'invalid_state');
-          assert.equal(e.detail.state, testState);
-          assert.isFalse(e.detail.interactive);
-          done();
-        });
-        element._authorize(url, settings);
-      });
-
-      // test('Does not dispatches oauth2-token-response event for state mismatch', (done) => {
-      //   if (popupsBlocked) {
-      //     done();
-      //     return;
-      //   }
-      //   let url = popupUrl + '#state=invalid&error=&error_message=';
-      //   let spy = sinon.spy();
-      //   element.addEventListener('oauth2-token-response', spy);
-      //   setTimeout(() => {
-      //     assert.isFalse(spy.called);
-      //     done();
-      //   }, 800);
-      //   element._authorize(url, settings);
-      // });
-
-      test('Dispatches oauth2-token-response for lack of response', (done) => {
-        if (popupsBlocked) {
-          done();
-          return;
-        }
-        // main docs page
-        element._authorize(popupUrl.replace('oauth-popup.html', 'test/empty-popup.html'), settings);
-        element.addEventListener('oauth2-token-response', function clb(e) {
-          element.removeEventListener('oauth2-token-response', clb);
-          assert.equal(e.detail.code, 'not_authorized');
-          assert.equal(e.detail.state, testState);
-          assert.isFalse(e.detail.interactive);
-          done();
+          responseFn = function(e) {
+            element.removeEventListener('oauth2-error', errorFn);
+            element.removeEventListener('oauth2-token-response', responseFn);
+            assert.isUndefined(e.detail.code, 'code is undefined');
+            assert.equal(e.detail.accessToken, token, 'Camel case accessToken is set');
+            assert.equal(e.detail.access_token, token, 'access_token is set');
+            assert.equal(e.detail.expiresIn, expiresIn, 'Camel case expiresIn is set');
+            assert.equal(e.detail.expires_in, expiresIn, 'expires_in is set');
+            done();
+          };
+          element.addEventListener('oauth2-error', responseFn);
+          element.addEventListener('oauth2-token-response', responseFn);
+          element._authorize(url, {});
         });
       });
     });
 
-    suite('Token response', () => {
-      let element;
-      setup(() => {
-        element = fixture('basic');
-        element._type = 'implicit';
-        element._state = testState;
+    suite('non interactive', () => {
+      let settings = {
+        interactive: false
+      };
+
+      suite('Error response', () => {
+        let element;
+        setup(() => {
+          element = fixture('basic');
+          element._type = 'implicit';
+          element._state = testState;
+        });
+
+        test('Dispatches oauth2-error for error response', (done) => {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
+          const eCode = 'test_error';
+          const eMessage = 'test message error no2';
+          let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
+          url += 'error_description=' + encodeURIComponent(eMessage);
+          element._authorize(url, settings);
+          element.addEventListener('oauth2-error', function clb(e) {
+            element.removeEventListener('oauth2-error', clb);
+            if (e.detail.code === 'popup_blocked') {
+              popupsBlocked = true;
+              done();
+              return;
+            }
+            assert.equal(e.detail.code, eCode);
+            assert.equal(e.detail.state, testState);
+            assert.equal(e.detail.message, eMessage);
+            assert.isFalse(e.detail.interactive);
+            done();
+          });
+        });
+
+        test('Do not dispatches oauth2-token-response event for error response', (done) => {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
+          const eCode = 'test_error';
+          const eMessage = 'test message error no3';
+          let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
+          url += 'error_description=' + encodeURIComponent(eMessage);
+          element._authorize(url, settings);
+          let spy = sinon.spy();
+          element.addEventListener('oauth2-token-response', spy);
+          element.addEventListener('oauth2-token-response', () => {
+            debugger
+          });
+          element.addEventListener('oauth2-error', function clb(e) {
+            element.removeEventListener('oauth2-error', clb);
+            assert.isFalse(spy.called);
+            done();
+          });
+        });
+
+        test('Dispatches oauth2-error for state mismatch', (done) => {
+          const eMessage = 'test message error no4';
+          let url = popupUrl + '#state=invalid&error=&';
+          url += 'error_message=' + encodeURIComponent(eMessage);
+          element.addEventListener('oauth2-error', function clb(e) {
+            element.removeEventListener('oauth2-error', clb);
+            assert.equal(e.detail.code, 'invalid_state');
+            assert.equal(e.detail.state, testState);
+            assert.isFalse(e.detail.interactive);
+            done();
+          });
+          element._authorize(url, settings);
+        });
+
+        // test('Does not dispatches oauth2-token-response event for state mismatch', (done) => {
+        //   if (popupsBlocked) {
+        //     done();
+        //     return;
+        //   }
+        //   let url = popupUrl + '#state=invalid&error=&error_message=';
+        //   let spy = sinon.spy();
+        //   element.addEventListener('oauth2-token-response', spy);
+        //   setTimeout(() => {
+        //     assert.isFalse(spy.called);
+        //     done();
+        //   }, 800);
+        //   element._authorize(url, settings);
+        // });
+
+        test('Dispatches oauth2-token-response for lack of response', (done) => {
+          if (popupsBlocked) {
+            done();
+            return;
+          }
+          // main docs page
+          element._authorize(popupUrl.replace('oauth-popup.html', 'test/empty-popup.html'), settings);
+          element.addEventListener('oauth2-token-response', function clb(e) {
+            element.removeEventListener('oauth2-token-response', clb);
+            assert.equal(e.detail.code, 'not_authorized');
+            assert.equal(e.detail.state, testState);
+            assert.isFalse(e.detail.interactive);
+            done();
+          });
+        });
       });
 
-      test('Dispatches oauth2-token-response', (done) => {
-        let token = 'token1234';
-        let expiresIn = 1234;
-        let url = popupUrl + '#state=' + testState + '&access_token=';
-        url += token + '&expires_in=' + expiresIn;
-        element.addEventListener('oauth2-token-response', function clb(e) {
-          element.removeEventListener('oauth2-token-response', clb);
-          assert.isUndefined(e.detail.code, 'code is undefined');
-          assert.equal(e.detail.accessToken, token, 'Camel case accessToken is set');
-          assert.equal(e.detail.access_token, token, 'access_token is set');
-          assert.equal(e.detail.expiresIn, expiresIn, 'Camel case expiresIn is set');
-          assert.equal(e.detail.expires_in, expiresIn, 'expires_in is set');
-          done();
+      suite('Token response', () => {
+        let element;
+        setup(() => {
+          element = fixture('basic');
+          element._type = 'implicit';
+          element._state = testState;
         });
-        element._authorize(url, settings);
+
+        test('Dispatches oauth2-token-response', (done) => {
+          let token = 'token1234';
+          let expiresIn = 1234;
+          let url = popupUrl + '#state=' + testState + '&access_token=';
+          url += token + '&expires_in=' + expiresIn;
+          element.addEventListener('oauth2-token-response', function clb(e) {
+            element.removeEventListener('oauth2-token-response', clb);
+            assert.isUndefined(e.detail.code, 'code is undefined');
+            assert.equal(e.detail.accessToken, token, 'Camel case accessToken is set');
+            assert.equal(e.detail.access_token, token, 'access_token is set');
+            assert.equal(e.detail.expiresIn, expiresIn, 'Camel case expiresIn is set');
+            assert.equal(e.detail.expires_in, expiresIn, 'expires_in is set');
+            done();
+          });
+          element._authorize(url, settings);
+        });
       });
     });
   });
-});
-</script>
+  </script>
 </body>
 </html>

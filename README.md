@@ -1,4 +1,9 @@
-[![Build Status](https://travis-ci.org/advanced-rest-client/oauth-authorization.svg?branch=stage)](https://travis-ci.org/advanced-rest-client/oauth-authorization)
+[![Published on NPM](https://img.shields.io/npm/v/@advanced-rest-client/oauth-authorization.svg)](https://www.npmjs.com/package/@advanced-rest-client/oauth-authorization)
+
+[![Build Status](https://travis-ci.org/advanced-rest-client/api-url-data-model.svg?branch=stage)](https://travis-ci.org/advanced-rest-client/oauth-authorization)
+
+[![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/advanced-rest-client/oauth-authorization)
+
 
 # OAuth authorization
 
@@ -21,10 +26,11 @@ parameters. If it fails, than it fail on the server side.
 
 ### Example
 
-```
+```html
 <outh2-authorization></outh2-authorization>
 ```
-```
+
+```javascript
 const settings = {
   type: 'implicit',
   clientId: 'CLIENT ID',
@@ -92,7 +98,7 @@ to determine cause of unsuccessful request.
 
 ### Example
 
-```
+```javascript
 const settings = {
   interactive: false,
   type: 'implicit',
@@ -173,12 +179,72 @@ under MIT licence.
 - This element uses [crypto-js](https://code.google.com/archive/p/crypto-js/) library
 distributed under BSD license.
 
+## Usage
+
+### Installation
+
+```
+npm install --save @advanced-rest-client/oauth-authorization
+```
+
+### In an html file
+
+```html
+<html>
+  <head>
+    <script type="module">
+      import '@advanced-rest-client/advanced-rest-client/oauth-authorization.js';
+    </script>
+  </head>
+  <body>
+    <oauth-authorization></oauth-authorization>
+  </body>
+</html>
+```
+
+### In a Polymer 3 element
+
+```js
+import {PolymerElement, html} from '@polymer/polymer';
+import '@advanced-rest-client/advanced-rest-client/oauth-authorization.js';
+
+class SampleElement extends PolymerElement {
+  static get template() {
+    return html`
+    <oauth-authorization content-type="application/json" value="{{body}}"></oauth-authorization>
+    `;
+  }
+}
+customElements.define('sample-element', SampleElement);
+```
+
+### Installation
+
+```sh
+git clone https://github.com/advanced-rest-client/oauth-authorization
+cd api-url-editor
+npm install
+npm install -g polymer-cli
+```
+
+### Running the demo locally
+
+```sh
+polymer serve --npm
+open http://127.0.0.1:<port>/demo/
+```
+
+### Running the tests
+```sh
+polymer test --npm
+```
+
 ## Required dependencies
 
 The `CryptoJS` and `RSAKey` libraries are not included into the element sources.
 If your project do not use this libraries already include it into your project.
 
-```
+```sh
 npm i cryptojslib jsrsasign
 ```
 

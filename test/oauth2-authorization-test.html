@@ -11,8 +11,6 @@
   <script src="../node_modules/wct-mocha/wct-mocha.js"></script>
   <script src="../node_modules/sinon/pkg/sinon.js"></script>
 
-  <script src="../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
-  <script type="module" src="../oauth2-authorization.js"></script>
 </head>
 
 <body>
@@ -22,915 +20,915 @@
     </template>
   </test-fixture>
   <script type="module">
-// import '../oauth2-authorization.js';
-// jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-// jscs:disable requireDotNotation
-function noop() {}
-function nooPromise() {
-  return Promise.resolve();
-}
-let popupsAllowed = true;
-suite('Basic', () => {
-  let element;
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  test('tokenInfo is undefined', () => {
-    assert.isUndefined(element.tokenInfo);
-  });
-
-  test('_popup is undefined', () => {
-    assert.isUndefined(element._popup);
-  });
-
-  test('_state is undefined', () => {
-    assert.isUndefined(element._state);
-  });
-});
-
-suite('_tokenRequestedHandler()', () => {
-  let element;
-  let ev = {
-    detail: {
-      a: 'test'
-    },
-    target: document.createElement('div'),
-    preventDefault: () => {},
-    stopPropagation: () => {},
-    stopImmediatePropagation: () => {}
-  };
-
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  test('Cancels the event', () => {
-    element.authorize = noop;
-    let copy = Object.assign({}, ev);
-    let stub1 = sinon.stub(copy, 'preventDefault');
-    let stub2 = sinon.stub(copy, 'stopPropagation');
-    let stub3 = sinon.stub(copy, 'stopImmediatePropagation');
-    element._tokenRequestedHandler(copy);
-    assert.isTrue(stub1.called);
-    assert.isTrue(stub2.called);
-    assert.isTrue(stub3.called);
-  });
-
-  test('Calls authorize function', () => {
-    let copy = Object.assign({}, ev);
-    let stub = sinon.stub(element, 'authorize');
-    element._tokenRequestedHandler(copy);
-    assert.isTrue(stub.called);
-  });
-
-  test('Calls authorize() with event detail', (done) => {
-    let copy = Object.assign({}, ev);
-    element.authorize = function(detail) {
-      assert.typeOf(detail, 'object');
-      assert.isTrue(detail === copy.detail);
-      done();
-    };
-    element._tokenRequestedHandler(copy);
-  });
-});
-
-suite('authorize()', () => {
-  let element;
-  suite('implicit type', () => {
-    let baseSettings = {
-      state: 'test-state',
-      type: 'implicit'
-    };
-
+  import '../oauth2-authorization.js';
+  // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+  // jscs:disable requireDotNotation
+  function noop() {}
+  function nooPromise() {
+    return Promise.resolve();
+  }
+  let popupsAllowed = true;
+  suite('Basic', () => {
+    let element;
     setup(() => {
       element = fixture('basic');
     });
 
-    test('Sets properties', () => {
-      element._constructPopupUrl = noop;
-      element._authorize = noop;
-      element.authorize(baseSettings);
-      assert.equal(element._type, 'implicit');
-      assert.equal(element._state, 'test-state');
-    });
-
-    test('Generates state if empty', () => {
-      let copy = Object.assign({}, baseSettings);
-      delete copy.state;
-      element._constructPopupUrl = noop;
-      element._authorize = noop;
-      element.authorize(copy);
-      assert.typeOf(element._state, 'string');
-    });
-
-    test('Clears tokenInfo', () => {
-      element._setTokenInfo('TEST');
-      element._constructPopupUrl = noop;
-      element._authorize = noop;
-      element.authorize(baseSettings);
+    test('tokenInfo is undefined', () => {
       assert.isUndefined(element.tokenInfo);
     });
 
-    test('Calls _constructPopupUrl()', (done) => {
-      element._authorize = noop;
-      element._constructPopupUrl = function(detail, type) {
-        assert.isTrue(detail === baseSettings);
-        assert.equal(type, 'token');
-        done();
-      };
-      element.authorize(baseSettings);
+    test('_popup is undefined', () => {
+      assert.isUndefined(element._popup);
     });
 
-    test('Calls _authorize()', (done) => {
-      element._constructPopupUrl = () => {
-        return 'TEST';
-      };
-      element._authorize = function(url, detail) {
-        assert.isTrue(detail === baseSettings);
-        assert.equal(url, 'TEST');
-        done();
-      };
-      element.authorize(baseSettings);
+    test('_state is undefined', () => {
+      assert.isUndefined(element._state);
     });
   });
 
-  suite('authorization_code type', () => {
-    let baseSettings = {
-      state: 'test-state',
-      type: 'authorization_code'
-    };
-
-    setup(() => {
-      element = fixture('basic');
-    });
-
-    test('Clears tokenInfo', () => {
-      element._setTokenInfo('TEST');
-      element._constructPopupUrl = noop;
-      element._authorize = noop;
-      element.authorize(baseSettings);
-      assert.isUndefined(element.tokenInfo);
-    });
-
-    test('Sets properties', () => {
-      element._constructPopupUrl = noop;
-      element._authorize = noop;
-      element.authorize(baseSettings);
-      assert.equal(element._type, 'authorization_code');
-      assert.equal(element._state, 'test-state');
-    });
-
-    test('Generates state if empty', () => {
-      let copy = Object.assign({}, baseSettings);
-      delete copy.state;
-      element._constructPopupUrl = noop;
-      element._authorize = noop;
-      element.authorize(copy);
-      assert.typeOf(element._state, 'string');
-    });
-
-    test('Calls _constructPopupUrl()', (done) => {
-      element._authorize = noop;
-      element._constructPopupUrl = function(detail, type) {
-        assert.isTrue(detail === baseSettings);
-        assert.equal(type, 'code');
-        done();
-      };
-      element.authorize(baseSettings);
-    });
-
-    test('Calls _authorize()', (done) => {
-      element._constructPopupUrl = () => {
-        return 'TEST';
-      };
-      element._authorize = function(url, detail) {
-        assert.isTrue(detail === baseSettings);
-        assert.equal(url, 'TEST');
-        done();
-      };
-      element.authorize(baseSettings);
-    });
-  });
-
-  suite('client_credentials type', () => {
-    let baseSettings = {
-      state: 'test-state',
-      type: 'client_credentials'
-    };
-
-    setup(() => {
-      element = fixture('basic');
-    });
-
-    test('Clears tokenInfo', () => {
-      element._setTokenInfo('TEST');
-      element._authorizeClientCredential = noop;
-      element.authorize(baseSettings);
-      assert.isUndefined(element.tokenInfo);
-    });
-
-    test('Sets properties', () => {
-      element._authorizeClientCredential = noop;
-      element.authorize(baseSettings);
-      assert.equal(element._type, 'client_credentials');
-      assert.equal(element._state, 'test-state');
-    });
-
-    test('Generates state if empty', () => {
-      let copy = Object.assign({}, baseSettings);
-      delete copy.state;
-      element._authorizeClientCredential = noop;
-      element.authorize(copy);
-      assert.typeOf(element._state, 'string');
-    });
-
-    test('Calls authorizeClientCredentials()', (done) => {
-      element.authorizeClientCredentials = function(detail) {
-        assert.isTrue(detail === baseSettings);
-        done();
-      };
-      element.authorize(baseSettings);
-    });
-  });
-
-  suite('password type', () => {
-    let baseSettings = {
-      state: 'test-state',
-      type: 'password'
-    };
-
-    setup(() => {
-      element = fixture('basic');
-    });
-
-    test('Clears tokenInfo', () => {
-      element._setTokenInfo('TEST');
-      element._authorizePassword = noop;
-      element.authorize(baseSettings);
-      assert.isUndefined(element.tokenInfo);
-    });
-
-    test('Sets properties', () => {
-      element._authorizePassword = noop;
-      element.authorize(baseSettings);
-      assert.equal(element._type, 'password');
-      assert.equal(element._state, 'test-state');
-    });
-
-    test('Generates state if empty', () => {
-      let copy = Object.assign({}, baseSettings);
-      delete copy.state;
-      element._authorizePassword = noop;
-      element.authorize(copy);
-      assert.typeOf(element._state, 'string');
-    });
-
-    test('Calls authorizePassword()', (done) => {
-      element.authorizePassword = function(detail) {
-        assert.isTrue(detail === baseSettings);
-        done();
-      };
-      element.authorize(baseSettings);
-    });
-  });
-});
-
-suite('_authorize()', () => {
-  let baseSettings = {
-    state: 'test-state',
-    type: 'any'
-  };
-  let popupUrl = 'test-url';
-  let element;
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  test('Calls _authorizePopup for interactive method', (done) => {
-    element._authorizePopup = function(url) {
-      assert.equal(url, popupUrl);
-      done();
-    };
-    element._authorize(popupUrl, baseSettings);
-  });
-
-  test('Calls _authorizePopup when interactive is set', (done) => {
-    let settings = Object.assign({
-      interactive: true
-    }, baseSettings);
-    element._authorizePopup = function(url) {
-      assert.equal(url, popupUrl);
-      done();
-    };
-    element._authorize(popupUrl, settings);
-  });
-
-  test('Calls _authorizeTokenNonInteractive when interactive is false', (done) => {
-    let settings = Object.assign({
-      interactive: false
-    }, baseSettings);
-    element._authorizeTokenNonInteractive = function(url) {
-      assert.equal(url, popupUrl);
-      done();
-    };
-    element._authorize(popupUrl, settings);
-  });
-});
-
-suite('_authorizePopup()', () => {
-  let popupUrl = '';
-  suiteSetup(() => {
-    popupUrl = location.href.substr(0, location.href.lastIndexOf('/'));
-    popupUrl += '/demo-popup.html';
-  });
-
-  let element;
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  teardown(() => {
-    if (element._popup && !element._popup.closed) {
-      element._popup.close();
-    }
-    window.focus();
-  });
-
-  test('Sets popup property (checks for popup block)', () => {
-    element._settings = {};
-    element._authorizePopup(popupUrl);
-    if (!element._popup) {
-      popupsAllowed = false;
-    }
-  });
-
-  test('Calls _beforePopupUnloadHandler when popup is closed', (done) => {
-    if (!popupsAllowed) {
-      done();
-      return;
-    }
-    element._beforePopupUnloadHandler = () => {
-      done();
-    };
-    element._state = 'test-state';
-    element._settings = {};
-    let url = popupUrl + '?autoClose=true';
-    element._authorizePopup(url);
-  });
-
-  test('Calls _popupMessageHandler() when popup send message', (done) => {
-    if (!popupsAllowed) {
-      done();
-      return;
-    }
-    element._popupMessageHandler = function(e) {
-      assert.equal(e.data.param, 'value');
-      done();
-    };
-    element._settings = {};
-    let url = popupUrl + '?auto-close=true&param=value';
-    element._authorizePopup(url);
-  });
-});
-
-suite('_authorizeTokenNonInteractive()', () => {
-  let element;
-  let iframeUrl = '';
-
-  suiteSetup(() => {
-    iframeUrl = location.href.substr(0, location.href.lastIndexOf('/'));
-    iframeUrl += '/demo-popup.html';
-  });
-
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  teardown(() => {
-    if (!element._iframe) {
-      return;
-    }
-    let frame = document.body.querySelector('iframe[data-owner="arc-oauth-authorization"]');
-    if (frame) {
-      document.body.removeChild(frame);
-    }
-  });
-
-  test('Sets _iframe property', () => {
-    element._settings = {};
-    element._authorizeTokenNonInteractive(iframeUrl);
-    assert.ok(element._iframe);
-  });
-
-  test('Appends iframe to the body', () => {
-    element._settings = {};
-    element._authorizeTokenNonInteractive(iframeUrl);
-    let frame = document.body.querySelector('iframe[data-owner="arc-oauth-authorization"]');
-    assert.ok(frame);
-  });
-
-  test('dispatches response for load error', (done) => {
-    element.addEventListener('oauth2-token-response', function clb(e) {
-      element.removeEventListener('oauth2-token-response', clb);
-      assert.isFalse(e.detail.interactive);
-      assert.equal(e.detail.code, 'not_authorized');
-      assert.equal(e.detail.state, 'test-state');
-      done();
-    });
-    element._state = 'test-state';
-    element._settings = {};
-    element._authorizeTokenNonInteractive(iframeUrl + '/test');
-  });
-});
-
-suite('_frameLoadErrorHandler()', () => {
-  let element;
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  test('dispatches response custom event', (done) => {
-    element.addEventListener('oauth2-token-response', function clb(e) {
-      element.removeEventListener('oauth2-token-response', clb);
-      assert.isFalse(e.detail.interactive);
-      assert.equal(e.detail.code, 'iframe_load_error');
-      assert.equal(e.detail.state, 'test-state');
-      done();
-    });
-    element._state = 'test-state';
-    element._frameLoadErrorHandler();
-  });
-});
-
-suite('_frameLoadHandler()', () => {
-  let element;
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  test('dispatches response custom event when token is not set', (done) => {
-    element.addEventListener('oauth2-token-response', function clb(e) {
-      element.removeEventListener('oauth2-token-response', clb);
-      assert.isFalse(e.detail.interactive);
-      assert.equal(e.detail.code, 'not_authorized');
-      assert.equal(e.detail.state, 'test-state');
-      done();
-    });
-    element._state = 'test-state';
-    element._frameLoadHandler();
-  });
-
-  test('Do not dispatches response custom event when token is set', (done) => {
-    let spy = sinon.spy();
-    element.addEventListener('oauth2-token-response', spy);
-    element._state = 'test-state';
-    element._setTokenInfo('info');
-    element._frameLoadHandler();
-    setTimeout(() => {
-      assert.isFalse(spy.called);
-      done();
-    }, 800);
-  });
-});
-
-suite('_observePopupState()', () => {
-  let element;
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  test('Calls _beforePopupUnloadHandler when popup is not set', (done) => {
-    element._beforePopupUnloadHandler = () => {
-      done();
-    };
-    element._observePopupState();
-  });
-
-  test('Calls _beforePopupUnloadHandler when popup is closed', (done) => {
-    element._beforePopupUnloadHandler = () => {
-      done();
-    };
-    element._popup = {
-      closed: true
-    };
-    element._observePopupState();
-  });
-
-  test('Clears interval', (done) => {
-    element._beforePopupUnloadHandler = () => {
-      assert.isUndefined(element.__popupCheckInterval);
-      done();
-    };
-    element._observePopupState();
-  });
-});
-
-suite('_constructPopupUrl()', () => {
-  let element;
-  suiteSetup(() => {
-    element = fixture('basic');
-  });
-  let baseSettings = {
-    authorizationUri: 'http://test.com/auth',
-    clientId: 'test client id',
-    redirectUri: 'http://test.com/redirect',
-    scopes: ['one', 'two'],
-    includeGrantedScopes: true,
-    loginHint: 'email@domain.com',
-    interactive: false
-  };
-  let defaultType = 'token';
-
-  test('Sets authorization url', () => {
-    let result = element._constructPopupUrl(baseSettings, defaultType);
-    assert.equal(result.indexOf('http://test.com/auth?'), 0);
-  });
-
-  test('Sets response_type property', () => {
-    let result = element._constructPopupUrl(baseSettings, defaultType);
-    assert.notEqual(result.indexOf('response_type=token&'), -1);
-  });
-
-  test('Sets client_id property', () => {
-    let result = element._constructPopupUrl(baseSettings, defaultType);
-    assert.notEqual(result.indexOf('client_id=test%20client%20id&'), -1);
-  });
-
-  test('Sets redirect_uri property', () => {
-    let result = element._constructPopupUrl(baseSettings, defaultType);
-    assert.notEqual(result.indexOf('redirect_uri=http%3A%2F%2Ftest.com%2Fredirect'), -1);
-  });
-
-  test('Sets scopes property', () => {
-    let result = element._constructPopupUrl(baseSettings, defaultType);
-    assert.notEqual(result.indexOf('scope=one%20two'), -1);
-  });
-
-  test('Sets state property', () => {
-    element._state = 'test state';
-    let result = element._constructPopupUrl(baseSettings, defaultType);
-    assert.notEqual(result.indexOf('state=test%20state'), -1);
-  });
-
-  test('Sets Google Oauth properties.', () => {
-    let result = element._constructPopupUrl(baseSettings, defaultType);
-    assert.notEqual(result.indexOf('include_granted_scopes=true'), -1);
-    assert.notEqual(result.indexOf('prompt=none'), -1);
-    assert.notEqual(result.indexOf('login_hint=email%40domain.com'), -1);
-  });
-
-  test('Skips redirect_uri if not set', () => {
-    let settings = Object.assign({}, baseSettings);
-    settings.redirectUri = undefined;
-    let result = element._constructPopupUrl(settings, defaultType);
-    assert.equal(result.indexOf('redirect_uri='), -1);
-  });
-
-  test('Skips scope if not set', () => {
-    let settings = Object.assign({}, baseSettings);
-    settings.scopes = undefined;
-    let result = element._constructPopupUrl(settings, defaultType);
-    assert.equal(result.indexOf('scope='), -1);
-  });
-
-  test('Skips include_granted_scopes if not set', () => {
-    let settings = Object.assign({}, baseSettings);
-    settings.includeGrantedScopes = undefined;
-    let result = element._constructPopupUrl(settings, defaultType);
-    assert.equal(result.indexOf('include_granted_scopes='), -1);
-  });
-
-  test('Skips prompt if not set', () => {
-    let settings = Object.assign({}, baseSettings);
-    settings.interactive = undefined;
-    let result = element._constructPopupUrl(settings, defaultType);
-    assert.equal(result.indexOf('prompt='), -1);
-  });
-
-  test('Skips login_hint if not set', () => {
-    let settings = Object.assign({}, baseSettings);
-    settings.loginHint = undefined;
-    let result = element._constructPopupUrl(settings, defaultType);
-    assert.equal(result.indexOf('login_hint='), -1);
-  });
-
-  test('Do not inserts "?" when auth url already contains it', () => {
-    let settings = Object.assign({}, baseSettings);
-    settings.authorizationUri = 'http://test.com/auth?custom=value';
-    let result = element._constructPopupUrl(settings, defaultType);
-    assert.equal(result.indexOf('http://test.com/auth?custom=value&response_type'), 0);
-  });
-});
-
-suite('randomString()', () => {
-  let element;
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  test('Generates string of given length', () => {
-    let result = element.randomString(1);
-    assert.typeOf(result, 'string');
-    assert.lengthOf(result, 1);
-    result = element.randomString(3);
-    assert.typeOf(result, 'string');
-    assert.lengthOf(result, 3);
-    result = element.randomString(6);
-    assert.typeOf(result, 'string');
-    assert.lengthOf(result, 6);
-    result = element.randomString(9);
-    assert.typeOf(result, 'string');
-    assert.lengthOf(result, 9);
-  });
-});
-
-suite('_computeScope()', () => {
-  let element;
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  test('Returns empty stirng for no argument', () => {
-    let result = element._computeScope();
-    assert.strictEqual(result, '');
-  });
-
-  test('Returns value for single scope', () => {
-    let result = element._computeScope(['one']);
-    assert.strictEqual(result, 'one');
-  });
-
-  test('Returns value for multiple scopes', () => {
-    let result = element._computeScope(['one', 'two']);
-    assert.strictEqual(result, 'one%20two');
-  });
-});
-
-suite('_beforePopupUnloadHandler()', () => {
-  let element;
-  setup(() => {
-    element = fixture('basic');
-  });
-
-  test('Dispatches error if popup is closed without token info', (done) => {
-    element.addEventListener('oauth2-error', function clb(e) {
-      element.removeEventListener('oauth2-error', clb);
-      assert.equal(e.detail.code, 'no_response', 'Dispatches no_response code');
-      assert.equal(e.detail.state, 'test-state', 'State is set');
-      assert.typeOf(e.detail.message, 'string', 'Message is set');
-      done();
-    });
-    element._state = 'test-state';
-    element._settings = {};
-    element._beforePopupUnloadHandler();
-  });
-
-  test('Do nothing if token info is set', () => {
-    let spy = sinon.spy();
-    element.addEventListener('oauth2-error', spy);
-    element._state = 'test-state';
-    element._settings = {};
-    element._setTokenInfo('test');
-    element._beforePopupUnloadHandler();
-    assert.isFalse(spy.called);
-  });
-
-  test('Do nothing auth type is token', () => {
-    let spy = sinon.spy();
-    element.addEventListener('oauth2-error', spy);
-    element._state = 'test-state';
-    element._setTokenInfo('test');
-    element._settings = {};
-    element._beforePopupUnloadHandler();
-    assert.isFalse(spy.called);
-  });
-});
-
-suite('_popupMessageHandler()', () => {
-  let element;
-  setup(() => {
-    element = fixture('basic');
-    element._type = 'implicit';
-    element._state = 'test-state';
-    element._popup = {
-      close: () => {},
-      closed: false
-    };
-  });
-  let eBase = {
-    data: {
-      tokenTime: 1234,
-      oauth2response: true
-    }
-  };
-  test('Reports error when state is invalid', (done) => {
-    let e = Object.assign({}, eBase);
-    e.data = Object.assign({}, e.data);
-    e.data.state = 'invalid';
-    element.addEventListener('oauth2-error', function clb(e) {
-      element.removeEventListener('oauth2-error', clb);
-      assert.equal(e.detail.code, 'invalid_state', 'Dispatches invalid_state code');
-      assert.equal(e.detail.state, 'test-state', 'State is set');
-      assert.equal(e.detail.serverState, 'invalid', 'Server state is set');
-      assert.typeOf(e.detail.message, 'string', 'Message is set');
-      done();
-    });
-    element._popupMessageHandler(e);
-  });
-
-  test('Reports error when error in response', (done) => {
-    let e = Object.assign({}, eBase);
-    e.data = Object.assign({}, e.data);
-    e.data.state = 'test-state';
-    e.data.error = 'test_error';
-    e.data.errorDescription = 'test description';
-    element.addEventListener('oauth2-error', function clb(ev) {
-      element.removeEventListener('oauth2-error', clb);
-      assert.equal(ev.detail.code, 'test_error', 'Code is set');
-      assert.equal(ev.detail.state, 'test-state', 'State is set');
-      assert.equal(ev.detail.message, e.data.errorDescription, 'Message is set');
-      done();
-    });
-    element._popupMessageHandler(e);
-  });
-
-  test('Reports token data', (done) => {
-    let e = Object.assign({}, eBase);
-    e.data = Object.assign({}, e.data);
-    e.data.state = 'test-state';
-    e.data.accessToken = 'testToken';
-    e.data.expiresIn = 3600;
-    element.addEventListener('oauth2-token-response', function clb(ev) {
-      element.removeEventListener('oauth2-token-response', clb);
-      assert.equal(ev.detail.accessToken, e.data.accessToken);
-      assert.equal(ev.detail.expiresIn, e.data.expiresIn);
-      done();
-    });
-    element._popupMessageHandler(e);
-  });
-
-  test('Sets tokenInfo property', () => {
-    let e = Object.assign({}, eBase);
-    e.data = Object.assign({}, e.data);
-    e.data.state = 'test-state';
-    e.data.accessToken = 'testToken';
-    e.data.expiresIn = 3600;
-    element._popupMessageHandler(e);
-    assert.equal(element.tokenInfo.accessToken, e.data.accessToken);
-    assert.equal(element.tokenInfo.expiresIn, e.data.expiresIn);
-  });
-
-  test('Clears the popup', () => {
-    let e = Object.assign({}, eBase);
-    e.data = Object.assign({}, e.data);
-    e.data.state = 'test-state';
-    e.data.accessToken = 'testToken';
-    let called;
-    element._popup = {
-      close: () => {
-        called = true;
-      }
-    };
-    element._popupMessageHandler(e);
-    assert.isTrue(called);
-    assert.isUndefined(element._popup);
-  });
-
-  test('Sets _exchangeCodeValue', () => {
-    let e = Object.assign({}, eBase);
-    e.data = Object.assign({}, e.data);
-    e.data.state = 'test-state';
-    e.data.code = 'testCode';
-    element._type = 'authorization_code';
-    element._exchangeCode = nooPromise;
-    element._popupMessageHandler(e);
-    assert.equal(element._exchangeCodeValue, e.data.code);
-  });
-
-  test('Calls _exchangeCode()', (done) => {
-    let e = Object.assign({}, eBase);
-    e.data = Object.assign({}, e.data);
-    e.data.state = 'test-state';
-    e.data.code = 'testCode';
-    element._type = 'authorization_code';
-    element._exchangeCode = function(code) {
-      assert.equal(code, e.data.code);
-      done();
-    };
-    element._popupMessageHandler(e);
-  });
-});
-
-suite('_camel()', () => {
-  let element;
-  suiteSetup(() => {
-    element = fixture('basic');
-  });
-
-  test('Renturns undefined if not changed', () => {
-    let result = element._camel('noop');
-    assert.isUndefined(result);
-  });
-
-  test('Renturns camel cased wirh "-"', () => {
-    let result = element._camel('property-name-item');
-    assert.equal(result, 'propertyNameItem');
-  });
-
-  test('Renturns camel cased wirh "_"', () => {
-    let result = element._camel('property_name_item');
-    assert.equal(result, 'propertyNameItem');
-  });
-});
-
-suite('Custom OAuth data', () => {
-  let element;
-  let params = {
-    type: 'custom_grant',
-    clientId: 'test',
-    clientSecret: 'test',
-    authorizationUri: 'https://auth.domain.com',
-    username: 'user-test',
-    password: 'pass-test' + Date.now(),
-    customData: {
-      auth: {
-        parameters: [{
-          name: 'aqp1',
-          value: 'aqpv1'
-        }]
+  suite('_tokenRequestedHandler()', () => {
+    let element;
+    let ev = {
+      detail: {
+        a: 'test'
       },
-      token: {
-        parameters: [{
-          name: 'tqp1',
-          value: 'tqpv1'
-        }],
-        headers: [{
-          name: 'th1',
-          value: 'thv1'
-        }],
-        body: [{
-          name: 'tb1',
-          value: 'tbv1'
-        }]
-      }
-    }
-  };
-  suiteSetup(() => {
-    element = fixture('basic');
-    element._settting = params;
-    element._state = 'test-state';
+      target: document.createElement('div'),
+      preventDefault: () => {},
+      stopPropagation: () => {},
+      stopImmediatePropagation: () => {}
+    };
+
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    test('Cancels the event', () => {
+      element.authorize = noop;
+      let copy = Object.assign({}, ev);
+      let stub1 = sinon.stub(copy, 'preventDefault');
+      let stub2 = sinon.stub(copy, 'stopPropagation');
+      let stub3 = sinon.stub(copy, 'stopImmediatePropagation');
+      element._tokenRequestedHandler(copy);
+      assert.isTrue(stub1.called);
+      assert.isTrue(stub2.called);
+      assert.isTrue(stub3.called);
+    });
+
+    test('Calls authorize function', () => {
+      let copy = Object.assign({}, ev);
+      let stub = sinon.stub(element, 'authorize');
+      element._tokenRequestedHandler(copy);
+      assert.isTrue(stub.called);
+    });
+
+    test('Calls authorize() with event detail', (done) => {
+      let copy = Object.assign({}, ev);
+      element.authorize = function(detail) {
+        assert.typeOf(detail, 'object');
+        assert.isTrue(detail === copy.detail);
+        done();
+      };
+      element._tokenRequestedHandler(copy);
+    });
   });
 
-  suite('_applyCustomSettingsQuery()', () => {
-    test('returns a string', () => {
-      let result = element._applyCustomSettingsQuery('', params.customData.auth);
-      assert.typeOf(result, 'string');
+  suite('authorize()', () => {
+    let element;
+    suite('implicit type', () => {
+      let baseSettings = {
+        state: 'test-state',
+        type: 'implicit'
+      };
+
+      setup(() => {
+        element = fixture('basic');
+      });
+
+      test('Sets properties', () => {
+        element._constructPopupUrl = noop;
+        element._authorize = noop;
+        element.authorize(baseSettings);
+        assert.equal(element._type, 'implicit');
+        assert.equal(element._state, 'test-state');
+      });
+
+      test('Generates state if empty', () => {
+        let copy = Object.assign({}, baseSettings);
+        delete copy.state;
+        element._constructPopupUrl = noop;
+        element._authorize = noop;
+        element.authorize(copy);
+        assert.typeOf(element._state, 'string');
+      });
+
+      test('Clears tokenInfo', () => {
+        element._setTokenInfo('TEST');
+        element._constructPopupUrl = noop;
+        element._authorize = noop;
+        element.authorize(baseSettings);
+        assert.isUndefined(element.tokenInfo);
+      });
+
+      test('Calls _constructPopupUrl()', (done) => {
+        element._authorize = noop;
+        element._constructPopupUrl = function(detail, type) {
+          assert.isTrue(detail === baseSettings);
+          assert.equal(type, 'token');
+          done();
+        };
+        element.authorize(baseSettings);
+      });
+
+      test('Calls _authorize()', (done) => {
+        element._constructPopupUrl = () => {
+          return 'TEST';
+        };
+        element._authorize = function(url, detail) {
+          assert.isTrue(detail === baseSettings);
+          assert.equal(url, 'TEST');
+          done();
+        };
+        element.authorize(baseSettings);
+      });
     });
 
-    test('returns the same string when no settings', () => {
-      let result = element._applyCustomSettingsQuery('', {});
-      assert.equal(result, '');
+    suite('authorization_code type', () => {
+      let baseSettings = {
+        state: 'test-state',
+        type: 'authorization_code'
+      };
+
+      setup(() => {
+        element = fixture('basic');
+      });
+
+      test('Clears tokenInfo', () => {
+        element._setTokenInfo('TEST');
+        element._constructPopupUrl = noop;
+        element._authorize = noop;
+        element.authorize(baseSettings);
+        assert.isUndefined(element.tokenInfo);
+      });
+
+      test('Sets properties', () => {
+        element._constructPopupUrl = noop;
+        element._authorize = noop;
+        element.authorize(baseSettings);
+        assert.equal(element._type, 'authorization_code');
+        assert.equal(element._state, 'test-state');
+      });
+
+      test('Generates state if empty', () => {
+        let copy = Object.assign({}, baseSettings);
+        delete copy.state;
+        element._constructPopupUrl = noop;
+        element._authorize = noop;
+        element.authorize(copy);
+        assert.typeOf(element._state, 'string');
+      });
+
+      test('Calls _constructPopupUrl()', (done) => {
+        element._authorize = noop;
+        element._constructPopupUrl = function(detail, type) {
+          assert.isTrue(detail === baseSettings);
+          assert.equal(type, 'code');
+          done();
+        };
+        element.authorize(baseSettings);
+      });
+
+      test('Calls _authorize()', (done) => {
+        element._constructPopupUrl = () => {
+          return 'TEST';
+        };
+        element._authorize = function(url, detail) {
+          assert.isTrue(detail === baseSettings);
+          assert.equal(url, 'TEST');
+          done();
+        };
+        element.authorize(baseSettings);
+      });
     });
 
-    test('returns params in query string.', () => {
-      let result = element._applyCustomSettingsQuery('', params.customData.auth);
-      assert.equal(result, '?aqp1=aqpv1');
+    suite('client_credentials type', () => {
+      let baseSettings = {
+        state: 'test-state',
+        type: 'client_credentials'
+      };
+
+      setup(() => {
+        element = fixture('basic');
+      });
+
+      test('Clears tokenInfo', () => {
+        element._setTokenInfo('TEST');
+        element._authorizeClientCredential = noop;
+        element.authorize(baseSettings);
+        assert.isUndefined(element.tokenInfo);
+      });
+
+      test('Sets properties', () => {
+        element._authorizeClientCredential = noop;
+        element.authorize(baseSettings);
+        assert.equal(element._type, 'client_credentials');
+        assert.equal(element._state, 'test-state');
+      });
+
+      test('Generates state if empty', () => {
+        let copy = Object.assign({}, baseSettings);
+        delete copy.state;
+        element._authorizeClientCredential = noop;
+        element.authorize(copy);
+        assert.typeOf(element._state, 'string');
+      });
+
+      test('Calls authorizeClientCredentials()', (done) => {
+        element.authorizeClientCredentials = function(detail) {
+          assert.isTrue(detail === baseSettings);
+          done();
+        };
+        element.authorize(baseSettings);
+      });
+    });
+
+    suite('password type', () => {
+      let baseSettings = {
+        state: 'test-state',
+        type: 'password'
+      };
+
+      setup(() => {
+        element = fixture('basic');
+      });
+
+      test('Clears tokenInfo', () => {
+        element._setTokenInfo('TEST');
+        element._authorizePassword = noop;
+        element.authorize(baseSettings);
+        assert.isUndefined(element.tokenInfo);
+      });
+
+      test('Sets properties', () => {
+        element._authorizePassword = noop;
+        element.authorize(baseSettings);
+        assert.equal(element._type, 'password');
+        assert.equal(element._state, 'test-state');
+      });
+
+      test('Generates state if empty', () => {
+        let copy = Object.assign({}, baseSettings);
+        delete copy.state;
+        element._authorizePassword = noop;
+        element.authorize(copy);
+        assert.typeOf(element._state, 'string');
+      });
+
+      test('Calls authorizePassword()', (done) => {
+        element.authorizePassword = function(detail) {
+          assert.isTrue(detail === baseSettings);
+          done();
+        };
+        element.authorize(baseSettings);
+      });
+    });
+  });
+
+  suite('_authorize()', () => {
+    let baseSettings = {
+      state: 'test-state',
+      type: 'any'
+    };
+    let popupUrl = 'test-url';
+    let element;
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    test('Calls _authorizePopup for interactive method', (done) => {
+      element._authorizePopup = function(url) {
+        assert.equal(url, popupUrl);
+        done();
+      };
+      element._authorize(popupUrl, baseSettings);
+    });
+
+    test('Calls _authorizePopup when interactive is set', (done) => {
+      let settings = Object.assign({
+        interactive: true
+      }, baseSettings);
+      element._authorizePopup = function(url) {
+        assert.equal(url, popupUrl);
+        done();
+      };
+      element._authorize(popupUrl, settings);
+    });
+
+    test('Calls _authorizeTokenNonInteractive when interactive is false', (done) => {
+      let settings = Object.assign({
+        interactive: false
+      }, baseSettings);
+      element._authorizeTokenNonInteractive = function(url) {
+        assert.equal(url, popupUrl);
+        done();
+      };
+      element._authorize(popupUrl, settings);
+    });
+  });
+
+  suite('_authorizePopup()', () => {
+    let popupUrl = '';
+    suiteSetup(() => {
+      popupUrl = location.href.substr(0, location.href.lastIndexOf('/'));
+      popupUrl += '/demo-popup.html';
+    });
+
+    let element;
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    teardown(() => {
+      if (element._popup && !element._popup.closed) {
+        element._popup.close();
+      }
+      window.focus();
+    });
+
+    test('Sets popup property (checks for popup block)', () => {
+      element._settings = {};
+      element._authorizePopup(popupUrl);
+      if (!element._popup) {
+        popupsAllowed = false;
+      }
+    });
+
+    test('Calls _beforePopupUnloadHandler when popup is closed', (done) => {
+      if (!popupsAllowed) {
+        done();
+        return;
+      }
+      element._beforePopupUnloadHandler = () => {
+        done();
+      };
+      element._state = 'test-state';
+      element._settings = {};
+      let url = popupUrl + '?autoClose=true';
+      element._authorizePopup(url);
+    });
+
+    test('Calls _popupMessageHandler() when popup send message', (done) => {
+      if (!popupsAllowed) {
+        done();
+        return;
+      }
+      element._popupMessageHandler = function(e) {
+        assert.equal(e.data.param, 'value');
+        done();
+      };
+      element._settings = {};
+      let url = popupUrl + '?auto-close=true&param=value';
+      element._authorizePopup(url);
+    });
+  });
+
+  suite('_authorizeTokenNonInteractive()', () => {
+    let element;
+    let iframeUrl = '';
+
+    suiteSetup(() => {
+      iframeUrl = location.href.substr(0, location.href.lastIndexOf('/'));
+      iframeUrl += '/demo-popup.html';
+    });
+
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    teardown(() => {
+      if (!element._iframe) {
+        return;
+      }
+      let frame = document.body.querySelector('iframe[data-owner="arc-oauth-authorization"]');
+      if (frame) {
+        document.body.removeChild(frame);
+      }
+    });
+
+    test('Sets _iframe property', () => {
+      element._settings = {};
+      element._authorizeTokenNonInteractive(iframeUrl);
+      assert.ok(element._iframe);
+    });
+
+    test('Appends iframe to the body', () => {
+      element._settings = {};
+      element._authorizeTokenNonInteractive(iframeUrl);
+      let frame = document.body.querySelector('iframe[data-owner="arc-oauth-authorization"]');
+      assert.ok(frame);
+    });
+
+    test('dispatches response for load error', (done) => {
+      element.addEventListener('oauth2-token-response', function clb(e) {
+        element.removeEventListener('oauth2-token-response', clb);
+        assert.isFalse(e.detail.interactive);
+        assert.equal(e.detail.code, 'not_authorized');
+        assert.equal(e.detail.state, 'test-state');
+        done();
+      });
+      element._state = 'test-state';
+      element._settings = {};
+      element._authorizeTokenNonInteractive(iframeUrl + '/test');
+    });
+  });
+
+  suite('_frameLoadErrorHandler()', () => {
+    let element;
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    test('dispatches response custom event', (done) => {
+      element.addEventListener('oauth2-token-response', function clb(e) {
+        element.removeEventListener('oauth2-token-response', clb);
+        assert.isFalse(e.detail.interactive);
+        assert.equal(e.detail.code, 'iframe_load_error');
+        assert.equal(e.detail.state, 'test-state');
+        done();
+      });
+      element._state = 'test-state';
+      element._frameLoadErrorHandler();
+    });
+  });
+
+  suite('_frameLoadHandler()', () => {
+    let element;
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    test('dispatches response custom event when token is not set', (done) => {
+      element.addEventListener('oauth2-token-response', function clb(e) {
+        element.removeEventListener('oauth2-token-response', clb);
+        assert.isFalse(e.detail.interactive);
+        assert.equal(e.detail.code, 'not_authorized');
+        assert.equal(e.detail.state, 'test-state');
+        done();
+      });
+      element._state = 'test-state';
+      element._frameLoadHandler();
+    });
+
+    test('Do not dispatches response custom event when token is set', (done) => {
+      let spy = sinon.spy();
+      element.addEventListener('oauth2-token-response', spy);
+      element._state = 'test-state';
+      element._setTokenInfo('info');
+      element._frameLoadHandler();
+      setTimeout(() => {
+        assert.isFalse(spy.called);
+        done();
+      }, 800);
+    });
+  });
+
+  suite('_observePopupState()', () => {
+    let element;
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    test('Calls _beforePopupUnloadHandler when popup is not set', (done) => {
+      element._beforePopupUnloadHandler = () => {
+        done();
+      };
+      element._observePopupState();
+    });
+
+    test('Calls _beforePopupUnloadHandler when popup is closed', (done) => {
+      element._beforePopupUnloadHandler = () => {
+        done();
+      };
+      element._popup = {
+        closed: true
+      };
+      element._observePopupState();
+    });
+
+    test('Clears interval', (done) => {
+      element._beforePopupUnloadHandler = () => {
+        assert.isUndefined(element.__popupCheckInterval);
+        done();
+      };
+      element._observePopupState();
     });
   });
 
   suite('_constructPopupUrl()', () => {
-    test('Applies params to the url for implicit type', () => {
-      let result = element._constructPopupUrl(params, 'token');
-      let compare = 'https://auth.domain.com?response_type=token&client_id=';
-      compare += 'test&state=test-state&aqp1=aqpv1';
-      assert.equal(result, compare);
+    let element;
+    suiteSetup(() => {
+      element = fixture('basic');
     });
-    test('Applies params to the url for authorization_code type', () => {
-      let result = element._constructPopupUrl(params, 'code');
-      let compare = 'https://auth.domain.com?response_type=code&client_id=';
-      compare += 'test&state=test-state&tqp1=tqpv1';
-      assert.equal(result, compare);
+    let baseSettings = {
+      authorizationUri: 'http://test.com/auth',
+      clientId: 'test client id',
+      redirectUri: 'http://test.com/redirect',
+      scopes: ['one', 'two'],
+      includeGrantedScopes: true,
+      loginHint: 'email@domain.com',
+      interactive: false
+    };
+    let defaultType = 'token';
+
+    test('Sets authorization url', () => {
+      let result = element._constructPopupUrl(baseSettings, defaultType);
+      assert.equal(result.indexOf('http://test.com/auth?'), 0);
+    });
+
+    test('Sets response_type property', () => {
+      let result = element._constructPopupUrl(baseSettings, defaultType);
+      assert.notEqual(result.indexOf('response_type=token&'), -1);
+    });
+
+    test('Sets client_id property', () => {
+      let result = element._constructPopupUrl(baseSettings, defaultType);
+      assert.notEqual(result.indexOf('client_id=test%20client%20id&'), -1);
+    });
+
+    test('Sets redirect_uri property', () => {
+      let result = element._constructPopupUrl(baseSettings, defaultType);
+      assert.notEqual(result.indexOf('redirect_uri=http%3A%2F%2Ftest.com%2Fredirect'), -1);
+    });
+
+    test('Sets scopes property', () => {
+      let result = element._constructPopupUrl(baseSettings, defaultType);
+      assert.notEqual(result.indexOf('scope=one%20two'), -1);
+    });
+
+    test('Sets state property', () => {
+      element._state = 'test state';
+      let result = element._constructPopupUrl(baseSettings, defaultType);
+      assert.notEqual(result.indexOf('state=test%20state'), -1);
+    });
+
+    test('Sets Google Oauth properties.', () => {
+      let result = element._constructPopupUrl(baseSettings, defaultType);
+      assert.notEqual(result.indexOf('include_granted_scopes=true'), -1);
+      assert.notEqual(result.indexOf('prompt=none'), -1);
+      assert.notEqual(result.indexOf('login_hint=email%40domain.com'), -1);
+    });
+
+    test('Skips redirect_uri if not set', () => {
+      let settings = Object.assign({}, baseSettings);
+      settings.redirectUri = undefined;
+      let result = element._constructPopupUrl(settings, defaultType);
+      assert.equal(result.indexOf('redirect_uri='), -1);
+    });
+
+    test('Skips scope if not set', () => {
+      let settings = Object.assign({}, baseSettings);
+      settings.scopes = undefined;
+      let result = element._constructPopupUrl(settings, defaultType);
+      assert.equal(result.indexOf('scope='), -1);
+    });
+
+    test('Skips include_granted_scopes if not set', () => {
+      let settings = Object.assign({}, baseSettings);
+      settings.includeGrantedScopes = undefined;
+      let result = element._constructPopupUrl(settings, defaultType);
+      assert.equal(result.indexOf('include_granted_scopes='), -1);
+    });
+
+    test('Skips prompt if not set', () => {
+      let settings = Object.assign({}, baseSettings);
+      settings.interactive = undefined;
+      let result = element._constructPopupUrl(settings, defaultType);
+      assert.equal(result.indexOf('prompt='), -1);
+    });
+
+    test('Skips login_hint if not set', () => {
+      let settings = Object.assign({}, baseSettings);
+      settings.loginHint = undefined;
+      let result = element._constructPopupUrl(settings, defaultType);
+      assert.equal(result.indexOf('login_hint='), -1);
+    });
+
+    test('Do not inserts "?" when auth url already contains it', () => {
+      let settings = Object.assign({}, baseSettings);
+      settings.authorizationUri = 'http://test.com/auth?custom=value';
+      let result = element._constructPopupUrl(settings, defaultType);
+      assert.equal(result.indexOf('http://test.com/auth?custom=value&response_type'), 0);
     });
   });
 
-  suite('_applyCustomSettingsBody()', () => {
-    test('returns a string', () => {
-      let result = element._applyCustomSettingsBody('', params.customData);
+  suite('randomString()', () => {
+    let element;
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    test('Generates string of given length', () => {
+      let result = element.randomString(1);
       assert.typeOf(result, 'string');
-    });
-
-    test('returns the same string when no settings', () => {
-      let result = element._applyCustomSettingsBody('', {});
-      assert.equal(result, '');
-    });
-
-    test('returns params in query string.', () => {
-      let result = element._applyCustomSettingsBody('', params.customData);
-      assert.equal(result, '&tb1=tbv1');
+      assert.lengthOf(result, 1);
+      result = element.randomString(3);
+      assert.typeOf(result, 'string');
+      assert.lengthOf(result, 3);
+      result = element.randomString(6);
+      assert.typeOf(result, 'string');
+      assert.lengthOf(result, 6);
+      result = element.randomString(9);
+      assert.typeOf(result, 'string');
+      assert.lengthOf(result, 9);
     });
   });
-});
-</script>
+
+  suite('_computeScope()', () => {
+    let element;
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    test('Returns empty stirng for no argument', () => {
+      let result = element._computeScope();
+      assert.strictEqual(result, '');
+    });
+
+    test('Returns value for single scope', () => {
+      let result = element._computeScope(['one']);
+      assert.strictEqual(result, 'one');
+    });
+
+    test('Returns value for multiple scopes', () => {
+      let result = element._computeScope(['one', 'two']);
+      assert.strictEqual(result, 'one%20two');
+    });
+  });
+
+  suite('_beforePopupUnloadHandler()', () => {
+    let element;
+    setup(() => {
+      element = fixture('basic');
+    });
+
+    test('Dispatches error if popup is closed without token info', (done) => {
+      element.addEventListener('oauth2-error', function clb(e) {
+        element.removeEventListener('oauth2-error', clb);
+        assert.equal(e.detail.code, 'no_response', 'Dispatches no_response code');
+        assert.equal(e.detail.state, 'test-state', 'State is set');
+        assert.typeOf(e.detail.message, 'string', 'Message is set');
+        done();
+      });
+      element._state = 'test-state';
+      element._settings = {};
+      element._beforePopupUnloadHandler();
+    });
+
+    test('Do nothing if token info is set', () => {
+      let spy = sinon.spy();
+      element.addEventListener('oauth2-error', spy);
+      element._state = 'test-state';
+      element._settings = {};
+      element._setTokenInfo('test');
+      element._beforePopupUnloadHandler();
+      assert.isFalse(spy.called);
+    });
+
+    test('Do nothing auth type is token', () => {
+      let spy = sinon.spy();
+      element.addEventListener('oauth2-error', spy);
+      element._state = 'test-state';
+      element._setTokenInfo('test');
+      element._settings = {};
+      element._beforePopupUnloadHandler();
+      assert.isFalse(spy.called);
+    });
+  });
+
+  suite('_popupMessageHandler()', () => {
+    let element;
+    setup(() => {
+      element = fixture('basic');
+      element._type = 'implicit';
+      element._state = 'test-state';
+      element._popup = {
+        close: () => {},
+        closed: false
+      };
+    });
+    let eBase = {
+      data: {
+        tokenTime: 1234,
+        oauth2response: true
+      }
+    };
+    test('Reports error when state is invalid', (done) => {
+      let e = Object.assign({}, eBase);
+      e.data = Object.assign({}, e.data);
+      e.data.state = 'invalid';
+      element.addEventListener('oauth2-error', function clb(e) {
+        element.removeEventListener('oauth2-error', clb);
+        assert.equal(e.detail.code, 'invalid_state', 'Dispatches invalid_state code');
+        assert.equal(e.detail.state, 'test-state', 'State is set');
+        assert.equal(e.detail.serverState, 'invalid', 'Server state is set');
+        assert.typeOf(e.detail.message, 'string', 'Message is set');
+        done();
+      });
+      element._popupMessageHandler(e);
+    });
+
+    test('Reports error when error in response', (done) => {
+      let e = Object.assign({}, eBase);
+      e.data = Object.assign({}, e.data);
+      e.data.state = 'test-state';
+      e.data.error = 'test_error';
+      e.data.errorDescription = 'test description';
+      element.addEventListener('oauth2-error', function clb(ev) {
+        element.removeEventListener('oauth2-error', clb);
+        assert.equal(ev.detail.code, 'test_error', 'Code is set');
+        assert.equal(ev.detail.state, 'test-state', 'State is set');
+        assert.equal(ev.detail.message, e.data.errorDescription, 'Message is set');
+        done();
+      });
+      element._popupMessageHandler(e);
+    });
+
+    test('Reports token data', (done) => {
+      let e = Object.assign({}, eBase);
+      e.data = Object.assign({}, e.data);
+      e.data.state = 'test-state';
+      e.data.accessToken = 'testToken';
+      e.data.expiresIn = 3600;
+      element.addEventListener('oauth2-token-response', function clb(ev) {
+        element.removeEventListener('oauth2-token-response', clb);
+        assert.equal(ev.detail.accessToken, e.data.accessToken);
+        assert.equal(ev.detail.expiresIn, e.data.expiresIn);
+        done();
+      });
+      element._popupMessageHandler(e);
+    });
+
+    test('Sets tokenInfo property', () => {
+      let e = Object.assign({}, eBase);
+      e.data = Object.assign({}, e.data);
+      e.data.state = 'test-state';
+      e.data.accessToken = 'testToken';
+      e.data.expiresIn = 3600;
+      element._popupMessageHandler(e);
+      assert.equal(element.tokenInfo.accessToken, e.data.accessToken);
+      assert.equal(element.tokenInfo.expiresIn, e.data.expiresIn);
+    });
+
+    test('Clears the popup', () => {
+      let e = Object.assign({}, eBase);
+      e.data = Object.assign({}, e.data);
+      e.data.state = 'test-state';
+      e.data.accessToken = 'testToken';
+      let called;
+      element._popup = {
+        close: () => {
+          called = true;
+        }
+      };
+      element._popupMessageHandler(e);
+      assert.isTrue(called);
+      assert.isUndefined(element._popup);
+    });
+
+    test('Sets _exchangeCodeValue', () => {
+      let e = Object.assign({}, eBase);
+      e.data = Object.assign({}, e.data);
+      e.data.state = 'test-state';
+      e.data.code = 'testCode';
+      element._type = 'authorization_code';
+      element._exchangeCode = nooPromise;
+      element._popupMessageHandler(e);
+      assert.equal(element._exchangeCodeValue, e.data.code);
+    });
+
+    test('Calls _exchangeCode()', (done) => {
+      let e = Object.assign({}, eBase);
+      e.data = Object.assign({}, e.data);
+      e.data.state = 'test-state';
+      e.data.code = 'testCode';
+      element._type = 'authorization_code';
+      element._exchangeCode = function(code) {
+        assert.equal(code, e.data.code);
+        done();
+      };
+      element._popupMessageHandler(e);
+    });
+  });
+
+  suite('_camel()', () => {
+    let element;
+    suiteSetup(() => {
+      element = fixture('basic');
+    });
+
+    test('Renturns undefined if not changed', () => {
+      let result = element._camel('noop');
+      assert.isUndefined(result);
+    });
+
+    test('Renturns camel cased wirh "-"', () => {
+      let result = element._camel('property-name-item');
+      assert.equal(result, 'propertyNameItem');
+    });
+
+    test('Renturns camel cased wirh "_"', () => {
+      let result = element._camel('property_name_item');
+      assert.equal(result, 'propertyNameItem');
+    });
+  });
+
+  suite('Custom OAuth data', () => {
+    let element;
+    let params = {
+      type: 'custom_grant',
+      clientId: 'test',
+      clientSecret: 'test',
+      authorizationUri: 'https://auth.domain.com',
+      username: 'user-test',
+      password: 'pass-test' + Date.now(),
+      customData: {
+        auth: {
+          parameters: [{
+            name: 'aqp1',
+            value: 'aqpv1'
+          }]
+        },
+        token: {
+          parameters: [{
+            name: 'tqp1',
+            value: 'tqpv1'
+          }],
+          headers: [{
+            name: 'th1',
+            value: 'thv1'
+          }],
+          body: [{
+            name: 'tb1',
+            value: 'tbv1'
+          }]
+        }
+      }
+    };
+    suiteSetup(() => {
+      element = fixture('basic');
+      element._settting = params;
+      element._state = 'test-state';
+    });
+
+    suite('_applyCustomSettingsQuery()', () => {
+      test('returns a string', () => {
+        let result = element._applyCustomSettingsQuery('', params.customData.auth);
+        assert.typeOf(result, 'string');
+      });
+
+      test('returns the same string when no settings', () => {
+        let result = element._applyCustomSettingsQuery('', {});
+        assert.equal(result, '');
+      });
+
+      test('returns params in query string.', () => {
+        let result = element._applyCustomSettingsQuery('', params.customData.auth);
+        assert.equal(result, '?aqp1=aqpv1');
+      });
+    });
+
+    suite('_constructPopupUrl()', () => {
+      test('Applies params to the url for implicit type', () => {
+        let result = element._constructPopupUrl(params, 'token');
+        let compare = 'https://auth.domain.com?response_type=token&client_id=';
+        compare += 'test&state=test-state&aqp1=aqpv1';
+        assert.equal(result, compare);
+      });
+      test('Applies params to the url for authorization_code type', () => {
+        let result = element._constructPopupUrl(params, 'code');
+        let compare = 'https://auth.domain.com?response_type=code&client_id=';
+        compare += 'test&state=test-state&tqp1=tqpv1';
+        assert.equal(result, compare);
+      });
+    });
+
+    suite('_applyCustomSettingsBody()', () => {
+      test('returns a string', () => {
+        let result = element._applyCustomSettingsBody('', params.customData);
+        assert.typeOf(result, 'string');
+      });
+
+      test('returns the same string when no settings', () => {
+        let result = element._applyCustomSettingsBody('', {});
+        assert.equal(result, '');
+      });
+
+      test('returns params in query string.', () => {
+        let result = element._applyCustomSettingsBody('', params.customData);
+        assert.equal(result, '&tb1=tbv1');
+      });
+    });
+  });
+  </script>
 </body>
 </html>
