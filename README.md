@@ -148,7 +148,7 @@ property.
 | Property | Type | Description |
 | ----------------|-------------|---------- |
 | `signatureMethod` | `String` | One of `PLAINTEXT`, `HMAC-SHA1`, `RSA-SHA1` |
-| `requestTokenUrl` | `String` | Token request URI. Optional for before request. Required for authorization |
+| `requestTokenUri` | `String` | Token request URI. Optional for before request. Required for authorization |
 | `accessTokenUri` | `String` | Access token request URI. Optional for before request. Required for authorization |
 | `authorizationUri` | `String` | User dialog URL. |
 | `consumerKey` | `String` | Consumer key to be used to generate the signature. Optional for before request. |

@@ -42,7 +42,7 @@ property.
 | Property | Type | Description |
 | ----------------|-------------|---------- |
 | `signatureMethod` | `String` | One of `PLAINTEXT`, `HMAC-SHA1`, `RSA-SHA1` |
-| `requestTokenUrl` | `String` | Token request URI. Optional for before request. Required for authorization |
+| `requestTokenUri` | `String` | Token request URI. Optional for before request. Required for authorization |
 | `accessTokenUri` | `String` | Access token request URI. Optional for before request. Required for authorization |
 | `authorizationUri` | `String` | User dialog URL. |
 | `consumerKey` | `String` | Consumer key to be used to generate the signature. Optional for before request. |
@@ -125,7 +125,7 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
       /**
        * OAuth 1 token authorization endpoint.
        */
-      requestTokenUrl: String,
+      requestTokenUri: String,
       /**
        * Oauth 1 token exchange endpoint
        */
@@ -332,8 +332,8 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
       }
       this.signatureMethod = signMethod;
     }
-    if (params.requestTokenUrl) {
-      this.requestTokenUrl = params.requestTokenUrl;
+    if (params.requestTokenUri) {
+      this.requestTokenUri = params.requestTokenUri;
     }
     if (params.accessTokenUri) {
       this.accessTokenUri = params.accessTokenUri;
@@ -1020,7 +1020,7 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
       extraParams.oauth_callback = this._authorizeCallback;
     }
     const method = this.authTokenMethod;
-    return this._performRequest(null, null, method, this.requestTokenUrl, extraParams)
+    return this._performRequest(null, null, method, this.requestTokenUri, extraParams)
     .then((response) => {
       if (!response.response) {
         let message = 'Couldn\'t request for authorization token. ';

@@ -57,7 +57,7 @@
         element = fixture('basic');
         settings = {
           signatureMethod: 'RSA-SHA1',
-          requestTokenUrl: 'http://request-token-url.com/',
+          requestTokenUri: 'http://request-token-url.com/',
           accessTokenUri: 'http://access-token-url.com/',
           consumerKey: 'test-consumer-key',
           consumerSecret: 'test-consumer-secret',
@@ -91,7 +91,7 @@
         element._prepareOauth(settings);
         assert.equal(element.signatureMethod, settings.signatureMethod, 'Signature method is set');
         assert.equal(element._privateKey, settings.consumerSecret, '_privateKey is set');
-        assert.equal(element.requestTokenUrl, settings.requestTokenUrl, 'requestTokenUrl is set');
+        assert.equal(element.requestTokenUri, settings.requestTokenUri, 'requestTokenUri is set');
         assert.equal(element.accessTokenUri, settings.accessTokenUri, 'accessTokenUri is set');
         assert.equal(element.consumerKey, settings.consumerKey, 'consumerKey is set');
         assert.equal(element.consumerSecret, settings.consumerSecret, 'consumerSecret is set');
