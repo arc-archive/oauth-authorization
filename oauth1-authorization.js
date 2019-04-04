@@ -11,12 +11,12 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import '@polymer/polymer/polymer-legacy.js';
-import {afterNextRender} from '@polymer/polymer/lib/utils/render-status.js';
-import '@polymer/iron-meta/iron-meta.js';
-import {UrlParser} from '@advanced-rest-client/url-parser/url-parser.js';
-import {HeadersParserMixin} from '@advanced-rest-client/headers-parser-mixin/headers-parser-mixin.js';
-import {PolymerElement} from '@polymer/polymer/polymer-element.js';
+import '../../@polymer/polymer/polymer-legacy.js';
+import {afterNextRender} from '../../@polymer/polymer/lib/utils/render-status.js';
+import '../../@polymer/iron-meta/iron-meta.js';
+import {UrlParser} from '../../@advanced-rest-client/url-parser/url-parser.js';
+import {HeadersParserMixin} from '../../@advanced-rest-client/headers-parser-mixin/headers-parser-mixin.js';
+import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
 /**
 An element to perform OAuth1 authorization and to sign auth requests.
 
