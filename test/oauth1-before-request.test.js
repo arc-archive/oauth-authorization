@@ -1,41 +1,16 @@
-<!doctype html>
-<!--
-@license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
-<html>
+import { fixture, assert } from '@open-wc/testing';
+import '../oauth1-authorization.js';
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-  <script src="../../web-component-tester/browser.js"></script>
-  <link rel="import" href="../oauth1-authorization.html">
-  <link rel="import" href="../../cryptojs-lib/cryptojs-lib.html">
-  <link rel="import" href="../jsrsasign-import.html">
-</head>
+describe('<oauth1-authorization>', function() {
+  async function basicFixture() {
+    return await fixture(`<oauth1-authorization></oauth1-authorization>`);
+  }
 
-<body>
-  <test-fixture id="basic">
-    <template>
-      <oauth1-authorization></oauth1-authorization>
-    </template>
-  </test-fixture>
-  <script>
-  /* global fixture, assert */
-  // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-  // jscs:disable requireDotNotation
-  suite('Before request - OAuth1', () => {
-    let element;
+  describe('Before request - OAuth1', function() {
     let request;
     let auth;
-    setup((done) => {
-      element = fixture('basic');
+    beforeEach(async () => {
+      await basicFixture();
       request = {
         url: 'http://domain.com/endpoint/?param=value',
         headers: 'x-requested-with: xmlhttprequest',
@@ -43,7 +18,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       };
       auth = {
         signatureMethod: 'HMAC-SHA1',
-        requestTokenUrl: 'https://echo.advancedrestclient.com/auth/oauth1/request_token',
+        requestTokenUri: 'https://echo.advancedrestclient.com/auth/oauth1/request_token',
         accessTokenUri: 'https://echo.advancedrestclient.com/auth/oauth1/access_token',
         authorizationUri: 'https://echo.advancedrestclient.com/auth/oauth1/dialog/authorize',
         consumerKey: 'key',
@@ -57,10 +32,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         tokenSecret: 'kOZA2NjIVQ1c8pUZ6Ku2c2Rs16aGeYnJHlZL7Kg2jFAfmigL1uFSUHNO5zLkkIru',
         type: 'oauth1'
       };
-      // Event listeners are deffered. It must account for this
-      Polymer.RenderStatus.afterNextRender(this, () => {
-        setTimeout(() => done(), 1);
-      });
     });
 
     function fire() {
@@ -75,21 +46,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       return event;
     }
 
-    test('Handles before-request event', () => {
+    it('Handles before-request event', () => {
       const event = fire();
       const headers = event.detail.headers;
       assert.typeOf(headers, 'string');
       assert.isTrue(headers.toLowerCase().indexOf('authorization') !== -1);
     });
 
-    test('Generates signature', () => {
-      let event = fire();
-      let headers = event.detail.headers;
-      let index = headers.indexOf('authorization');
-      let value = headers.substr(index + 15 + 6);
-      let params = {};
+    it('Generates signature', () => {
+      const event = fire();
+      const headers = event.detail.headers;
+      const index = headers.indexOf('authorization');
+      const value = headers.substr(index + 15 + 6);
+      const params = {};
       value.split(', ').forEach(function(line) {
-        let parts = line.split('=');
+        const parts = line.split('=');
         let _value = parts[1].substr(1);
         _value = _value.substr(0, _value.length - 1);
         params[parts[0]] = _value;
@@ -103,7 +74,4 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       assert.equal(params.oauth_signature, '4huy8JcLkX8bch540ZTXiwH%2B4Vc%3D');
     });
   });
-  </script>
-</body>
-
-</html>
+});

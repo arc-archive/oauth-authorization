@@ -1,4 +1,4 @@
-<!--
+/**
 @license
 Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,13 +10,12 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../polymer/lib/utils/render-status.html">
-<link rel="import" href="../iron-meta/iron-meta.html">
-<link rel="import" href="../url-parser/url-parser.html">
-<link rel="import" href="../headers-parser-behavior/headers-parser-behavior.html">
-<!--
+*/
+import { LitElement } from 'lit-element';
+import '@polymer/iron-meta/iron-meta.js';
+import { HeadersParserMixin } from '@advanced-rest-client/headers-parser-mixin/headers-parser-mixin.js';
+function noop() {}
+/**
 An element to perform OAuth1 authorization and to sign auth requests.
 
 Note that the OAuth1 authorization wasn't designed for browser. Most existing
@@ -41,13 +40,13 @@ property.
 | Property | Type | Description |
 | ----------------|-------------|---------- |
 | `signatureMethod` | `String` | One of `PLAINTEXT`, `HMAC-SHA1`, `RSA-SHA1` |
-| `requestTokenUrl` | `String` | Token request URI. Optional for before request. Required for authorization |
+| `requestTokenUri` | `String` | Token request URI. Optional for before request. Required for authorization |
 | `accessTokenUri` | `String` | Access token request URI. Optional for before request. Required for authorization |
 | `authorizationUri` | `String` | User dialog URL. |
 | `consumerKey` | `String` | Consumer key to be used to generate the signature. Optional for before request. |
 | `consumerSecret` | `String` | Consumer secret to be used to generate the signature. Optional for before request. |
 | `redirectUri` | `String` | Redirect URI for the authorization. Optional for before request. |
-| `authParamsLocation` | `String` | Optional. Location of the authorization parameters. Default to `authorization` meaning it creates an authorization header. Any other value means query parameters |
+| `authParamsLocation` | `String` | Location of the authorization parameters. Default to `authorization` header |
 | `authTokenMethod` | `String` | Token request HTTP method. Default to `POST`. Optional for before request. |
 | `version` | `String` | Oauth1 protocol version. Default to `1.0` |
 | `nonceSize` | `Number` | Size of the nonce word to generate. Default to 32. Unused if `nonce` is set. |
@@ -72,94 +71,95 @@ under MIT licence.
 - This element uses [crypto-js](https://code.google.com/archive/p/crypto-js/) library
 distributed under BSD license.
 
-## Changes in version 2
+## Required dependencies
 
-- replaced `redirectUrl` property with `redirectUri`
-- replaced `authorizationUrl` property with `authorizationUri`
-- replaced `accessTokenUrl` property with `accessTokenUri`
-- **CryptoJS library is no longer included by default**. Use `advanced-rest-client/cryptojs-lib` or own veresion of the library. This component uses `CryptoJS.HmacSHA1` and `CryptoJS.enc.Base64` from the library.
-- **RSAKey library is no longer included by default**. Include `https://github.com/kjur/jsrsasign` library if needed.
+The `CryptoJS` and `RSAKey` libraries are not included into the element sources.
+If your project do not use this libraries already include it into your project.
+
+This component also uses `URLSearchParams` so provide a polyfill for `URL` and `URLSearchParams`.
+
+```
+npm i cryptojslib jsrsasign
+```
+
+```html
+<script src="../cryptojslib/components/core.js"></script>
+<script src="../cryptojslib/rollups/sha1.js"></script>
+<script src="../cryptojslib/components/enc-base64-min.js"></script>
+<script src="../cryptojslib/rollups/md5.js"></script>
+<script src="../cryptojslib/rollups/hmac-sha1.js"></script>
+<script src="../jsrsasign/lib/jsrsasign-rsa-min.js"></script>
+```
 
 @customElement
-@polymer
 @memberof LogicElements
--->
-<script>
-window.forceJURL = true;
-class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Element) {
-  static get is() { return 'oauth1-authorization'; }
+@appliesMixin HeadersParserMixin
+*/
+if (window) {
+  window.forceJURL = true;
+}
+export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
+  get lastIssuedToken() {
+    return this._lastIssuedToken;
+  }
+
+  set lastIssuedToken(value) {
+    const old = this._lastIssuedToken;
+    if (old === value) {
+      return;
+    }
+    this._lastIssuedToken = value;
+    this.dispatchEvent(new CustomEvent('last-issued-token-changed', {
+      detail: {
+        value
+      }
+    }));
+  }
+
   static get properties() {
     return {
-      // A full data returned by the authorization endpoint.
-      tokenInfo: {
-        type: Object,
-        readOnly: true
-      },
       /**
        * If set, requests made by this element to authorization endpoint will be
        * prefixed with the proxy value.
        */
-      proxy: String,
+      proxy: { type: String },
       /**
        * Latest valid token exchanged with the authorization endpoint.
        */
-      lastIssuedToken: {
-        type: Object,
-        notify: true
-      },
+      lastIssuedToken: { type: Object },
       /**
        * OAuth 1 token authorization endpoint.
        */
-      requestTokenUrl: String,
+      requestTokenUri: { type: String },
       /**
        * Oauth 1 token exchange endpoint
        */
-      accessTokenUri: String,
+      accessTokenUri: { type: String },
       /**
        * Oauth 1 consumer key to use with auth request
        */
-      consumerKey: String,
+      consumerKey: { type: String },
       /**
        * Oauth 1 consumer secret to be used to generate the signature.
        */
-      consumerSecret: String,
+      consumerSecret: { type: String },
       /**
        * A signature generation method.
        * Once of: `PLAINTEXT`, `HMAC-SHA1` or `RSA-SHA1`
        */
-      signatureMethod: {
-        type: String,
-        value: 'HMAC-SHA1'
-      },
+      signatureMethod: { type: String },
       /**
        * Location of the OAuth authorization parameters.
        * It can be either `authorization` meaning as a header and
        * `querystring` to put OAuth parameters to the URL.
        */
-      authParamsLocation: {
-        type: String,
-        value: 'authorization'
-      },
-      _caseMap: {
-        type: Object,
-        value: {}
-      },
-      _camelRegex: {
-        type: Object,
-        value: function() {
-          return /([A-Z])/g;
-        }
-      },
+      authParamsLocation: { type: String },
+      _caseMap: { type: Object },
+      _camelRegex: { type: Object },
       /**
        * Returns `application/x-www-form-urlencoded` content type value.
        */
-      urlEncodedType: {
-        type: String,
-        readOnly: true,
-        value: function() {
-          return 'application/x-www-form-urlencoded';
-        }
-      }
+      urlEncodedType: { type: String }
     };
   }
 
@@ -168,15 +168,20 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     this._tokenRequestedHandler = this._tokenRequestedHandler.bind(this);
     this._listenPopup = this._listenPopup.bind(this);
     this._handleRequest = this._handleRequest.bind(this);
+
+    this.signatureMethod = 'HMAC-SHA1';
+    this.authParamsLocation = 'authorization';
+    this._caseMap = {};
+    this._camelRegex = /([A-Z])/g;
+    this.urlEncodedType = 'application/x-www-form-urlencoded';
   }
 
   connectedCallback() {
     super.connectedCallback();
-    Polymer.RenderStatus.afterNextRender(this, () => {
-      window.addEventListener('oauth1-token-requested', this._tokenRequestedHandler);
-      window.addEventListener('message', this._listenPopup);
-      window.addEventListener('before-request', this._handleRequest);
-    });
+    window.addEventListener('oauth1-token-requested', this._tokenRequestedHandler);
+    window.addEventListener('message', this._listenPopup);
+    window.addEventListener('before-request', this._handleRequest);
+    this.setAttribute('aria-hidden', 'true');
   }
 
   disconnectedCallback() {
@@ -190,6 +195,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * Normally `before-request` expects to set a promise on the `detail.promises`
    * object. But because this taks is sync it skips the promise and manipulate
    * request object directly.
+   * @param {CustomEvent} e
    */
   _handleRequest(e) {
     const request = e.detail;
@@ -207,8 +213,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * `auth-methods/oauth1.html` element.
    *
    * @param {Object} request ARC request object
-   * @param {String} token OAuth1 token
-   * @param {String} tokenSecret OAuth1 token secret
+   * @param {String} auth Token request auth object
    */
   _applyBeforeRequestSignature(request, auth) {
     if (!request || !request.method || !request.url) {
@@ -216,8 +221,8 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     }
     try {
       this._prepareOauth(auth);
-    } catch (e) {
-      console.error(e);
+    } catch (_) {
+      noop();
       return;
     }
 
@@ -232,7 +237,9 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
       let contentType;
       try {
         contentType = this.getContentType(request.headers);
-      } catch (e) {}
+      } catch (e) {
+        noop();
+      }
       if (contentType && contentType.indexOf(this.urlEncodedType) === 0) {
         body = request.body;
       }
@@ -243,7 +250,9 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
       const authorization = this._buildAuthorizationHeaders(orderedParameters);
       try {
         request.headers = this.replaceHeaderValue(request.headers, 'authorization', authorization);
-      } catch (e) {}
+      } catch (_) {
+        noop();
+      }
     } else {
       request.url = this._buildAuthorizationQueryStirng(request.url, orderedParameters);
     }
@@ -254,6 +263,8 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    *
    * The detail object of the event contains OAuth1 configuration as described
    * in `auth-methods/oauth1.html`element.
+   *
+   * @param {CustomEvent} e
    */
   _tokenRequestedHandler(e) {
     e.preventDefault();
@@ -272,7 +283,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     try {
       this._prepareOauth(settings);
     } catch (e) {
-      console.error(e);
+      noop();
       this._dispatchError('Unable to authorize: ' + e.message, 'params-error');
       return;
     }
@@ -293,7 +304,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
       this._observePopupState();
     })
     .catch((e) => {
-      let msg = e.message || 'Unknown error when getting the token';
+      const msg = e.message || 'Unknown error when getting the token';
       this._dispatchError(msg, 'token-request-error');
     });
   }
@@ -306,7 +317,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    */
   _prepareOauth(params) {
     if (params.signatureMethod) {
-      let signMethod = params.signatureMethod;
+      const signMethod = params.signatureMethod;
       if (['PLAINTEXT', 'HMAC-SHA1', 'RSA-SHA1'].indexOf(signMethod) === -1) {
         throw new Error('Unsupported signature method: ' + signMethod);
       }
@@ -315,8 +326,8 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
       }
       this.signatureMethod = signMethod;
     }
-    if (params.requestTokenUrl) {
-      this.requestTokenUrl = params.requestTokenUrl;
+    if (params.requestTokenUri) {
+      this.requestTokenUri = params.requestTokenUri;
     }
     if (params.accessTokenUri) {
       this.accessTokenUri = params.accessTokenUri;
@@ -387,8 +398,8 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * @return {String} Normalized params.
    */
   _finishEncodeParams(url) {
-    return url.replace(/\!/g, '%21')
-    .replace(/\'/g, '%27')
+    return url.replace(/!/g, '%21')
+    .replace(/'/g, '%27')
     .replace(/\(/g, '%28')
     .replace(/\)/g, '%29')
     .replace(/\*/g, '%2A');
@@ -518,28 +529,22 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * Adds query paramteres with OAuth 1 parameters to the URL
    * as described in https://tools.ietf.org/html/rfc5849#section-3.5.3
    *
+   * @param {String} url
    * @param {Array} orderedParameters Oauth parameters that are already
    * ordered.
    * @return {String} URL to use with the request
    */
   _buildAuthorizationQueryStirng(url, orderedParameters) {
-    /* global UrlParser */
-    const urlParser = new UrlParser(url);
-    orderedParameters = orderedParameters.map(function(item) {
-      return [
-        encodeURIComponent(item[0]),
-        encodeURIComponent(item[1])
-      ];
+    const parser = new URL(url);
+    orderedParameters.forEach((item) => {
+      parser.searchParams.append(item[0], item[1]);
     });
-    const params = urlParser.searchParams.concat(orderedParameters);
-    urlParser.searchParams = params;
-    url = urlParser.toString();
-    return url;
+    return parser.toString();
   }
   // Takes an object literal that represents the arguments, and returns an array
   // of argument/value pairs.
   _makeArrayOfArgumentsHash(argumentsHash) {
-    var argumentPairs = [];
+    const argumentPairs = [];
     Object.keys(argumentsHash).forEach(function(key) {
       const value = argumentsHash[key];
       if (Array.isArray(value)) {
@@ -568,6 +573,9 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
   /**
    * Sort function to sort parameters as described in
    * https://tools.ietf.org/html/rfc5849#section-3.4.1.3.2
+   * @param {String} a
+   * @param {String} b
+   * @return {Number}
    */
   _sortParamsFunction(a, b) {
     if (a[0] === b[0]) {
@@ -612,13 +620,15 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * first element as a name of the parameter and second element as a value.
    */
   _listQueryParameters(url) {
-    const parsedUrl = new UrlParser(url);
-    return parsedUrl.searchParams.map((item) => {
-      return [
-        this.decodeData(item[0]),
-        this.decodeData(item[1])
+    const parsedUrl = new URL(url);
+    const result = [];
+    parsedUrl.searchParams.forEach((value, key) => {
+      result[result.length] = [
+        this.decodeData(key),
+        this.decodeData(value)
       ];
     });
+    return result;
   }
   /**
    * Computes array of parameters from the entity body.
@@ -722,7 +732,6 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    *
    * In this case the signature is the key.
    *
-   * @param {String} baseText Computed signature base text.
    * @param {String} key Computed signature key.
    * @return {String} Computed OAuth1 signature.
    */
@@ -740,13 +749,13 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     /* global RSAKey */
     const rsa = new RSAKey();
     rsa.readPrivateKeyFromPEMString(privateKey);
-    var hSig = rsa.sign(baseText, 'sha1');
+    const hSig = rsa.sign(baseText, 'sha1');
     return this.hex2b64(hSig);
   }
   /**
    * Creates a signature for the HMAC-SHA1 method.
    *
-   * @param {String} signatureBase Computed signature base text.
+   * @param {String} baseText Computed signature base text.
    * @param {String} key Computed signature key.
    * @return {String} Computed OAuth1 signature.
    */
@@ -856,7 +865,9 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
       let contentType;
       try {
         contentType = this.getContentType(request.headers);
-      } catch (e) {}
+      } catch (_) {
+        noop();
+      }
       if (contentType && contentType.indexOf(this.urlEncodedType) === 0) {
         body = request.body;
       }
@@ -867,7 +878,9 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
       const authorization = this._buildAuthorizationHeaders(orderedParameters);
       try {
         request.headers = this.replaceHeaderValue(request.headers, 'authorization', authorization);
-      } catch (e) {}
+      } catch (_) {
+        noop();
+      }
     } else {
       request.url = this._buildAuthorizationQueryStirng(request.url, orderedParameters);
     }
@@ -883,7 +896,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
     }
     const headers = {};
     if (this.authParamsLocation === 'authorization') {
-      var authorization = this._buildAuthorizationHeaders(orderedParameters);
+      const authorization = this._buildAuthorizationHeaders(orderedParameters);
       if (this._isEcho) {
         headers['X-Verify-Credentials-Authorization'] = authorization;
       } else {
@@ -937,6 +950,11 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
   /**
    * Exchanges temporary authorization token for authorized token.
    * When ready this function fires `oauth1-token-response`
+   *
+   * @param {String} token
+   * @param {String} secret
+   * @param {String} verifier
+   * @return {Promise}
    */
   getOAuthAccessToken(token, secret, verifier) {
     const extraParams = {};
@@ -996,7 +1014,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
       extraParams.oauth_callback = this._authorizeCallback;
     }
     const method = this.authTokenMethod;
-    return this._performRequest(null, null, method, this.requestTokenUrl, extraParams)
+    return this._performRequest(null, null, method, this.requestTokenUri, extraParams)
     .then((response) => {
       if (!response.response) {
         let message = 'Couldn\'t request for authorization token. ';
@@ -1117,6 +1135,9 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * Adds camel case keys to a map of parameters.
    * It adds new keys to the object tranformed from `oauth_token`
    * to `oauthToken`
+   *
+   * @param {Object} obj
+   * @return {Object}
    */
   parseMapKeys(obj) {
     Object.keys(obj).forEach((key) => this._parseParameter(key, obj));
@@ -1129,6 +1150,7 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    *
    * @param {String} param Key in the `settings` object.
    * @param {Object} settings Parameters.
+   * @return {Object}
    */
   _parseParameter(param, settings) {
     if (!(param in settings)) {
@@ -1182,5 +1204,4 @@ class OAuth1Authorization extends ArcBehaviors.HeadersParserBehavior(Polymer.Ele
    * `Request` object for fetch API.
    */
 }
-window.customElements.define(OAuth1Authorization.is, OAuth1Authorization);
-</script>
+window.customElements.define('oauth1-authorization', OAuth1Authorization);

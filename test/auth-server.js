@@ -1,6 +1,6 @@
-/* global sinon */
+import sinon from 'sinon/pkg/sinon-esm.js';
 
-const ClientCredentialsServer = {
+export const ClientCredentialsServer = {
   responseType: 'json',
   createServer: function(type) {
     this.type = type;
@@ -78,13 +78,18 @@ const ClientCredentialsServer = {
         throw new Error('Required client_secret is missing');
       }
     }
-    if (this.type === 'client_credentials' || this.type === 'password') {
+    if (this.type === 'client_credentials' || this.type === 'password' | this.type === 'custom_oauth') {
       if (params.scope !== 'one%20two') {
         throw new Error('Required scope is missing');
       }
     }
     if (params.custom_body_param !== 'custom%20value') {
       throw new Error('Required custom_body_param is missing');
+    }
+    if (this.type === 'custom_oauth') {
+      if (params.redirect_uri !== 'https%3A%2F%2Fauth.domain.com%2Fredirect') {
+        throw new Error('redirect_uri');
+      }
     }
   },
 

@@ -1,58 +1,34 @@
-<!doctype html>
-<!--
-@license
-Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
-Licensed under the Apache License, Version 2.0 (the "License"); you may not
-use this file except in compliance with the License. You may obtain a copy of
-the License at
-http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-License for the specific language governing permissions and limitations under
-the License.
--->
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-  <script src="../../web-component-tester/browser.js"></script>
-  <script src="../../iron-test-helpers/test-helpers.js"></script>
-  <link rel="import" href="../oauth2-authorization.html">
-  <!-- <link rel="import" href="../../arc-polyfills/arc-polyfills.html"> -->
-</head>
+import { fixture, assert, aTimeout } from '@open-wc/testing';
+import sinon from 'sinon/pkg/sinon-esm.js';
+import '../oauth2-authorization.js';
 
-<body>
-  <test-fixture id="basic">
-    <template>
-      <oauth2-authorization></oauth2-authorization>
-    </template>
-  </test-fixture>
-  <script>
-  /* global fixture, assert, sinon */
-  // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-  // jscs:disable requireDotNotation
-  let popupUrl = location.href.substr(0, location.href.lastIndexOf('/')).replace('/test', '');
-  popupUrl += '/oauth-popup.html';
+describe('<oauth2-authorization>', () => {
+  async function basicFixture() {
+    return await fixture(`<oauth2-authorization></oauth2-authorization>`);
+  }
+
+  let popupUrl = location.href.substr(0, location.href.lastIndexOf('/'));
+  popupUrl += '/base/oauth-popup.html';
+
   const testState = 'test-state';
   let popupsBlocked = false;
   function noop() {}
-  suite('Implicit token', () => {
-    suite('Popup', () => {
-      suite('Error response', () => {
+
+  describe('Implicit token', () => {
+    describe('Popup', () => {
+      describe('Error response', () => {
         let element;
-        setup((done) => {
-          element = fixture('basic');
+        beforeEach(async () => {
+          element = await basicFixture();
           element._type = 'implicit';
           element._state = testState;
-          element._popup = {close: noop};
-          setTimeout(done, 1000);
+          element._popup = { close: noop };
+          await aTimeout(1000);
         });
 
-        test('Dispatches oauth2-error for error response', (done) => {
-          let eCode = 'test_error';
-          let eMessage = 'test message';
+        it('Dispatches oauth2-error for error response', (done) => {
+          const eCode = 'test_error';
+          const eMessage = 'test message';
           let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
           url += 'error_description=' + encodeURIComponent(eMessage);
           let errorFn;
@@ -80,12 +56,12 @@ the License.
           element._authorize(url, {});
         });
 
-        test('Dispatches oauth2-error for state mismatch', (done) => {
+        it('Dispatches oauth2-error for state mismatch', (done) => {
           if (popupsBlocked) {
             done();
             return;
           }
-          let url = popupUrl + '#state=invalid&error=&error_message=';
+          const url = popupUrl + '#state=invalid&error=&error_message=';
           let errorFn;
           let responseFn;
           errorFn = function(e) {
@@ -107,22 +83,22 @@ the License.
         });
       });
 
-      suite('Token response', () => {
+      describe('Token response', () => {
         let element;
-        setup(() => {
-          element = fixture('basic');
+        beforeEach(async () => {
+          element = await basicFixture();
           element._type = 'implicit';
           element._state = testState;
-          element._popup = {close: noop};
+          element._popup = { close: noop };
         });
 
-        test('Dispatches oauth2-token-response', (done) => {
+        it('Dispatches oauth2-token-response', (done) => {
           if (popupsBlocked) {
             done();
             return;
           }
-          let token = 'token1234';
-          let expiresIn = 1234;
+          const token = 'token1234';
+          const expiresIn = 1234;
           let url = popupUrl + '#state=' + testState + '&access_token=';
           url += token + '&expires_in=' + expiresIn;
           let errorFn;
@@ -150,26 +126,26 @@ the License.
       });
     });
 
-    suite('none interactive', () => {
-      let settings = {
+    describe('non interactive', () => {
+      const settings = {
         interactive: false
       };
 
-      suite('Error response', () => {
+      describe('Error response', () => {
         let element;
-        setup(() => {
-          element = fixture('basic');
+        beforeEach(async () => {
+          element = await basicFixture();
           element._type = 'implicit';
           element._state = testState;
         });
 
-        test('Dispatches oauth2-error for error response', (done) => {
+        it('Dispatches oauth2-error for error response', (done) => {
           if (popupsBlocked) {
             done();
             return;
           }
-          let eCode = 'test_error';
-          let eMessage = 'test message';
+          const eCode = 'test_error';
+          const eMessage = 'test message error no2';
           let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
           url += 'error_description=' + encodeURIComponent(eMessage);
           element._authorize(url, settings);
@@ -188,31 +164,29 @@ the License.
           });
         });
 
-        test('Does not dispatches oauth2-token-response event for error response', (done) => {
+        it('Do not dispatches oauth2-token-response event for error response', (done) => {
           if (popupsBlocked) {
             done();
             return;
           }
-          let eCode = 'test_error';
-          let eMessage = 'test message';
+          const eCode = 'test_error';
+          const eMessage = 'test message error no3';
           let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
           url += 'error_description=' + encodeURIComponent(eMessage);
           element._authorize(url, settings);
-          let spy = sinon.spy();
+          const spy = sinon.spy();
           element.addEventListener('oauth2-token-response', spy);
-          setTimeout(() => {
+          element.addEventListener('oauth2-error', function clb() {
+            element.removeEventListener('oauth2-error', clb);
             assert.isFalse(spy.called);
             done();
-          }, 800);
+          });
         });
 
-        test('Dispatches oauth2-error for state mismatch', (done) => {
-          if (popupsBlocked) {
-            done();
-            return;
-          }
-          let url = popupUrl + '#state=invalid&error=&error_message=';
-          element._authorize(url, settings);
+        it('Dispatches oauth2-error for state mismatch', (done) => {
+          const eMessage = 'test message error no4';
+          let url = popupUrl + '#state=invalid&error=&';
+          url += 'error_message=' + encodeURIComponent(eMessage);
           element.addEventListener('oauth2-error', function clb(e) {
             element.removeEventListener('oauth2-error', clb);
             assert.equal(e.detail.code, 'invalid_state');
@@ -220,24 +194,25 @@ the License.
             assert.isFalse(e.detail.interactive);
             done();
           });
-        });
-
-        test('Does not dispatches oauth2-token-response event for state mismatch', (done) => {
-          if (popupsBlocked) {
-            done();
-            return;
-          }
-          let url = popupUrl + '#state=invalid&error=&error_message=';
           element._authorize(url, settings);
-          let spy = sinon.spy();
-          element.addEventListener('oauth2-token-response', spy);
-          setTimeout(() => {
-            assert.isFalse(spy.called);
-            done();
-          }, 800);
         });
 
-        test('Dispatches oauth2-token-response for lack of response', (done) => {
+        // it('Does not dispatches oauth2-token-response event for state mismatch', (done) => {
+        //   if (popupsBlocked) {
+        //     done();
+        //     return;
+        //   }
+        //   let url = popupUrl + '#state=invalid&error=&error_message=';
+        //   let spy = sinon.spy();
+        //   element.addEventListener('oauth2-token-response', spy);
+        //   setTimeout(() => {
+        //     assert.isFalse(spy.called);
+        //     done();
+        //   }, 800);
+        //   element._authorize(url, settings);
+        // });
+
+        it('Dispatches oauth2-token-response for lack of response', (done) => {
           if (popupsBlocked) {
             done();
             return;
@@ -253,17 +228,18 @@ the License.
           });
         });
       });
-      suite('Token response', () => {
+
+      describe('Token response', () => {
         let element;
-        setup(() => {
-          element = fixture('basic');
+        beforeEach(async () => {
+          element = await basicFixture();
           element._type = 'implicit';
           element._state = testState;
         });
 
-        test('Dispatches oauth2-token-response', (done) => {
-          let token = 'token1234';
-          let expiresIn = 1234;
+        it('Dispatches oauth2-token-response', (done) => {
+          const token = 'token1234';
+          const expiresIn = 1234;
           let url = popupUrl + '#state=' + testState + '&access_token=';
           url += token + '&expires_in=' + expiresIn;
           element.addEventListener('oauth2-token-response', function clb(e) {
@@ -280,6 +256,4 @@ the License.
       });
     });
   });
-  </script>
-</body>
-</html>
+});
