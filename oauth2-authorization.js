@@ -205,11 +205,24 @@ export class OAuth2Authorization extends PolymerElement {
    * as OAuth 2.0 allows extensions to grant type.
    */
   authorize(settings) {
-    this._setTokenInfo(undefined);
+    this._tokenInfo = undefined;
     this._type = settings.type;
     this._state = settings.state || this.randomString(6);
     this._settings = settings;
     this._errored = false;
+
+    try {
+      this._sanityCheck(settings);
+    } catch (e) {
+      this._dispatchError({
+        message: e.message,
+        code: 'oauth_error',
+        state: this._state,
+        interactive: settings.interactive
+      });
+      throw e;
+    }
+
     switch (settings.type) {
       case 'implicit':
         this._authorize(this._constructPopupUrl(settings, 'token'), settings);
@@ -230,6 +243,61 @@ export class OAuth2Authorization extends PolymerElement {
         .catch(() => {});
     }
   }
+  /**
+   * Checks if basic configuration of the OAuth 2 request is valid an can proceed
+   * with authentication.
+   * @param {Object} settings authorization settings
+   * @throws {Error} When setttings are not valid
+   */
+  _sanityCheck(settings) {
+    if (settings.type === 'implicit' || settings.type === 'authorization_code') {
+      try {
+        this._checkUrl(settings.authorizationUri);
+      } catch (e) {
+        throw(new Error(`authorizationUri: ${e.message}`));
+      }
+      if (settings.redirectUri) {
+        try {
+          this._checkUrl(settings.redirectUri);
+        } catch (e) {
+          throw(new Error(`redirectUri: ${e.message}`));
+        }
+      }
+      if (settings.accessTokenUri) {
+        try {
+          this._checkUrl(settings.accessTokenUri);
+        } catch (e) {
+          throw(new Error(`accessTokenUri: ${e.message}`));
+        }
+      }
+    } else if (settings.accessTokenUri) {
+      if (settings.accessTokenUri) {
+        try {
+          this._checkUrl(settings.accessTokenUri);
+        } catch (e) {
+          throw(new Error(`accessTokenUri: ${e.message}`));
+        }
+      }
+    }
+  }
+  /**
+   * Checks if the URL has valid scheme for OAuth flow.
+   * @param {String} url The url value to test
+   * @throws {TypeError} When passed value is not set, empty, or not a string
+   * @throws {Error} When passed value is not a valid URL for OAuth 2 flow
+   */
+  _checkUrl(url) {
+    if (!url) {
+      throw new TypeError('the value is missing');
+    }
+    if (typeof url !== 'string') {
+      throw new TypeError('the value is not a string');
+    }
+    if (url.indexOf('http://') === -1 && url.indexOf('https://') === -1) {
+      throw new Error('the value has invalid scheme');
+    }
+  }
+
   /**
    * Authorizes the user in the OAuth authorization endpoint.
    * By default it authorizes the user using a popup that displays
@@ -657,7 +725,7 @@ export class OAuth2Authorization extends PolymerElement {
    * @return {Object} The same tokenInfo, used for Promise return value.
    */
   _handleTokenInfo(tokenInfo) {
-    this._setTokenInfo(tokenInfo);
+    this._tokenInfo = tokenInfo;
     tokenInfo.interactive = this._settings.interactive;
     if ('error' in tokenInfo) {
       this._dispatchError({
