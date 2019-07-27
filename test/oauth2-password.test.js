@@ -1,28 +1,13 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+import { fixture, assert } from '@open-wc/testing';
+import { ClientCredentialsServer } from './auth-server.js';
+import '../oauth2-authorization.js';
 
-  <script src="../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../../@polymer/test-fixture/test-fixture.js"></script>
-  <script src="../../../mocha/mocha.js"></script>
-  <script src="../../../chai/chai.js"></script>
-  <script src="../../../wct-mocha/wct-mocha.js"></script>
-  <script src="../../../sinon/pkg/sinon.js"></script>
+describe('<oauth2-authorization>', () => {
+  async function basicFixture() {
+    return await fixture(`<oauth2-authorization></oauth2-authorization>`);
+  }
 
-  <script src="./auth-server.js"></script>
-</head>
-
-<body>
-  <test-fixture id="basic">
-    <template>
-      <oauth2-authorization></oauth2-authorization>
-    </template>
-  </test-fixture>
-  <script type="module">
-  import '../oauth2-authorization.js';
-  suite('Password request', () => {
+  describe('Password request', () => {
     const params = {
       type: 'password',
       clientId: 'test client id',
@@ -48,27 +33,31 @@
         }
       }
     };
-    /* global ClientCredentialsServer */
-    setup(() => {
+
+    before(() => {
       ClientCredentialsServer.createServer('password');
     });
 
-    teardown(() => {
+    after(() => {
       ClientCredentialsServer.restore();
     });
 
-    suite('authorizePassword()', () => {
-      test('Returns a Promise', () => {
-        const element = fixture('basic');
+    describe('authorizePassword()', () => {
+      it('Returns a Promise', async () => {
+        const element = await basicFixture();
         const result = element.authorizePassword(params);
         assert.typeOf(result.then, 'function');
-        return result;
+        await result;
       });
 
-      suite('JSON response', () => {
-        test('Gets token info', () => {
+      describe('JSON response', () => {
+        let element;
+        beforeEach(async () => {
+          element = await basicFixture();
+        });
+
+        it('Gets token info', () => {
           ClientCredentialsServer.responseType = 'json';
-          const element = fixture('basic');
           return element.authorizePassword(params)
           .then((info) => {
             assert.equal(info.accessToken, 'server-token');
@@ -81,9 +70,8 @@
           });
         });
 
-        test('Gets error info', () => {
+        it('Gets error info', () => {
           ClientCredentialsServer.responseType = 'json';
-          const element = fixture('basic');
           const clone = Object.assign({}, params);
           clone.accessTokenUri = 'https://auth.domain.com/clienterror';
           return element.authorizePassword(clone)
@@ -96,10 +84,14 @@
         });
       });
 
-      suite('URL encoded response', () => {
-        test('Gets token info', () => {
+      describe('URL encoded response', () => {
+        let element;
+        beforeEach(async () => {
+          element = await basicFixture();
+        });
+
+        it('Gets token info', () => {
           ClientCredentialsServer.responseType = 'urlencoded';
-          const element = fixture('basic');
           return element.authorizePassword(params)
           .then((info) => {
             assert.equal(info.accessToken, 'server-token');
@@ -112,9 +104,8 @@
           });
         });
 
-        test('Gets error info', () => {
+        it('Gets error info', () => {
           ClientCredentialsServer.responseType = 'urlencoded';
-          const element = fixture('basic');
           const clone = Object.assign({}, params);
           clone.accessTokenUri = 'https://auth.domain.com/clienterror';
           return element.authorizePassword(clone)
@@ -127,9 +118,13 @@
         });
       });
 
-      suite('Error responses', () => {
-        test('Handles 404 response', () => {
-          const element = fixture('basic');
+      describe('Error responses', () => {
+        let element;
+        beforeEach(async () => {
+          element = await basicFixture();
+        });
+
+        it('Handles 404 response', () => {
           const clone = Object.assign({}, params);
           clone.accessTokenUri = 'https://auth.domain.com/server404error';
           return element.authorizePassword(clone)
@@ -141,8 +136,7 @@
           });
         });
 
-        test('Handles 40x response', () => {
-          const element = fixture('basic');
+        it('Handles 40x response', () => {
           const clone = Object.assign({}, params);
           clone.accessTokenUri = 'https://auth.domain.com/server400error';
           return element.authorizePassword(clone)
@@ -154,8 +148,7 @@
           });
         });
 
-        test('Handles 50x response', () => {
-          const element = fixture('basic');
+        it('Handles 50x response', () => {
           const clone = Object.assign({}, params);
           clone.accessTokenUri = 'https://auth.domain.com/server500error';
           return element.authorizePassword(clone)
@@ -168,9 +161,13 @@
         });
       });
 
-      suite('Events', () => {
-        test('Dispatches success event for correct response', (done) => {
-          const element = fixture('basic');
+      describe('Events', () => {
+        let element;
+        beforeEach(async () => {
+          element = await basicFixture();
+        });
+
+        it('Dispatches success event for correct response', (done) => {
           element.addEventListener('oauth2-token-response', function clb(e) {
             element.removeEventListener('oauth2-token-response', clb);
             assert.equal(e.detail.accessToken, 'server-token');
@@ -185,8 +182,7 @@
           element.authorize(params);
         });
 
-        test('Dispatches error event when oauth error', (done) => {
-          const element = fixture('basic');
+        it('Dispatches error event when oauth error', (done) => {
           element.addEventListener('oauth2-error', function clb(e) {
             element.removeEventListener('oauth2-error', clb);
             assert.equal(e.detail.code, 'test-error');
@@ -200,8 +196,7 @@
           element.authorize(clone);
         });
 
-        test('Dispatches error event when 404', (done) => {
-          const element = fixture('basic');
+        it('Dispatches error event when 404', (done) => {
           element.addEventListener('oauth2-error', function clb(e) {
             element.removeEventListener('oauth2-error', clb);
             assert.equal(e.detail.code, 'request_error');
@@ -215,8 +210,7 @@
           element.authorize(clone);
         });
 
-        test('Dispatches error event when 40x', (done) => {
-          const element = fixture('basic');
+        it('Dispatches error event when 40x', (done) => {
           element.addEventListener('oauth2-error', function clb(e) {
             element.removeEventListener('oauth2-error', clb);
             assert.equal(e.detail.code, 'request_error');
@@ -230,8 +224,7 @@
           element.authorize(clone);
         });
 
-        test('Dispatches error event when 50x', (done) => {
-          const element = fixture('basic');
+        it('Dispatches error event when 50x', (done) => {
           element.addEventListener('oauth2-error', function clb(e) {
             element.removeEventListener('oauth2-error', clb);
             assert.equal(e.detail.code, 'request_error');
@@ -247,6 +240,4 @@
       });
     });
   });
-  </script>
-</body>
-</html>
+});

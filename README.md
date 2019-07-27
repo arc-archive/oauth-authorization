@@ -12,17 +12,16 @@ Provides components to authorize the user using OAuth 1 and OAuth 2 standards.
 ## OAuth 2
 
 There are 4 basic token requests flows:
-- Authorization Code for apps running on a web server (`authorization_code` type)
-- Implicit for browser-based or mobile apps (`implicit` type)
-- Password for logging in with a username and password (`password` type)
-- Client credentials for application access (`client_credentials` type)
 
-This element uses them all.
+-   Authorization Code for apps running on a web server (`authorization_code` type)
+-   Implicit for browser-based or mobile apps (`implicit` type)
+-   Password for logging in with a username and password (`password` type)
+-   Client credentials for application access (`client_credentials` type)
+
+Additionally you can use custom flow type.
 
 Main function is the `authorize()` function that can be also used via event system.
-This function accepts different set of parameters depending on request type. However it will
-not perform a validation on the settings. It will try to perform the request for given set of
-parameters. If it fails, than it fail on the server side.
+This function accepts different set of parameters depending on request type.
 
 ### Example
 
@@ -47,9 +46,18 @@ const event = new CustomEvent('oauth2-token-requested', { 'detail': settings, bu
 document.dispatchEvent(event);
 ```
 
-There is one difference for from using event based approach. When the token has been received
-this will set `tokenValue` property on the target of the event.
-The event will be cancelled one it reach this element so other elements will not double the action.
+Listen for token response:
+
+```javascript
+// oauth2-token-response
+factory.ontokenresponse = (e) => {
+  console.log(e.detial);
+};
+// oauth2-error event
+factory.ontokenerror = (e) => {
+  console.log(e.detial);
+};
+```
 
 An element or app that requesting the token should observe the `oauth2-token-response` and
 `oauth2-error` events to get back the response.
@@ -82,7 +90,7 @@ settings. It is a good idea to use this property to check if the event response
 support different OAuth clients so you can check later with the token response if
 this is a response for the same client.
 
-## Non-interactive authorization (experimental)
+## Non-interactive authorization
 
 For `implicit` and `code` token requests you can set `interactive` property
 of the settings object to `false` to request the token in the background without
@@ -124,6 +132,7 @@ document.body.addEventListener('oauth2-token-response', (e) => {
 ```
 
 ## OAuth 1
+
 An element to perform OAuth1 authorization and to sign auth requests.
 
 Note that the OAuth1 authorization wasn't designed for browser. Most existing
@@ -167,16 +176,16 @@ property.
 
 ## Error codes
 
--  `params-error` Oauth1 parameters are invalid
--  `oauth1-error` OAuth popup is blocked.
--  `token-request-error` HTTP request to the authorization server failed
--  `no-response` No response recorded.
+-   `params-error` Oauth1 parameters are invalid
+-   `oauth1-error` OAuth popup is blocked.
+-   `token-request-error` HTTP request to the authorization server failed
+-   `no-response` No response recorded.
 
 ## Acknowledgements
 
-- This element uses [jsrsasign](https://github.com/kjur/jsrsasign) library distributed
+-   This element uses [jsrsasign](https://github.com/kjur/jsrsasign) library distributed
 under MIT licence.
-- This element uses [crypto-js](https://code.google.com/archive/p/crypto-js/) library
+-   This element uses [crypto-js](https://code.google.com/archive/p/crypto-js/) library
 distributed under BSD license.
 
 ## Usage
@@ -202,41 +211,18 @@ npm install --save @advanced-rest-client/oauth-authorization
 </html>
 ```
 
-### In a Polymer 3 element
-
-```js
-import {PolymerElement, html} from '@polymer/polymer';
-import '@advanced-rest-client/advanced-rest-client/oauth-authorization.js';
-
-class SampleElement extends PolymerElement {
-  static get template() {
-    return html`
-    <oauth-authorization content-type="application/json" value="{{body}}"></oauth-authorization>
-    `;
-  }
-}
-customElements.define('sample-element', SampleElement);
-```
-
-### Installation
+### Development
 
 ```sh
 git clone https://github.com/advanced-rest-client/oauth-authorization
-cd api-url-editor
+cd oauth-authorization
 npm install
-npm install -g polymer-cli
-```
-
-### Running the demo locally
-
-```sh
-polymer serve --npm
-open http://127.0.0.1:<port>/demo/
 ```
 
 ### Running the tests
+
 ```sh
-polymer test --npm
+npm test
 ```
 
 ## Required dependencies
@@ -256,3 +242,5 @@ npm i cryptojslib jsrsasign
 <script src="../../../cryptojslib/rollups/hmac-sha1.js"></script>
 <script src="../../../jsrsasign/lib/jsrsasign-rsa-min.js"></script>
 ```
+
+Also OAuth1 element uses `URL` class with `searchParams` properties. If targeting old browsers include polyfill for this too.

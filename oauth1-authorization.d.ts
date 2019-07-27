@@ -12,19 +12,23 @@
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
+import {LitElement} from 'lit-element';
+
+import {HeadersParserMixin} from '@advanced-rest-client/headers-parser-mixin/headers-parser-mixin.js';
+
 export {OAuth1Authorization};
 
 declare class OAuth1Authorization {
 
   /**
+   * Latest valid token exchanged with the authorization endpoint.
+   */
+  lastIssuedToken: object|null|undefined;
+
+  /**
    * Returns a list of characters that can be used to buid nonce.
    */
   readonly nonceChars: Array<String|null>|null;
-
-  /**
-   * A full data returned by the authorization endpoint.
-   */
-  readonly tokenInfo: object|null|undefined;
 
   /**
    * If set, requests made by this element to authorization endpoint will be
@@ -33,14 +37,9 @@ declare class OAuth1Authorization {
   proxy: string|null|undefined;
 
   /**
-   * Latest valid token exchanged with the authorization endpoint.
-   */
-  lastIssuedToken: object|null|undefined;
-
-  /**
    * OAuth 1 token authorization endpoint.
    */
-  requestTokenUrl: string|null|undefined;
+  requestTokenUri: string|null|undefined;
 
   /**
    * Oauth 1 token exchange endpoint
@@ -75,7 +74,7 @@ declare class OAuth1Authorization {
   /**
    * Returns `application/x-www-form-urlencoded` content type value.
    */
-  readonly urlEncodedType: string|null|undefined;
+  urlEncodedType: string|null|undefined;
   connectedCallback(): void;
   disconnectedCallback(): void;
 

@@ -1,50 +1,34 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+import { fixture, assert, aTimeout } from '@open-wc/testing';
+import sinon from 'sinon/pkg/sinon-esm.js';
+import '../oauth2-authorization.js';
 
-  <script src="../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../../@polymer/test-fixture/test-fixture.js"></script>
-  <script src="../../../mocha/mocha.js"></script>
-  <script src="../../../chai/chai.js"></script>
-  <script src="../../../wct-mocha/wct-mocha.js"></script>
-  <script src="../../../sinon/pkg/sinon.js"></script>
+describe('<oauth2-authorization>', () => {
+  async function basicFixture() {
+    return await fixture(`<oauth2-authorization></oauth2-authorization>`);
+  }
 
-  <script src="../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
-  <!-- <link rel="import" href="../../arc-polyfills/arc-polyfills.html"> -->
-</head>
+  let popupUrl = location.href.substr(0, location.href.lastIndexOf('/'));
+  popupUrl += '/base/oauth-popup.html';
 
-<body>
-  <test-fixture id="basic">
-    <template>
-      <oauth2-authorization></oauth2-authorization>
-    </template>
-  </test-fixture>
-  <script type="module">
-  import '../oauth2-authorization.js';
-  // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-  // jscs:disable requireDotNotation
-  let popupUrl = location.href.substr(0, location.href.lastIndexOf('/')).replace('/test', '');
-  popupUrl += '/oauth-popup.html';
   const testState = 'test-state';
   let popupsBlocked = false;
   function noop() {}
-  suite('Implicit token', () => {
-    suite('Popup', () => {
-      suite('Error response', () => {
+
+  describe('Implicit token', () => {
+    describe('Popup', () => {
+      describe('Error response', () => {
         let element;
-        setup((done) => {
-          element = fixture('basic');
+        beforeEach(async () => {
+          element = await basicFixture();
           element._type = 'implicit';
           element._state = testState;
-          element._popup = {close: noop};
-          setTimeout(done, 1000);
+          element._popup = { close: noop };
+          await aTimeout(1000);
         });
 
-        test('Dispatches oauth2-error for error response', (done) => {
-          let eCode = 'test_error';
-          let eMessage = 'test message';
+        it('Dispatches oauth2-error for error response', (done) => {
+          const eCode = 'test_error';
+          const eMessage = 'test message';
           let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
           url += 'error_description=' + encodeURIComponent(eMessage);
           let errorFn;
@@ -72,12 +56,12 @@
           element._authorize(url, {});
         });
 
-        test('Dispatches oauth2-error for state mismatch', (done) => {
+        it('Dispatches oauth2-error for state mismatch', (done) => {
           if (popupsBlocked) {
             done();
             return;
           }
-          let url = popupUrl + '#state=invalid&error=&error_message=';
+          const url = popupUrl + '#state=invalid&error=&error_message=';
           let errorFn;
           let responseFn;
           errorFn = function(e) {
@@ -99,22 +83,22 @@
         });
       });
 
-      suite('Token response', () => {
+      describe('Token response', () => {
         let element;
-        setup(() => {
-          element = fixture('basic');
+        beforeEach(async () => {
+          element = await basicFixture();
           element._type = 'implicit';
           element._state = testState;
-          element._popup = {close: noop};
+          element._popup = { close: noop };
         });
 
-        test('Dispatches oauth2-token-response', (done) => {
+        it('Dispatches oauth2-token-response', (done) => {
           if (popupsBlocked) {
             done();
             return;
           }
-          let token = 'token1234';
-          let expiresIn = 1234;
+          const token = 'token1234';
+          const expiresIn = 1234;
           let url = popupUrl + '#state=' + testState + '&access_token=';
           url += token + '&expires_in=' + expiresIn;
           let errorFn;
@@ -142,20 +126,20 @@
       });
     });
 
-    suite('non interactive', () => {
-      let settings = {
+    describe('non interactive', () => {
+      const settings = {
         interactive: false
       };
 
-      suite('Error response', () => {
+      describe('Error response', () => {
         let element;
-        setup(() => {
-          element = fixture('basic');
+        beforeEach(async () => {
+          element = await basicFixture();
           element._type = 'implicit';
           element._state = testState;
         });
 
-        test('Dispatches oauth2-error for error response', (done) => {
+        it('Dispatches oauth2-error for error response', (done) => {
           if (popupsBlocked) {
             done();
             return;
@@ -180,7 +164,7 @@
           });
         });
 
-        test('Do not dispatches oauth2-token-response event for error response', (done) => {
+        it('Do not dispatches oauth2-token-response event for error response', (done) => {
           if (popupsBlocked) {
             done();
             return;
@@ -190,19 +174,16 @@
           let url = popupUrl + '#state=' + testState + '&error=' + eCode + '&';
           url += 'error_description=' + encodeURIComponent(eMessage);
           element._authorize(url, settings);
-          let spy = sinon.spy();
+          const spy = sinon.spy();
           element.addEventListener('oauth2-token-response', spy);
-          element.addEventListener('oauth2-token-response', () => {
-            debugger
-          });
-          element.addEventListener('oauth2-error', function clb(e) {
+          element.addEventListener('oauth2-error', function clb() {
             element.removeEventListener('oauth2-error', clb);
             assert.isFalse(spy.called);
             done();
           });
         });
 
-        test('Dispatches oauth2-error for state mismatch', (done) => {
+        it('Dispatches oauth2-error for state mismatch', (done) => {
           const eMessage = 'test message error no4';
           let url = popupUrl + '#state=invalid&error=&';
           url += 'error_message=' + encodeURIComponent(eMessage);
@@ -216,7 +197,7 @@
           element._authorize(url, settings);
         });
 
-        // test('Does not dispatches oauth2-token-response event for state mismatch', (done) => {
+        // it('Does not dispatches oauth2-token-response event for state mismatch', (done) => {
         //   if (popupsBlocked) {
         //     done();
         //     return;
@@ -231,7 +212,7 @@
         //   element._authorize(url, settings);
         // });
 
-        test('Dispatches oauth2-token-response for lack of response', (done) => {
+        it('Dispatches oauth2-token-response for lack of response', (done) => {
           if (popupsBlocked) {
             done();
             return;
@@ -248,17 +229,17 @@
         });
       });
 
-      suite('Token response', () => {
+      describe('Token response', () => {
         let element;
-        setup(() => {
-          element = fixture('basic');
+        beforeEach(async () => {
+          element = await basicFixture();
           element._type = 'implicit';
           element._state = testState;
         });
 
-        test('Dispatches oauth2-token-response', (done) => {
-          let token = 'token1234';
-          let expiresIn = 1234;
+        it('Dispatches oauth2-token-response', (done) => {
+          const token = 'token1234';
+          const expiresIn = 1234;
           let url = popupUrl + '#state=' + testState + '&access_token=';
           url += token + '&expires_in=' + expiresIn;
           element.addEventListener('oauth2-token-response', function clb(e) {
@@ -275,6 +256,4 @@
       });
     });
   });
-  </script>
-</body>
-</html>
+});

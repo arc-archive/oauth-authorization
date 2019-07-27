@@ -23,7 +23,8 @@ the License.
   var messageTarget = (window.opener || window.top);
   var data = location.search.substr(1);
   var params = {
-    'autoClose': false
+    'autoClose': false,
+    'oauth2response': true
   };
   data.split('&').forEach(function(p) {
     var item = p.split('=');

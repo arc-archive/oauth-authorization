@@ -18,122 +18,11 @@ declare namespace LogicElements {
 
   /**
    * The `<outh2-authorization>` performs an OAuth2 requests to get a token for given settings.
-   *
-   * There are 4 basic token requests flows:
-   * - Authorization Code for apps running on a web server (`authorization_code` type)
-   * - Implicit for browser-based or mobile apps (`implicit` type)
-   * - Password for logging in with a username and password (`password` type)
-   * - Client credentials for application access (`client_credentials` type)
-   *
-   * Main function is the `authorize()` function that can be also used via event system.
-   * This function accepts different set of parameters depending on request type. However it will
-   * not perform a validation on the settings. It will try to perform the request for given set of
-   * parameters. If it fails, than it fail on the server side.
-   *
-   * ### Example
-   *
-   * ```
-   * <outh2-authorization></outh2-authorization>
-   * ```
-   * ```
-   * const settings = {
-   *   type: 'implicit',
-   *   clientId: 'CLIENT ID',
-   *   redirectUri: 'https://example.com/auth-popup.html',
-   *   authorizationUri: 'https://auth.example.com/token'
-   *   scopes: ['email'],
-   *   state: 'Optional string'
-   * };
-   * const factory = document.querySelector('outh2-authorization');
-   * factory.authorize(settings)
-   *
-   * // or event based
-   * const event = new CustomEvent('oauth2-token-requested', { 'detail': settings, bubbles: true });
-   * document.dispatchEvent(event);
-   * ```
-   *
-   * There is one difference for from using event based approach. When the token has been received
-   * this will set `tokenValue` property on the target of the event.
-   * The event will be cancelled one it reach this element so other elements will not double the action.
-   *
-   * An element or app that requesting the token should observe the `oauth2-token-response` and
-   * `oauth2-error` events to get back the response.
-   *
-   * ## Popup in authorization flow
-   *
-   * This element contain a `oauth-popup.html` that can be used to exchange token / code data with
-   * hosting page. Other page can be used as well. But in must `window.postMessage` back to the
-   * `window.opener`. The structure of the message if the parsed query or has string to the map
-   * of parameters. Furthermore it must camel case the parameters. Example script is source code
-   * of the `oauth-popup.html` page.
-   * Popup should be served over the SSL.
-   *
-   * ## The state parameter and security
-   *
-   * This element is intened to be used in debug applications where confidentialy is already
-   * compromised because users may be asked to provide client secret parameter (depending on the flow).
-   * *It should not be used in client applications** that don't serve debugging purposes.
-   * Client secret should never be used on the client side.
-   *
-   * To have at least minimum of protection (in already compromised environment) this library generates
-   * a `state` parameter as a series of alphanumeric characters and append them to the request.
-   * It is expected to return the same string in the response (as defined in rfc6749). Though this
-   * parameter is optional, it will reject the response if the `state` parameter is not the same as the
-   * one generated before the request.
-   *
-   * The state parameter is generated automatically by the element if non provided in
-   * settings. It is a good idea to use this property to check if the event response
-   * (either token or error) are coming from your request for token. The app can
-   * support different OAuth clients so you can check later with the token response if
-   * this is a response for the same client.
-   *
-   * ## Non-interactive authorization (experimental)
-   *
-   * For `implicit` and `code` token requests you can set `interactive` property
-   * of the settings object to `false` to request the token in the background without
-   * displaying any UI related to authorization to the user.
-   * It can be used to request an access token after the user authorized the application.
-   * Server should return the token which will be passed back to the application.
-   *
-   * When using `interactive = false` mode then the response event is always
-   * `oauth2-token-response`, even when there was authorization error or user never
-   * authorized the application. In this case the response object will not carry
-   * `accessToken` property and always have `interactive` set to `false` and `code`
-   * to determine cause of unsuccessful request.
-   *
-   * ### Example
-   *
-   * ```
-   * const settings = {
-   *   interactive: false,
-   *   type: 'implicit',
-   *   clientId: 'CLIENT ID',
-   *   redirectUri: 'https://example.com/auth-popup.html',
-   *   authorizationUri: 'https://auth.example.com/token'
-   *   state: '1234'
-   * };
-   * const event = new CustomEvent('oauth2-token-requested', { 'detail': settings, bubbles: true });
-   * document.dispatchEvent(event);
-   *
-   * document.body.addEventListener('oauth2-token-response', (e) => {
-   *   let info = e.detail;
-   *   if (info.state !== '1234') {
-   *     return;
-   *   }
-   *   if (info.interactive === false && info.code) {
-   *     // unsuccessful request
-   *     return;
-   *   }
-   *   let token = info.accessToken;
-   * });
-   * ```
    */
-  class OAuth2Authorization extends PolymerElement {
-
-    /**
-     * A full data returned by the authorization endpoint.
-     */
-    readonly tokenInfo: object|null|undefined;
+  class OAuth2Authorization extends HTMLElement {
+    readonly tokenInfo: object|null;
+    ontokenerror: Function|null;
+    ontokenresponse: Function|null;
     connectedCallback(): void;
     disconnectedCallback(): void;
 
@@ -161,6 +50,21 @@ declare namespace LogicElements {
      * as OAuth 2.0 allows extensions to grant type.
      */
     authorize(settings: {[key: String|null]: String|null}): void;
+
+    /**
+     * Checks if basic configuration of the OAuth 2 request is valid an can proceed
+     * with authentication.
+     *
+     * @param settings authorization settings
+     */
+    _sanityCheck(settings: object|null): void;
+
+    /**
+     * Checks if the URL has valid scheme for OAuth flow.
+     *
+     * @param url The url value to test
+     */
+    _checkUrl(url: String|null): void;
 
     /**
      * Authorizes the user in the OAuth authorization endpoint.
@@ -235,12 +139,10 @@ declare namespace LogicElements {
     _computeScope(scopes: Array<String|null>|null): String|null;
 
     /**
-     * Listen for a message from the popup.
-     *
-     * Token will be extracted and `oauth2-token-response` will be fired. Also, if the initial
-     * request came from an event, a `tokenValue` property fill be set on the event target.
+     * Listens for a message from the popup.
      */
     _popupMessageHandler(e: Event|null): void;
+    _processPopupData(e: any): void;
     _clearIframeTimeout(): void;
 
     /**
@@ -438,6 +340,14 @@ declare namespace LogicElements {
      * @param detail The detail object.
      */
     _dispatchResponse(detail: object|null): void;
+
+    /**
+     * Registers an event handler for given type
+     *
+     * @param eventType Event type (name)
+     * @param value The handler to register
+     */
+    _registerCallback(eventType: String|null, value: Function|null): void;
   }
 }
 

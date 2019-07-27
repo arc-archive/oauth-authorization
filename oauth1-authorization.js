@@ -11,12 +11,10 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import '../../@polymer/polymer/polymer-legacy.js';
-import {afterNextRender} from '../../@polymer/polymer/lib/utils/render-status.js';
-import '../../@polymer/iron-meta/iron-meta.js';
-import {UrlParser} from '../../@advanced-rest-client/url-parser/url-parser.js';
-import {HeadersParserMixin} from '../../@advanced-rest-client/headers-parser-mixin/headers-parser-mixin.js';
-import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
+import { LitElement } from 'lit-element';
+import '@polymer/iron-meta/iron-meta.js';
+import { HeadersParserMixin } from '@advanced-rest-client/headers-parser-mixin/headers-parser-mixin.js';
+function noop() {}
 /**
 An element to perform OAuth1 authorization and to sign auth requests.
 
@@ -78,6 +76,8 @@ distributed under BSD license.
 The `CryptoJS` and `RSAKey` libraries are not included into the element sources.
 If your project do not use this libraries already include it into your project.
 
+This component also uses `URLSearchParams` so provide a polyfill for `URL` and `URLSearchParams`.
+
 ```
 npm i cryptojslib jsrsasign
 ```
@@ -92,89 +92,74 @@ npm i cryptojslib jsrsasign
 ```
 
 @customElement
-@polymer
 @memberof LogicElements
 @appliesMixin HeadersParserMixin
 */
 if (window) {
   window.forceJURL = true;
 }
-export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
-  static get is() {
-    return 'oauth1-authorization';
+export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
+  get lastIssuedToken() {
+    return this._lastIssuedToken;
   }
+
+  set lastIssuedToken(value) {
+    const old = this._lastIssuedToken;
+    if (old === value) {
+      return;
+    }
+    this._lastIssuedToken = value;
+    this.dispatchEvent(new CustomEvent('last-issued-token-changed', {
+      detail: {
+        value
+      }
+    }));
+  }
+
   static get properties() {
     return {
-      // A full data returned by the authorization endpoint.
-      tokenInfo: {
-        type: Object,
-        readOnly: true
-      },
       /**
        * If set, requests made by this element to authorization endpoint will be
        * prefixed with the proxy value.
        */
-      proxy: String,
+      proxy: { type: String },
       /**
        * Latest valid token exchanged with the authorization endpoint.
        */
-      lastIssuedToken: {
-        type: Object,
-        notify: true
-      },
+      lastIssuedToken: { type: Object },
       /**
        * OAuth 1 token authorization endpoint.
        */
-      requestTokenUri: String,
+      requestTokenUri: { type: String },
       /**
        * Oauth 1 token exchange endpoint
        */
-      accessTokenUri: String,
+      accessTokenUri: { type: String },
       /**
        * Oauth 1 consumer key to use with auth request
        */
-      consumerKey: String,
+      consumerKey: { type: String },
       /**
        * Oauth 1 consumer secret to be used to generate the signature.
        */
-      consumerSecret: String,
+      consumerSecret: { type: String },
       /**
        * A signature generation method.
        * Once of: `PLAINTEXT`, `HMAC-SHA1` or `RSA-SHA1`
        */
-      signatureMethod: {
-        type: String,
-        value: 'HMAC-SHA1'
-      },
+      signatureMethod: { type: String },
       /**
        * Location of the OAuth authorization parameters.
        * It can be either `authorization` meaning as a header and
        * `querystring` to put OAuth parameters to the URL.
        */
-      authParamsLocation: {
-        type: String,
-        value: 'authorization'
-      },
-      _caseMap: {
-        type: Object,
-        value: {}
-      },
-      _camelRegex: {
-        type: Object,
-        value: function() {
-          return /([A-Z])/g;
-        }
-      },
+      authParamsLocation: { type: String },
+      _caseMap: { type: Object },
+      _camelRegex: { type: Object },
       /**
        * Returns `application/x-www-form-urlencoded` content type value.
        */
-      urlEncodedType: {
-        type: String,
-        readOnly: true,
-        value: function() {
-          return 'application/x-www-form-urlencoded';
-        }
-      }
+      urlEncodedType: { type: String }
     };
   }
 
@@ -183,15 +168,20 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
     this._tokenRequestedHandler = this._tokenRequestedHandler.bind(this);
     this._listenPopup = this._listenPopup.bind(this);
     this._handleRequest = this._handleRequest.bind(this);
+
+    this.signatureMethod = 'HMAC-SHA1';
+    this.authParamsLocation = 'authorization';
+    this._caseMap = {};
+    this._camelRegex = /([A-Z])/g;
+    this.urlEncodedType = 'application/x-www-form-urlencoded';
   }
 
   connectedCallback() {
     super.connectedCallback();
-    afterNextRender(this, () => {
-      window.addEventListener('oauth1-token-requested', this._tokenRequestedHandler);
-      window.addEventListener('message', this._listenPopup);
-      window.addEventListener('before-request', this._handleRequest);
-    });
+    window.addEventListener('oauth1-token-requested', this._tokenRequestedHandler);
+    window.addEventListener('message', this._listenPopup);
+    window.addEventListener('before-request', this._handleRequest);
+    this.setAttribute('aria-hidden', 'true');
   }
 
   disconnectedCallback() {
@@ -231,8 +221,8 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
     }
     try {
       this._prepareOauth(auth);
-    } catch (e) {
-      console.error(e);
+    } catch (_) {
+      noop();
       return;
     }
 
@@ -247,7 +237,9 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
       let contentType;
       try {
         contentType = this.getContentType(request.headers);
-      } catch (e) {}
+      } catch (e) {
+        noop();
+      }
       if (contentType && contentType.indexOf(this.urlEncodedType) === 0) {
         body = request.body;
       }
@@ -258,7 +250,9 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
       const authorization = this._buildAuthorizationHeaders(orderedParameters);
       try {
         request.headers = this.replaceHeaderValue(request.headers, 'authorization', authorization);
-      } catch (e) {}
+      } catch (_) {
+        noop();
+      }
     } else {
       request.url = this._buildAuthorizationQueryStirng(request.url, orderedParameters);
     }
@@ -289,7 +283,7 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
     try {
       this._prepareOauth(settings);
     } catch (e) {
-      console.error(e);
+      noop();
       this._dispatchError('Unable to authorize: ' + e.message, 'params-error');
       return;
     }
@@ -310,7 +304,7 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
       this._observePopupState();
     })
     .catch((e) => {
-      let msg = e.message || 'Unknown error when getting the token';
+      const msg = e.message || 'Unknown error when getting the token';
       this._dispatchError(msg, 'token-request-error');
     });
   }
@@ -323,7 +317,7 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
    */
   _prepareOauth(params) {
     if (params.signatureMethod) {
-      let signMethod = params.signatureMethod;
+      const signMethod = params.signatureMethod;
       if (['PLAINTEXT', 'HMAC-SHA1', 'RSA-SHA1'].indexOf(signMethod) === -1) {
         throw new Error('Unsupported signature method: ' + signMethod);
       }
@@ -404,8 +398,8 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
    * @return {String} Normalized params.
    */
   _finishEncodeParams(url) {
-    return url.replace(/\!/g, '%21')
-    .replace(/\'/g, '%27')
+    return url.replace(/!/g, '%21')
+    .replace(/'/g, '%27')
     .replace(/\(/g, '%28')
     .replace(/\)/g, '%29')
     .replace(/\*/g, '%2A');
@@ -541,17 +535,11 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
    * @return {String} URL to use with the request
    */
   _buildAuthorizationQueryStirng(url, orderedParameters) {
-    const urlParser = new UrlParser(url);
-    orderedParameters = orderedParameters.map(function(item) {
-      return [
-        encodeURIComponent(item[0]),
-        encodeURIComponent(item[1])
-      ];
+    const parser = new URL(url);
+    orderedParameters.forEach((item) => {
+      parser.searchParams.append(item[0], item[1]);
     });
-    const params = urlParser.searchParams.concat(orderedParameters);
-    urlParser.searchParams = params;
-    url = urlParser.toString();
-    return url;
+    return parser.toString();
   }
   // Takes an object literal that represents the arguments, and returns an array
   // of argument/value pairs.
@@ -632,13 +620,15 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
    * first element as a name of the parameter and second element as a value.
    */
   _listQueryParameters(url) {
-    const parsedUrl = new UrlParser(url);
-    return parsedUrl.searchParams.map((item) => {
-      return [
-        this.decodeData(item[0]),
-        this.decodeData(item[1])
+    const parsedUrl = new URL(url);
+    const result = [];
+    parsedUrl.searchParams.forEach((value, key) => {
+      result[result.length] = [
+        this.decodeData(key),
+        this.decodeData(value)
       ];
     });
+    return result;
   }
   /**
    * Computes array of parameters from the entity body.
@@ -875,7 +865,9 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
       let contentType;
       try {
         contentType = this.getContentType(request.headers);
-      } catch (e) {}
+      } catch (_) {
+        noop();
+      }
       if (contentType && contentType.indexOf(this.urlEncodedType) === 0) {
         body = request.body;
       }
@@ -886,7 +878,9 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
       const authorization = this._buildAuthorizationHeaders(orderedParameters);
       try {
         request.headers = this.replaceHeaderValue(request.headers, 'authorization', authorization);
-      } catch (e) {}
+      } catch (_) {
+        noop();
+      }
     } else {
       request.url = this._buildAuthorizationQueryStirng(request.url, orderedParameters);
     }
@@ -1210,4 +1204,4 @@ export class OAuth1Authorization extends HeadersParserMixin(PolymerElement) {
    * `Request` object for fetch API.
    */
 }
-window.customElements.define(OAuth1Authorization.is, OAuth1Authorization);
+window.customElements.define('oauth1-authorization', OAuth1Authorization);
