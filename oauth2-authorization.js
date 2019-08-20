@@ -111,16 +111,13 @@ export class OAuth2Authorization extends HTMLElement {
         this._authorize(this._constructPopupUrl(settings, 'code'), settings);
         break;
       case 'client_credentials':
-        this.authorizeClientCredentials(settings)
-        .catch(() => {});
+        this.authorizeClientCredentials(settings).catch(() => {});
         break;
       case 'password':
-        this.authorizePassword(settings)
-        .catch(() => {});
+        this.authorizePassword(settings).catch(() => {});
         break;
       default:
-        this.authorizeCustomGrant(settings)
-        .catch(() => {});
+        this.authorizeCustomGrant(settings).catch(() => {});
     }
   }
   /**
@@ -134,13 +131,13 @@ export class OAuth2Authorization extends HTMLElement {
       try {
         this._checkUrl(settings.authorizationUri);
       } catch (e) {
-        throw(new Error(`authorizationUri: ${e.message}`));
+        throw new Error(`authorizationUri: ${e.message}`);
       }
       if (settings.accessTokenUri) {
         try {
           this._checkUrl(settings.accessTokenUri);
         } catch (e) {
-          throw(new Error(`accessTokenUri: ${e.message}`));
+          throw new Error(`accessTokenUri: ${e.message}`);
         }
       }
     } else if (settings.accessTokenUri) {
@@ -148,7 +145,7 @@ export class OAuth2Authorization extends HTMLElement {
         try {
           this._checkUrl(settings.accessTokenUri);
         } catch (e) {
-          throw(new Error(`accessTokenUri: ${e.message}`));
+          throw new Error(`accessTokenUri: ${e.message}`);
         }
       }
     }
@@ -383,6 +380,7 @@ export class OAuth2Authorization extends HTMLElement {
       });
       this._errored = true;
       this._clearIframeTimeout();
+      this.clear();
     } else if ('error' in tokenInfo) {
       this._dispatchError({
         message: tokenInfo.errorDescription || 'The request is invalid.',
@@ -392,15 +390,15 @@ export class OAuth2Authorization extends HTMLElement {
       });
       this._errored = true;
       this._clearIframeTimeout();
+      this.clear();
     } else if (this._type === 'implicit') {
       this._handleTokenInfo(tokenInfo);
+      this.clear();
     } else if (this._type === 'authorization_code') {
       this._exchangeCodeValue = tokenInfo.code;
-      this._exchangeCode(tokenInfo.code)
-      .catch(() => {});
+      this._exchangeCode(tokenInfo.code).catch(() => {});
       this._clearIframeTimeout();
     }
-    this.clear();
   }
 
   _clearIframeTimeout() {
@@ -411,8 +409,9 @@ export class OAuth2Authorization extends HTMLElement {
   }
   // http://stackoverflow.com/a/10727155/1127848
   randomString(len) {
-    return Math.round((Math.pow(36, len + 1) - Math.random() * Math.pow(36, len)))
-      .toString(36).slice(1);
+    return Math.round(Math.pow(36, len + 1) - Math.random() * Math.pow(36, len))
+      .toString(36)
+      .slice(1);
   }
   /**
    * Popup is closed by this element so if data is not yet set it means that the
@@ -448,7 +447,9 @@ export class OAuth2Authorization extends HTMLElement {
     const body = this._getCodeEchangeBody(this._settings, code);
     try {
       const tokenInfo = await this._requestToken(url, body, this._settings);
-      return this._handleTokenInfo(tokenInfo);
+      const result = this._handleTokenInfo(tokenInfo);
+      this.clear();
+      return result;
     } catch (cause) {
       this._handleTokenCodeError(cause);
     }
@@ -629,12 +630,12 @@ export class OAuth2Authorization extends HTMLElement {
    */
   _handleTokenCodeError(e) {
     this._dispatchError({
-      message: 'Couldn\'t connect to the server. ' + e.message,
+      message: "Couldn't connect to the server. " + e.message,
       code: 'request_error',
       state: this._state,
       interactive: this._settings.interactive
     });
-    this._settings = undefined;
+    this.clear();
     throw e;
   }
   /**
@@ -669,7 +670,9 @@ export class OAuth2Authorization extends HTMLElement {
     const body = this._getPasswordBody(settings);
     try {
       const tokenInfo = await this._requestToken(url, body, settings);
-      return this._handleTokenInfo(tokenInfo);
+      const result = this._handleTokenInfo(tokenInfo);
+      this.clear();
+      return result;
     } catch (cause) {
       this._handleTokenCodeError(cause);
     }
@@ -706,7 +709,9 @@ export class OAuth2Authorization extends HTMLElement {
     const body = this._getClientCredentialsBody(settings);
     try {
       const tokenInfo = await this._requestToken(url, body, settings);
-      return this._handleTokenInfo(tokenInfo);
+      const result = this._handleTokenInfo(tokenInfo);
+      this.clear();
+      return result;
     } catch (cause) {
       this._handleTokenCodeError(cause);
     }
@@ -744,7 +749,9 @@ export class OAuth2Authorization extends HTMLElement {
     const body = this._getCustomGrantBody(settings);
     try {
       const tokenInfo = await this._requestToken(url, body, settings);
-      return this._handleTokenInfo(tokenInfo);
+      const result = this._handleTokenInfo(tokenInfo);
+      this.clear();
+      return result;
     } catch (cause) {
       this._handleTokenCodeError(cause);
     }
@@ -758,9 +765,7 @@ export class OAuth2Authorization extends HTMLElement {
    * @return {String} Request body.
    */
   _getCustomGrantBody(settings) {
-    const parts = [
-      'grant_type=' + encodeURIComponent(settings.type)
-    ];
+    const parts = ['grant_type=' + encodeURIComponent(settings.type)];
     if (settings.clientId) {
       parts[parts.length] = 'client_id=' + encodeURIComponent(settings.clientId);
     }
@@ -794,13 +799,15 @@ export class OAuth2Authorization extends HTMLElement {
       return url;
     }
     url += url.indexOf('?') === -1 ? '?' : '&';
-    url += data.parameters.map((item) => {
-      let value = item.value;
-      if (value) {
-        value = encodeURIComponent(value);
-      }
-      return encodeURIComponent(item.name) + '=' + value;
-    }).join('&');
+    url += data.parameters
+      .map((item) => {
+        let value = item.value;
+        if (value) {
+          value = encodeURIComponent(value);
+        }
+        return encodeURIComponent(item.name) + '=' + value;
+      })
+      .join('&');
     return url;
   }
   /**
@@ -833,13 +840,17 @@ export class OAuth2Authorization extends HTMLElement {
     if (!data || !data.token || !data.token.body) {
       return body;
     }
-    body += '&' + data.token.body.map(function(item) {
-      let value = item.value;
-      if (value) {
-        value = encodeURIComponent(value);
-      }
-      return encodeURIComponent(item.name) + '=' + value;
-    }).join('&');
+    body +=
+      '&' +
+      data.token.body
+        .map(function(item) {
+          let value = item.value;
+          if (value) {
+            value = encodeURIComponent(value);
+          }
+          return encodeURIComponent(item.name) + '=' + value;
+        })
+        .join('&');
     return body;
   }
   /**
@@ -851,7 +862,7 @@ export class OAuth2Authorization extends HTMLElement {
     const e = new CustomEvent('oauth2-error', {
       bubbles: true,
       composed: true,
-      detail: detail
+      detail
     });
     this.dispatchEvent(e);
   }
@@ -864,7 +875,7 @@ export class OAuth2Authorization extends HTMLElement {
     const e = new CustomEvent('oauth2-token-response', {
       bubbles: true,
       composed: true,
-      detail: detail
+      detail
     });
     this.dispatchEvent(e);
   }

@@ -2,10 +2,55 @@ import { fixture, assert } from '@open-wc/testing';
 import { ClientCredentialsServer } from './auth-server.js';
 import '../oauth2-authorization.js';
 
+let popupsAllowed;
+const win = window.open('https://example.com', 'oauth-window');
+if (!win) {
+  popupsAllowed = false;
+} else {
+  popupsAllowed = true;
+  win.close();
+}
+
 describe('<oauth2-authorization>', () => {
   async function basicFixture() {
     return await fixture(`<oauth2-authorization></oauth2-authorization>`);
   }
+
+  (popupsAllowed ? describe : describe.skip)('full code flow', () => {
+    let element;
+    let params;
+    beforeEach(async () => {
+      element = await basicFixture();
+      params = {
+        type: 'authorization_code',
+        clientId: 'test client id',
+        clientSecret: 'test client secret',
+        accessTokenUri: 'https://auth.domain.com/alwaysRespond',
+        authorizationUri: location.origin + '/base/test/code-request.html',
+        redirectUri: 'https://domain.com/redirect',
+        interactive: true,
+        scopes: ['one', 'two']
+      };
+    });
+    before(() => {
+      ClientCredentialsServer.createServer('authorization_code');
+    });
+
+    after(() => {
+      ClientCredentialsServer.restore();
+    });
+
+    it('returns the token', (done) => {
+      element.authorize(params);
+      element.addEventListener('oauth2-token-response', () => {
+        done();
+      });
+
+      element.addEventListener('oauth2-error', (e) => {
+        done(new Error(e.detail.message));
+      });
+    });
+  });
 
   describe('Password request', () => {
     const params = {
@@ -19,18 +64,24 @@ describe('<oauth2-authorization>', () => {
       scopes: ['one', 'two'],
       customData: {
         token: {
-          parameters: [{
-            name: 'customParam',
-            value: 'paramValue'
-          }],
-          headers: [{
-            name: 'x-custom-header',
-            value: 'header value'
-          }],
-          body: [{
-            name: 'custom_body_param',
-            value: 'custom value'
-          }]
+          parameters: [
+            {
+              name: 'customParam',
+              value: 'paramValue'
+            }
+          ],
+          headers: [
+            {
+              name: 'x-custom-header',
+              value: 'header value'
+            }
+          ],
+          body: [
+            {
+              name: 'custom_body_param',
+              value: 'custom value'
+            }
+          ]
         }
       }
     };
@@ -190,8 +241,7 @@ describe('<oauth2-authorization>', () => {
           clone.accessTokenUri = 'https://auth.domain.com/clienterror';
           element._settings = clone;
           element._state = 'test-state';
-          element._exchangeCode(code)
-          .catch(() => {});
+          element._exchangeCode(code).catch(() => {});
         });
 
         it('Dispatches error event when 404', (done) => {
@@ -207,8 +257,7 @@ describe('<oauth2-authorization>', () => {
           clone.accessTokenUri = 'https://auth.domain.com/server404error';
           element._settings = clone;
           element._state = 'test-state';
-          element._exchangeCode(code)
-          .catch(() => {});
+          element._exchangeCode(code).catch(() => {});
         });
 
         it('Dispatches error event when 40x', (done) => {
@@ -224,8 +273,7 @@ describe('<oauth2-authorization>', () => {
           clone.accessTokenUri = 'https://auth.domain.com/server400error';
           element._settings = clone;
           element._state = 'test-state';
-          element._exchangeCode(code)
-          .catch(() => {});
+          element._exchangeCode(code).catch(() => {});
         });
 
         it('Dispatches error event when 50x', (done) => {
@@ -241,8 +289,7 @@ describe('<oauth2-authorization>', () => {
           clone.accessTokenUri = 'https://auth.domain.com/server500error';
           element._settings = clone;
           element._state = 'test-state';
-          element._exchangeCode(code)
-          .catch(() => {});
+          element._exchangeCode(code).catch(() => {});
         });
       });
     });
