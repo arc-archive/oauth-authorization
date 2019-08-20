@@ -282,3 +282,12 @@
 
 
 
+# [3.0.0](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.14...3.0.0) (2019-08-20)
+
+
+### Features
+
+* partially fixes advanced-rest-client/auth-methods/issues/18 ([717a5fe](https://github.com/advanced-rest-client/oauth-authorization/commit/717a5fe))
+
+
+
