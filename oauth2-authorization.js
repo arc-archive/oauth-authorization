@@ -98,7 +98,7 @@ export class OAuth2Authorization extends HTMLElement {
     this._state = settings.state || this.randomString(6);
     this._settings = settings;
     this._errored = false;
-    this._overrideCodeExchangeFlow = settings.overrideExchangeCodeFlow;
+    this._overrideExchangeCodeFlow = settings.overrideExchangeCodeFlow;
 
     try {
       this._sanityCheck(settings);
@@ -375,7 +375,7 @@ export class OAuth2Authorization extends HTMLElement {
 
   _processPopupData(e) {
     const tokenInfo = e.data;
-    const dontProcess = !this._overrideCodeExchangeFlow && (!tokenInfo || !tokenInfo.oauth2response);
+    const dontProcess = !this._overrideExchangeCodeFlow && (!tokenInfo || !tokenInfo.oauth2response);
     if (dontProcess) {
       // Possibly a message in the authorization info, not the popup.
       return;
@@ -411,7 +411,7 @@ export class OAuth2Authorization extends HTMLElement {
       // For authorization_code flow, the developer (user of the oauth2-authorization lib)
       // can pass a setting to override the code exchange flow. In this scenario,
       // we dispatch the auth code instead of exchanging the code for an access token.
-      if (this._overrideCodeExchangeFlow) {
+      if (this._overrideExchangeCodeFlow) {
         this._dispatchCodeResponse(tokenInfo);
       } else {
         this._exchangeCodeValue = tokenInfo.code;
