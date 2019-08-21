@@ -83,6 +83,14 @@ export class OAuth2Authorization extends HTMLElement {
    * - type {String} Authorization grant type. Can be `implicit`,
    * `authorization_code`, `client_credentials`, `password` or custom value
    * as OAuth 2.0 allows extensions to grant type.
+   *
+   * NOTE: For authorization_code and any other grant type that may receive a code
+   * and exchange it for an access token, the settings object may have a property "overrideExchangeCodeFlow".
+   * The "overrideExchangeCodeFlow" property is a flag indiciating that the developer wants to handle
+   * exchanging the code for the token instead of having the module do it. This makes it so that
+   * client-side apps can use the auth code and exchange via their server for an access token.
+   * An "oauth2-code-response" will be dispatched with the auth code if "overrideExchangeCodeFlow"
+   * is set for the authorization_code and refresh_token grant types.
    */
   authorize(settings) {
     this._tokenInfo = undefined;
@@ -90,6 +98,7 @@ export class OAuth2Authorization extends HTMLElement {
     this._state = settings.state || this.randomString(6);
     this._settings = settings;
     this._errored = false;
+    this._overrideCodeExchangeFlow = settings.overrideExchangeCodeFlow;
 
     try {
       this._sanityCheck(settings);
@@ -108,6 +117,9 @@ export class OAuth2Authorization extends HTMLElement {
         this._authorize(this._constructPopupUrl(settings, 'token'), settings);
         break;
       case 'authorization_code':
+        this._authorize(this._constructPopupUrl(settings, 'code'), settings);
+        break;
+      case 'refresh_token':
         this._authorize(this._constructPopupUrl(settings, 'code'), settings);
         break;
       case 'client_credentials':
@@ -363,7 +375,8 @@ export class OAuth2Authorization extends HTMLElement {
 
   _processPopupData(e) {
     const tokenInfo = e.data;
-    if (!tokenInfo || !tokenInfo.oauth2response) {
+    const dontProcess = !this._overrideCodeExchangeFlow && (!tokenInfo || !tokenInfo.oauth2response);
+    if (dontProcess) {
       // Possibly a message in the authorization info, not the popup.
       return;
     }
@@ -394,10 +407,17 @@ export class OAuth2Authorization extends HTMLElement {
     } else if (this._type === 'implicit') {
       this._handleTokenInfo(tokenInfo);
       this.clear();
-    } else if (this._type === 'authorization_code') {
-      this._exchangeCodeValue = tokenInfo.code;
-      this._exchangeCode(tokenInfo.code).catch(() => {});
-      this._clearIframeTimeout();
+    } else if (this._type === 'authorization_code' || this._type === 'refresh_token') {
+      // For authorization_code flow, the developer (user of the oauth2-authorization lib)
+      // can pass a setting to override the code exchange flow. In this scenario,
+      // we dispatch the auth code instead of exchanging the code for an access token.
+      if (this._overrideCodeExchangeFlow) {
+        this._dispatchCodeResponse(tokenInfo);
+      } else {
+        this._exchangeCodeValue = tokenInfo.code;
+        this._exchangeCode(tokenInfo.code).catch(() => {});
+        this._clearIframeTimeout();
+      }
     }
   }
 
@@ -867,7 +887,20 @@ export class OAuth2Authorization extends HTMLElement {
     this.dispatchEvent(e);
   }
   /**
-   * Dispatches an error event that propagates through the DOM.
+   * Dispatches an event with the authorization-code that propagates through the DOM.
+   *
+   * @param {Object} detail The detail object.
+   */
+  _dispatchCodeResponse(detail) {
+    const e = new CustomEvent('oauth2-code-response', {
+      bubbles: true,
+      composed: true,
+      detail
+    });
+    this.dispatchEvent(e);
+  }
+  /**
+   * Dispatches an event with the token (e.g. access token) that propagates through the DOM.
    *
    * @param {Object} detail The detail object.
    */
