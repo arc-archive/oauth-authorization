@@ -898,7 +898,7 @@ export class OAuth2Authorization extends HTMLElement {
     this.dispatchEvent(e);
   }
   /**
-   * Dispatches an event with the authorization-code that propagates through the DOM.
+   * Dispatches an event with the authorization code that propagates through the DOM.
    * Closes the popup once the authorization code has been dispatched.
    *
    * @param {Object} detail The detail object.
