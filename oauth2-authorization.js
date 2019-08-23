@@ -84,13 +84,21 @@ export class OAuth2Authorization extends HTMLElement {
    * `authorization_code`, `client_credentials`, `password` or custom value
    * as OAuth 2.0 allows extensions to grant type.
    *
-   * NOTE: For authorization_code and any other grant type that may receive a code
-   * and exchange it for an access token, the settings object may have a property "overrideExchangeCodeFlow".
-   * The "overrideExchangeCodeFlow" property is a flag indiciating that the developer wants to handle
-   * exchanging the code for the token instead of having the module do it. This makes it so that
-   * client-side apps can use the auth code and exchange via their server for an access token.
-   * An "oauth2-code-response" will be dispatched with the auth code if "overrideExchangeCodeFlow"
-   * is set for the authorization_code and refresh_token grant types.
+   * NOTE:
+   * For authorization_code and any other grant type that may receive a code
+   * and exchange it for an access token (e.g. refresh_token), the settings object may have a property
+   * "overrideExchangeCodeFlow" with a boolean value (true/false).
+   *
+   * The "overrideExchangeCodeFlow" property is a flag indicating that the developer wants to handle
+   * exchanging the code for the token instead of having the module do it.
+   *
+   * If "overrideExchangeCodeFlow" is set to true for the authorization_code and refresh_token grant types,
+   * we dispatch an "oauth2-code-response" event with the auth code.
+   *
+   * The user of this module should listen for this event and exchange the token for an access token on their end.
+   *
+   * This allows client-side apps to exchange the auth code with their backend/server for an access token
+   * since CORS isn't enabled for the /token endpoint.
    */
   authorize(settings) {
     this._tokenInfo = undefined;
@@ -408,9 +416,12 @@ export class OAuth2Authorization extends HTMLElement {
       this._handleTokenInfo(tokenInfo);
       this.clear();
     } else if (this._type === 'authorization_code' || this._type === 'refresh_token') {
-      // For authorization_code flow, the developer (user of the oauth2-authorization lib)
-      // can pass a setting to override the code exchange flow. In this scenario,
-      // we dispatch the auth code instead of exchanging the code for an access token.
+      /**
+       * For the authorization_code flow, the developer (user of the oauth2-authorization lib)
+       * can pass a setting to override the code exchange flow. In this scenario,
+       * we dispatch an event with the auth code instead of exchanging the code for an access token.
+       * See {@link authorize()} comment for more details.
+       */
       if (this._overrideExchangeCodeFlow) {
         this._dispatchCodeResponse(tokenInfo);
       } else {
