@@ -909,6 +909,7 @@ export class OAuth2Authorization extends HTMLElement {
       detail
     });
     this.dispatchEvent(e);
+    this.clear();
   }
   /**
    * Dispatches an event with the token (e.g. access token) that propagates through the DOM.
