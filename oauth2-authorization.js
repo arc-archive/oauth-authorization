@@ -86,13 +86,13 @@ export class OAuth2Authorization extends HTMLElement {
    *
    * NOTE:
    * For authorization_code and any other grant type that may receive a code
-   * and exchange it for an access token (e.g. refresh_token), the settings object may have a property
+   * and exchange it for an access token, the settings object may have a property
    * "overrideExchangeCodeFlow" with a boolean value (true/false).
    *
    * The "overrideExchangeCodeFlow" property is a flag indicating that the developer wants to handle
    * exchanging the code for the token instead of having the module do it.
    *
-   * If "overrideExchangeCodeFlow" is set to true for the authorization_code and refresh_token grant types,
+   * If "overrideExchangeCodeFlow" is set to true for the authorization_code grant type,
    * we dispatch an "oauth2-code-response" event with the auth code.
    *
    * The user of this module should listen for this event and exchange the token for an access token on their end.
@@ -125,9 +125,6 @@ export class OAuth2Authorization extends HTMLElement {
         this._authorize(this._constructPopupUrl(settings, 'token'), settings);
         break;
       case 'authorization_code':
-        this._authorize(this._constructPopupUrl(settings, 'code'), settings);
-        break;
-      case 'refresh_token':
         this._authorize(this._constructPopupUrl(settings, 'code'), settings);
         break;
       case 'client_credentials':
@@ -415,7 +412,7 @@ export class OAuth2Authorization extends HTMLElement {
     } else if (this._type === 'implicit') {
       this._handleTokenInfo(tokenInfo);
       this.clear();
-    } else if (this._type === 'authorization_code' || this._type === 'refresh_token') {
+    } else if (this._type === 'authorization_code') {
       /**
        * For the authorization_code flow, the developer (user of the oauth2-authorization lib)
        * can pass a setting to override the code exchange flow. In this scenario,
