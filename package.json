@@ -1,7 +1,7 @@
 {
   "name": "@advanced-rest-client/oauth-authorization",
   "description": "A set of elements that perform oauth authorization",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "license": "Apache-2.0",
   "main": "outh-authorization.js",
   "keywords": [
