@@ -50,6 +50,18 @@ describe('<oauth2-authorization>', () => {
         done(new Error(e.detail.message));
       });
     });
+
+    it('returns the auth "code" if the overrideExchangeCodeFlow is set', (done) => {
+      const paramsWithOverride = Object.assign({}, params, { overrideExchangeCodeFlow: true });
+
+      element.addEventListener('oauth2-code-response', () => {
+        done();
+      });
+      element.addEventListener('oauth2-error', (e) => {
+        done(new Error(e.detail.message));
+      });
+      element.authorize(paramsWithOverride);
+    });
   });
 
   describe('Password request', () => {
