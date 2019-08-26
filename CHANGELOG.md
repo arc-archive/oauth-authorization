@@ -291,3 +291,23 @@
 
 
 
+## [3.0.1](https://github.com/advanced-rest-client/oauth-authorization/compare/0.2.14...3.0.1) (2019-08-26)
+
+
+### Bug Fixes
+
+* **auth-code:** add test for auth code overrideExchangeCodeFlow ([b8891e8](https://github.com/advanced-rest-client/oauth-authorization/commit/b8891e8))
+* **authorization_code:** close the popup upon sending the auth code ([fe2b095](https://github.com/advanced-rest-client/oauth-authorization/commit/fe2b095))
+* **comment:** update comment ([75cfcf9](https://github.com/advanced-rest-client/oauth-authorization/commit/75cfcf9))
+* **comment:** update comment ([0e13286](https://github.com/advanced-rest-client/oauth-authorization/commit/0e13286))
+* **notes:** update notes ([3aba475](https://github.com/advanced-rest-client/oauth-authorization/commit/3aba475))
+* **refresh:** remove refresh token grant type ([5f44813](https://github.com/advanced-rest-client/oauth-authorization/commit/5f44813))
+
+
+### Features
+
+* partially fixes advanced-rest-client/auth-methods/issues/18 ([717a5fe](https://github.com/advanced-rest-client/oauth-authorization/commit/717a5fe))
+* **auth-code:** add flag to dispatch event with the auth code ([8f252da](https://github.com/advanced-rest-client/oauth-authorization/commit/8f252da))
+
+
+
