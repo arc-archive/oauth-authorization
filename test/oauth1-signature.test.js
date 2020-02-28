@@ -13,25 +13,39 @@ describe('<oauth1-authorization>', function() {
         element = await basicFixture();
       });
 
-      [{
-        url: 'http://domain.com',
-        result: []
-      }, {
-        url: 'http://domain.com/path/file.html',
-        result: []
-      }, {
-        url: 'http://domain.com/path/file.html?',
-        result: []
-      }, {
-        url: 'http://domain.com/path/file.html?param=value',
-        result: [['param', 'value']]
-      }, {
-        url: 'http://domain.com/path/file.html?param=value&a',
-        result: [['param', 'value'], ['a', '']]
-      }, {
-        url: 'http://domain.com/path/file.html?param=value&a=&test#123',
-        result: [['param', 'value'], ['a', ''], ['test', '']]
-      }].forEach(function(item) {
+      [
+        {
+          url: 'http://domain.com',
+          result: []
+        },
+        {
+          url: 'http://domain.com/path/file.html',
+          result: []
+        },
+        {
+          url: 'http://domain.com/path/file.html?',
+          result: []
+        },
+        {
+          url: 'http://domain.com/path/file.html?param=value',
+          result: [['param', 'value']]
+        },
+        {
+          url: 'http://domain.com/path/file.html?param=value&a',
+          result: [
+            ['param', 'value'],
+            ['a', '']
+          ]
+        },
+        {
+          url: 'http://domain.com/path/file.html?param=value&a=&test#123',
+          result: [
+            ['param', 'value'],
+            ['a', ''],
+            ['test', '']
+          ]
+        }
+      ].forEach(function(item) {
         it('Parses ' + item.url, function() {
           const params = element._listQueryParameters(item.url);
           assert.lengthOf(params, item.result.length, 'Length is OK');
@@ -249,7 +263,6 @@ describe('<oauth1-authorization>', function() {
         compare += '%3D7d8f3e4a%26oauth_signature_method%3DHMAC-SHA1%26oauth_';
         compare += 'timestamp%3D137131201%26oauth_token%3Dkkk9d7dh3k39sjv7';
 
-
         const normalised = element.createSignatureBase(method, url, oauthParams);
         assert.equal(normalised, compare);
       });
@@ -313,7 +326,8 @@ describe('<oauth1-authorization>', function() {
         };
         const url = 'http://term.ie/oauth/example/request_token.php';
         const base = element.createSignatureBase('POST', url, oauthParams);
-        const compare = 'POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_' +
+        const compare =
+          'POST&http%3A%2F%2Fterm.ie%2Foauth%2Fexample%2Frequest_' +
           'token.php&oauth_callback%3Dhttp%253A%252F%252F192.168.1.16%253A808' +
           '1%252Fcomponents%252Fauth-methods%252Fdemo%252Foauth1.html%26oauth' +
           '_consumer_key%3Dkey%26oauth_nonce%3DKoirwhdQhaHOuviMm1YydjVlcOZxJv' +
@@ -425,6 +439,153 @@ describe('<oauth1-authorization>', function() {
           assert.equal(base, 'secret&');
         });
       });
+    });
+  });
+
+  describe('signRequestObject()', () => {
+    let element;
+    before(async function() {
+      element = await basicFixture();
+    });
+
+    const token = 'abc';
+    const tokenSecret = 'xyz';
+
+    it('returns the same object when no request method', () => {
+      const request = {
+        url: 'http://domain.com/path/file.html?param=value'
+      };
+      const result = element.signRequestObject({ ...request }, token, tokenSecret);
+      assert.deepEqual(result, request);
+    });
+
+    it('returns the same object when no url', () => {
+      const request = {
+        method: 'GET'
+      };
+      const result = element.signRequestObject({ ...request }, token, tokenSecret);
+      assert.deepEqual(result, request);
+    });
+
+    it('signs GET request', () => {
+      const request = {
+        method: 'GET',
+        url: 'http://domain.com/path/file.html?param=value',
+        headers: ''
+      };
+      const result = element.signRequestObject({ ...request }, token, tokenSecret);
+      assert.include(result.headers, 'oauth_token="abc"');
+    });
+
+    it('signs POST request with payload', () => {
+      const request = {
+        method: 'GET',
+        url: 'http://domain.com/path/file.html?param=value',
+        headers: 'content-type: text/plain',
+        body: 'test'
+      };
+      const result = element.signRequestObject({ ...request }, token, tokenSecret);
+      assert.include(result.headers, 'oauth_token="abc"');
+    });
+  });
+
+  describe('signRequest()', () => {
+    let element;
+    before(async function() {
+      element = await basicFixture();
+    });
+
+    const token = 'abc';
+    const tokenSecret = 'xyz';
+
+    function createAuthorization() {
+      return {
+        valid: true,
+        type: 'oauth 1',
+        settings: {
+          signatureMethod: 'PLAINTEXT',
+          requestTokenUri: 'https://domain.com/token',
+          accessTokenUri: 'https://domain.com/access',
+          consumerKey: 'ckey',
+          consumerSecret: 'csecret',
+          redirectUri: 'https://rdr.com',
+          token,
+          tokenSecret
+        }
+      };
+    }
+
+    it('returns the same object when no request method', () => {
+      const auth = createAuthorization();
+      const request = {
+        url: 'http://domain.com/path/file.html?param=value'
+      };
+      const result = element.signRequest({ ...request }, auth);
+      assert.deepEqual(result, request);
+    });
+
+    it('returns the same object when no url', () => {
+      const auth = createAuthorization();
+      const request = {
+        method: 'GET'
+      };
+      const result = element.signRequest({ ...request }, auth);
+      assert.deepEqual(result, request);
+    });
+
+    it('signs GET request', () => {
+      const auth = createAuthorization();
+      const request = {
+        method: 'GET',
+        url: 'http://domain.com/path/file.html?param=value',
+        headers: ''
+      };
+      const result = element.signRequest({ ...request }, auth);
+      const { headers } = result;
+      assert.include(headers, 'authorization: OAuth ', 'has "authorization" value');
+      assert.include(headers, 'oauth_consumer_key="ckey",', 'has "consumer_key"');
+      // value is generated so not testing for it
+      assert.include(headers, 'oauth_nonce="', 'has "nonce"');
+      assert.include(headers, 'oauth_signature_method="PLAINTEXT",', 'has "signature_method"');
+      // value is time dependent so not testing for it
+      assert.include(headers, 'oauth_timestamp="', 'has "timestamp"');
+      assert.include(headers, 'oauth_token="abc",', 'has "token"');
+      assert.include(headers, 'oauth_version="1.0",', 'has "version"');
+      assert.include(headers, 'oauth_signature="csecret%26xyz"', 'has "signature"');
+    });
+
+    it('signs POST request', () => {
+      const auth = createAuthorization();
+      const request = {
+        method: 'POST',
+        url: 'http://domain.com/path/file.html?param=value',
+        headers: 'content-type: text/plain',
+        body: 'test'
+      };
+      const result = element.signRequest({ ...request }, auth);
+      const { headers } = result;
+      assert.include(headers, 'authorization: OAuth ', 'has "authorization" value');
+      assert.include(headers, 'oauth_consumer_key="ckey",', 'has "consumer_key"');
+      // value is generated so not testing for it
+      assert.include(headers, 'oauth_nonce="', 'has "nonce"');
+      assert.include(headers, 'oauth_signature_method="PLAINTEXT",', 'has "signature_method"');
+      // value is time dependent so not testing for it
+      assert.include(headers, 'oauth_timestamp="', 'has "timestamp"');
+      assert.include(headers, 'oauth_token="abc",', 'has "token"');
+      assert.include(headers, 'oauth_version="1.0",', 'has "version"');
+      assert.include(headers, 'oauth_signature="csecret%26xyz"', 'has "signature"');
+    });
+
+    it('accepts array argument', () => {
+      const auth = createAuthorization();
+      const request = {
+        method: 'GET',
+        url: 'http://domain.com/path/file.html?param=value',
+        headers: ''
+      };
+      const result = element.signRequest({ ...request }, [auth]);
+      const { headers } = result;
+      assert.include(headers, 'authorization: OAuth ', 'has "authorization" value');
     });
   });
 });

@@ -15,6 +15,14 @@ import { LitElement } from 'lit-element';
 import '@polymer/iron-meta/iron-meta.js';
 import { HeadersParserMixin } from '@advanced-rest-client/headers-parser-mixin/headers-parser-mixin.js';
 function noop() {}
+
+/**
+ * @typedef AuthSettings
+ * @property {Boolean} valid
+ * @property {String} type
+ * @property {Object} settings
+ */
+
 /**
 An element to perform OAuth1 authorization and to sign auth requests.
 
@@ -109,11 +117,13 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
       return;
     }
     this._lastIssuedToken = value;
-    this.dispatchEvent(new CustomEvent('last-issued-token-changed', {
-      detail: {
-        value
-      }
-    }));
+    this.dispatchEvent(
+      new CustomEvent('last-issued-token-changed', {
+        detail: {
+          value
+        }
+      })
+    );
   }
 
   static get properties() {
@@ -204,6 +214,37 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
     }
     this._applyBeforeRequestSignature(request, request.auth);
   }
+
+  /**
+   * This is similar to `signRequestObject()` fut it accepts the request object
+   * and authorization settings separately and it uses OAuth configuration
+   * from the auth object.
+   *
+   * @param {Object} request ARC/API Console request object
+   * @param {AuthSettings|Array<AuthSettings>} auth Authorization object
+   * @return {Object} Signed request object.
+   */
+  signRequest(request, auth) {
+    if (!auth) {
+      return request;
+    }
+    const authInfo = Array.isArray(auth)
+      ? auth.find((item) => item.type === 'oauth 1')
+      : auth.type === 'oauth1' || auth.type === 'oauth 1'
+      ? auth
+      : undefined;
+    if (!authInfo) {
+      return request;
+    }
+    const authSettings = authInfo.settings || {};
+    const { token, tokenSecret } = authSettings;
+    if (!token || !tokenSecret) {
+      return request;
+    }
+    this._applyBeforeRequestSignature(request, authSettings);
+    return request;
+  }
+
   /**
    * Applies OAuth1 authorization header with generated signature for this
    * request.
@@ -222,7 +263,6 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
     try {
       this._prepareOauth(auth);
     } catch (_) {
-      noop();
       return;
     }
 
@@ -238,14 +278,13 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
       try {
         contentType = this.getContentType(request.headers);
       } catch (e) {
-        noop();
+        // ...
       }
       if (contentType && contentType.indexOf(this.urlEncodedType) === 0) {
         body = request.body;
       }
     }
-    const orderedParameters = this._prepareParameters(token, tokenSecret, method,
-      request.url, {}, body);
+    const orderedParameters = this._prepareParameters(token, tokenSecret, method, request.url, {}, body);
     if (this.authParamsLocation === 'authorization') {
       const authorization = this._buildAuthorizationHeaders(orderedParameters);
       try {
@@ -288,25 +327,24 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
       return;
     }
     this.getOAuthRequestToken()
-    .then((temporaryCredentials) => {
-      this.temporaryCredentials = temporaryCredentials;
-      const authorizationUri = settings.authorizationUri + '?oauth_token=' +
-        temporaryCredentials.oauth_token;
-      this.popupClosedProperly = undefined;
-      this._popup = window.open(authorizationUri, 'api-console-oauth1');
-      if (!this._popup) {
-        // popup blocked.
-        this._dispatchError('Authorization popup is blocked', 'popup-blocked');
-        return;
-      }
-      this._next = 'exchange-token';
-      this._popup.window.focus();
-      this._observePopupState();
-    })
-    .catch((e) => {
-      const msg = e.message || 'Unknown error when getting the token';
-      this._dispatchError(msg, 'token-request-error');
-    });
+      .then((temporaryCredentials) => {
+        this.temporaryCredentials = temporaryCredentials;
+        const authorizationUri = settings.authorizationUri + '?oauth_token=' + temporaryCredentials.oauth_token;
+        this.popupClosedProperly = undefined;
+        this._popup = window.open(authorizationUri, 'api-console-oauth1');
+        if (!this._popup) {
+          // popup blocked.
+          this._dispatchError('Authorization popup is blocked', 'popup-blocked');
+          return;
+        }
+        this._next = 'exchange-token';
+        this._popup.window.focus();
+        this._observePopupState();
+      })
+      .catch((e) => {
+        const msg = e.message || 'Unknown error when getting the token';
+        this._dispatchError(msg, 'token-request-error');
+      });
   }
   /**
    * Sets a configuration properties on this element from passed settings.
@@ -376,7 +414,7 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
    * @return {Number} Current timestamp
    */
   getTimestamp() {
-    return Math.floor((new Date()).getTime() / 1000);
+    return Math.floor(new Date().getTime() / 1000);
   }
   /**
    * URL encodes the string.
@@ -398,11 +436,12 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
    * @return {String} Normalized params.
    */
   _finishEncodeParams(url) {
-    return url.replace(/!/g, '%21')
-    .replace(/'/g, '%27')
-    .replace(/\(/g, '%28')
-    .replace(/\)/g, '%29')
-    .replace(/\*/g, '%2A');
+    return url
+      .replace(/!/g, '%21')
+      .replace(/'/g, '%27')
+      .replace(/\(/g, '%28')
+      .replace(/\)/g, '%29')
+      .replace(/\*/g, '%2A');
   }
 
   /**
@@ -435,8 +474,7 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
    * `application/x-www-form-urlencoded`.
    * @throws Error when `signatureMethod` is not one of listed here.
    */
-  getSignature(signatureMethod, requestMethod, url, oauthParameters,
-    tokenSecret, body) {
+  getSignature(signatureMethod, requestMethod, url, oauthParameters, tokenSecret, body) {
     let signatureBase;
     let key;
     if (signatureMethod !== 'PLAINTEXT') {
@@ -468,8 +506,10 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
     const parsedUrl = new URL(url);
     let port = '';
     if (parsedUrl.port) {
-      if ((parsedUrl.protocol === 'http:' && parsedUrl.port !== '80') ||
-        (parsedUrl.protocol === 'https:' && parsedUrl.port !== '443')) {
+      if (
+        (parsedUrl.protocol === 'http:' && parsedUrl.port !== '80') ||
+        (parsedUrl.protocol === 'https:' && parsedUrl.port !== '443')
+      ) {
         port = ':' + parsedUrl.port;
       }
     }
@@ -623,10 +663,7 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
     const parsedUrl = new URL(url);
     const result = [];
     parsedUrl.searchParams.forEach((value, key) => {
-      result[result.length] = [
-        this.decodeData(key),
-        this.decodeData(value)
-      ];
+      result[result.length] = [this.decodeData(key), this.decodeData(value)];
     });
     return result;
   }
@@ -771,11 +808,68 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
    */
   get nonceChars() {
     return [
-      'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-      'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B',
-      'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3',
-      '4', '5', '6', '7', '8', '9'
+      'a',
+      'b',
+      'c',
+      'd',
+      'e',
+      'f',
+      'g',
+      'h',
+      'i',
+      'j',
+      'k',
+      'l',
+      'm',
+      'n',
+      'o',
+      'p',
+      'q',
+      'r',
+      's',
+      't',
+      'u',
+      'v',
+      'w',
+      'x',
+      'y',
+      'z',
+      'A',
+      'B',
+      'C',
+      'D',
+      'E',
+      'F',
+      'G',
+      'H',
+      'I',
+      'J',
+      'K',
+      'L',
+      'M',
+      'N',
+      'O',
+      'P',
+      'Q',
+      'R',
+      'S',
+      'T',
+      'U',
+      'V',
+      'W',
+      'X',
+      'Y',
+      'Z',
+      '0',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9'
     ];
   }
 
@@ -794,31 +888,28 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
 
   _prepareParameters(token, tokenSecret, method, url, extraParams, body) {
     const oauthParameters = {
-      'oauth_timestamp': this._timestamp || this.getTimestamp(),
-      'oauth_nonce': this._nonce || this._getNonce(this._nonceSize),
-      'oauth_version': this._version,
-      'oauth_signature_method': this.signatureMethod,
-      'oauth_consumer_key': this.consumerKey
+      oauth_timestamp: this._timestamp || this.getTimestamp(),
+      oauth_nonce: this._nonce || this._getNonce(this._nonceSize),
+      oauth_version: this._version,
+      oauth_signature_method: this.signatureMethod,
+      oauth_consumer_key: this.consumerKey
     };
     if (token) {
       oauthParameters.oauth_token = token;
     }
     let sig;
     if (this._isEcho) {
-      sig = this.getSignature(this.signatureMethod, 'GET',
-        this._verifyCredentials, oauthParameters, tokenSecret, body);
+      sig = this.getSignature(this.signatureMethod, 'GET', this._verifyCredentials, oauthParameters, tokenSecret, body);
     } else {
       if (extraParams) {
         Object.keys(extraParams).forEach((key) => {
           oauthParameters[key] = extraParams[key];
         });
       }
-      sig = this.getSignature(this.signatureMethod, method, url, oauthParameters,
-        tokenSecret, body);
+      sig = this.getSignature(this.signatureMethod, method, url, oauthParameters, tokenSecret, body);
     }
 
-    const orderedParameters = this._sortRequestParams(
-      this._makeArrayOfArgumentsHash(oauthParameters));
+    const orderedParameters = this._sortRequestParams(this._makeArrayOfArgumentsHash(oauthParameters));
     orderedParameters[orderedParameters.length] = ['oauth_signature', sig];
     return orderedParameters;
   }
@@ -829,6 +920,7 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
     });
     return result.join('&');
   }
+
   /**
    * Creates OAuth1 signature for a `request` object.
    * The request object must contain:
@@ -872,8 +964,7 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
         body = request.body;
       }
     }
-    const orderedParameters = this._prepareParameters(token, tokenSecret, method,
-      request.url, {}, body);
+    const orderedParameters = this._prepareParameters(token, tokenSecret, method, request.url, {}, body);
     if (this.authParamsLocation === 'authorization') {
       const authorization = this._buildAuthorizationHeaders(orderedParameters);
       try {
@@ -917,7 +1008,7 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
         }
       });
     }
-    if (withPayload && (extraParams && !body) && ['POST', 'PUT'].indexOf(method) !== -1) {
+    if (withPayload && extraParams && !body && ['POST', 'PUT'].indexOf(method) !== -1) {
       body = this.encodeUriParams(extraParams);
       body = this._finishEncodeParams(body);
     }
@@ -933,19 +1024,19 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
     }
     let responseHeaders;
     return this.request(url, init)
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('Token request error ended with status ' + response.status);
-      }
-      responseHeaders = response.headers;
-      return response.text();
-    })
-    .then((text) => {
-      return {
-        response: text,
-        headers: responseHeaders
-      };
-    });
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Token request error ended with status ' + response.status);
+        }
+        responseHeaders = response.headers;
+        return response.text();
+      })
+      .then((text) => {
+        return {
+          response: text,
+          headers: responseHeaders
+        };
+      });
   }
   /**
    * Exchanges temporary authorization token for authorized token.
@@ -963,30 +1054,29 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
     }
     const method = this.authTokenMethod;
     return this._performRequest(token, secret, method, this.accessTokenUri, extraParams)
-    .then((response) => {
-      if (!response.response) {
-        let message = 'Couldn\'t exchange token. ';
-        message += 'Authorization server may be down or CORS is disabled.';
-        throw new Error(message);
-      }
-      const params = {};
-      this._formUrlEncodedToParams(response.response)
-      .forEach((pair) => {
-        params[pair[0]] = pair[1];
+      .then((response) => {
+        if (!response.response) {
+          let message = "Couldn't exchange token. ";
+          message += 'Authorization server may be down or CORS is disabled.';
+          throw new Error(message);
+        }
+        const params = {};
+        this._formUrlEncodedToParams(response.response).forEach((pair) => {
+          params[pair[0]] = pair[1];
+        });
+        return params;
+      })
+      .then((tokenInfo) => {
+        this.clearRequestVariables();
+        this.lastIssuedToken = tokenInfo;
+        const e = new CustomEvent('oauth1-token-response', {
+          bubbles: true,
+          composed: true,
+          cancelable: false,
+          detail: tokenInfo
+        });
+        this.dispatchEvent(e);
       });
-      return params;
-    })
-    .then((tokenInfo) => {
-      this.clearRequestVariables();
-      this.lastIssuedToken = tokenInfo;
-      const e = new CustomEvent('oauth1-token-response', {
-        bubbles: true,
-        composed: true,
-        cancelable: false,
-        detail: tokenInfo
-      });
-      this.dispatchEvent(e);
-    });
   }
   /**
    * Clears variables set for current request after signature has been
@@ -1014,16 +1104,14 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
       extraParams.oauth_callback = this._authorizeCallback;
     }
     const method = this.authTokenMethod;
-    return this._performRequest(null, null, method, this.requestTokenUri, extraParams)
-    .then((response) => {
+    return this._performRequest(null, null, method, this.requestTokenUri, extraParams).then((response) => {
       if (!response.response) {
-        let message = 'Couldn\'t request for authorization token. ';
+        let message = "Couldn't request for authorization token. ";
         message += 'Authorization server may be down or CORS is disabled.';
         throw new Error(message);
       }
       const params = {};
-      this._formUrlEncodedToParams(response.response)
-      .forEach((pair) => {
+      this._formUrlEncodedToParams(response.response).forEach((pair) => {
         params[pair[0]] = pair[1];
       });
       return params;
@@ -1081,18 +1169,25 @@ export class OAuth1Authorization extends HeadersParserMixin(LitElement) {
   }
 
   _listenPopup(e) {
-    if (!location || !e.source || !this._popup || e.origin !== location.origin ||
-      e.source.location.href !== this._popup.location.href) {
+    if (
+      !location ||
+      !e.source ||
+      !this._popup ||
+      e.origin !== location.origin ||
+      e.source.location.href !== this._popup.location.href
+    ) {
       return;
     }
     const tokenInfo = e.data;
     this.popupClosedProperly = true;
     switch (this._next) {
       case 'exchange-token':
-        this.getOAuthAccessToken(tokenInfo.oauthToken,
+        this.getOAuthAccessToken(
+          tokenInfo.oauthToken,
           this.temporaryCredentials.oauth_token_secret,
-          tokenInfo.oauthVerifier);
-      break;
+          tokenInfo.oauthVerifier
+        );
+        break;
     }
     this._popup.close();
   }
