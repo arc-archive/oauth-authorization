@@ -46,6 +46,13 @@ module.exports = (config) => {
         // if you are using 'bare module imports' you will need this option
         nodeResolve: true
       },
+
+      client: {
+        mocha: {
+          timeout: 10000
+        }
+      },
+
       coverageIstanbulReporter: {
         thresholds: {
           // emitWarning: true,
@@ -65,7 +72,7 @@ module.exports = (config) => {
                 statements: 47,
                 lines: 47,
                 branches: 37,
-                functions: 48,
+                functions: 48
               }
             }
           }
