@@ -52,7 +52,6 @@
     "sinon": "^9.0.0"
   },
   "scripts": {
-    "test": "karma start --coverage",
     "update-types": "gen-typescript-declarations --deleteExisting --outDir .",
     "start": "es-dev-server --app-index demo/index.html --node-resolve --open --watch",
     "start:compatibility": "es-dev-server --app-index demo/index.html --compatibility all --node-resolve --open --watch",
@@ -62,10 +61,11 @@
     "format:prettier": "prettier \"**/*.js\" --write",
     "lint": "npm run lint:eslint && npm run lint:prettier",
     "format": "npm run format:eslint && npm run format:prettier",
+    "test": "karma start --coverage",
     "test:watch": "karma start --auto-watch=true --single-run=false",
-    "test:legacy": "karma start --legacy --coverage",
-    "test:legacy:watch": "karma start --legacy --auto-watch=true --single-run=false",
-    "test:sl": "karma start karma.sl.config.js --legacy --coverage"
+    "test:update-snapshots": "karma start --update-snapshots",
+    "test:prune-snapshots": "karma start --prune-snapshots",
+    "test:sl": "karma start karma.sl.config.js --coverage"
   },
   "lint-staged": {
     "*.js": [
