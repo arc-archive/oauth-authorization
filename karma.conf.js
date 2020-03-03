@@ -68,7 +68,7 @@ module.exports = (config) => {
             branches: 80,
             functions: 90,
             overrides: {
-              'oauth1-authorization.js': {
+              'src/OAuth1Authorization.js': {
                 statements: 47,
                 lines: 47,
                 branches: 37,

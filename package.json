@@ -27,6 +27,7 @@
     "email": "arc@mulesoft.com"
   },
   "dependencies": {
+    "@advanced-rest-client/events-target-mixin": "^3.0.0",
     "@advanced-rest-client/headers-parser-mixin": "^3.0.0",
     "@polymer/iron-meta": "^3.0.0",
     "lit-element": "^2.0.1"

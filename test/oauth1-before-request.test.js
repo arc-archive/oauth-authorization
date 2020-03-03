@@ -30,15 +30,19 @@ describe('<oauth1-authorization>', function() {
         timestamp: 1509402152,
         token: 'tWfvyFw7anQYC0Fo',
         tokenSecret: 'kOZA2NjIVQ1c8pUZ6Ku2c2Rs16aGeYnJHlZL7Kg2jFAfmigL1uFSUHNO5zLkkIru',
-        type: 'oauth1'
+        type: 'oauth 1'
       };
     });
 
     function fire() {
       const detail = Object.assign ? Object.assign({}, request) : request;
-      detail.auth = auth;
+      detail.auth = {
+        settings: auth,
+        valid: true,
+        type: 'oauth 1'
+      };
       const event = new CustomEvent('before-request', {
-        detail: detail,
+        detail,
         bubbles: true,
         composed: true
       });
