@@ -202,11 +202,13 @@ npm install --save @advanced-rest-client/oauth-authorization
 <html>
   <head>
     <script type="module">
-      import '@advanced-rest-client/advanced-rest-client/oauth-authorization.js';
+      import '@advanced-rest-client/advanced-rest-client/oauth1-authorization.js';
+      import '@advanced-rest-client/advanced-rest-client/oauth2-authorization.js';
     </script>
   </head>
   <body>
-    <oauth-authorization></oauth-authorization>
+    <oauth1-authorization></oauth1-authorization>
+    <oauth2-authorization></oauth2-authorization>
   </body>
 </html>
 ```
