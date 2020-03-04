@@ -430,3 +430,44 @@
  [9bdf257](https://github.com/advanced-rest-client/oauth-authorization/commit/9bdf2570a78265f5398db8d1165dd834141819d4) by jarrodek
 
 
+<a name="4.0.0"></a>
+# [4.0.0](https://github.com/advanced-rest-client/oauth-authorization/compare/3.0.1...4.0.0) (2020-03-04)
+
+## Build
+
+* bumping version [839f35f](https://github.com/advanced-rest-client/oauth-authorization/commit/839f35f1ec3a7632a9f268f8a30f25ff600839cf) by Pawel Psztyc
+
+
+## Continuous integration
+
+* updating SL configuration [f4ebfee](https://github.com/advanced-rest-client/oauth-authorization/commit/f4ebfee0050e5bb861b3b36cc88744fbba93ad0e) by Pawel Psztyc
+* updating Travis configuration [d3a48f4](https://github.com/advanced-rest-client/oauth-authorization/commit/d3a48f4495427c12fd5a040939ed3ee2a805b7be) by Pawel Psztyc
+
+
+## Update
+
+* adding types [48c7017](https://github.com/advanced-rest-client/oauth-authorization/commit/48c70179c3f5b093869ec752212e31b2c276f08f) by Pawel Psztyc
+* adding exception handling for OAuth 1 [4f3be8d](https://github.com/advanced-rest-client/oauth-authorization/commit/4f3be8d9ca27e48120f78346e07bb5c6b1de98c6) by Pawel Psztyc
+* bumping major version [42a2238](https://github.com/advanced-rest-client/oauth-authorization/commit/42a2238b307e9c0c7e228ce13696a43f253189f4) by Pawel Psztyc
+* removing unused commands from `lint-starged` cnf [b1c8e47](https://github.com/advanced-rest-client/oauth-authorization/commit/b1c8e47bf562498d2e329e055494994903cc44c9) by Pawel Psztyc
+* [ci skip] automated merge master->stage. syncing main branches [32b86fd](https://github.com/advanced-rest-client/oauth-authorization/commit/32b86fde6967e653563a60bde92e5128bc77301c) by Ci agent
+* upgrding dependencies [838bc1e](https://github.com/advanced-rest-client/oauth-authorization/commit/838bc1e268f211aa0b91ff1c5e74f0de80f55b91) by Pawel Psztyc
+* upgrading dependencies [4429e94](https://github.com/advanced-rest-client/oauth-authorization/commit/4429e94c3ca1731b3c3c1c1fb47bcb34852c8f29) by Pawel
+
+
+## Features
+
+* adding `signRequest()` method [a682a65](https://github.com/advanced-rest-client/oauth-authorization/commit/a682a657cc4c7ae6e9c93424e4eb5bf255ad1c50) by Pawel Psztyc
+
+
+## Refactor
+
+* move sources to src and add events-target-mixin support [d37b847](https://github.com/advanced-rest-client/oauth-authorization/commit/d37b8478b703297584913eef89c9202fe052925a) by Pawel Psztyc
+
+
+## Testing
+
+* temporaily removing Safari-1 [36e502d](https://github.com/advanced-rest-client/oauth-authorization/commit/36e502df5b6dda8eeaba4f75e7f497eb382db5a9) by Pawel Psztyc
+* updating test commands [e0800ff](https://github.com/advanced-rest-client/oauth-authorization/commit/e0800ffab5988e67e38f3351ab0997f413d489fb) by Pawel Psztyc
+
+
