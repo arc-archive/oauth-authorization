@@ -5,12 +5,12 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   oauth1-authorization.js
+ *   index.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 
-import {OAuth1Authorization} from './src/OAuth1Authorization.js';
+export {OAuth2Authorization} from './src/OAuth2Authorization.js';
 
-export {OAuth1Authorization};
+export {OAuth1Authorization} from './src/OAuth1Authorization.js';
