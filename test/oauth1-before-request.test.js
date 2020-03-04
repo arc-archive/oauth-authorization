@@ -9,8 +9,9 @@ describe('<oauth1-authorization>', function() {
   describe('Before request - OAuth1', function() {
     let request;
     let auth;
+    let element;
     beforeEach(async () => {
-      await basicFixture();
+      element = await basicFixture();
       request = {
         url: 'http://domain.com/endpoint/?param=value',
         headers: 'x-requested-with: xmlhttprequest',
@@ -51,10 +52,17 @@ describe('<oauth1-authorization>', function() {
     }
 
     it('Handles before-request event', () => {
-      const event = fire();
-      const headers = event.detail.headers;
+      const e = fire();
+      const { headers } = e.detail;
       assert.typeOf(headers, 'string');
       assert.isTrue(headers.toLowerCase().indexOf('authorization') !== -1);
+    });
+
+    it('ignores the event when ignoreBeforeRequest is set', () => {
+      element.ignoreBeforeRequest = true;
+      const e = fire();
+      const { headers } = e.detail;
+      assert.isTrue(headers.toLowerCase().indexOf('authorization') === -1);
     });
 
     it('Generates signature', () => {

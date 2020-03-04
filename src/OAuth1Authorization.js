@@ -156,7 +156,11 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
       /**
        * Returns `application/x-www-form-urlencoded` content type value.
        */
-      urlEncodedType: { type: String }
+      urlEncodedType: { type: String },
+      /**
+       * When set the `before-request` event is not handled by this element
+       */
+      ignoreBeforeRequest: { type: Boolean },
     };
   }
 
@@ -215,6 +219,9 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
    * @param {CustomEvent} e
    */
   _handleRequest(e) {
+    if (this.ignoreBeforeRequest) {
+      return;
+    }
     const request = e.detail;
     const { auth } = request;
     const authSettings = this._getAuthSettings(auth);
