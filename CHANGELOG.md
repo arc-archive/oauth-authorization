@@ -504,3 +504,33 @@
 * move sources to src and add events-target-mixin support [d37b847](https://github.com/advanced-rest-client/oauth-authorization/commit/d37b8478b703297584913eef89c9202fe052925a) by Pawel Psztyc
 
 
+<a name="4.0.2"></a>
+## [4.0.2](https://github.com/advanced-rest-client/oauth-authorization/compare/4.0.0...4.0.2) (2020-03-04)
+
+### Build
+
+* bumping version [f44fc61](https://github.com/advanced-rest-client/oauth-authorization/commit/f44fc61505cf9d2b548c60d28248668527b3ecb5) by Pawel Psztyc
+* bumping version [b7f3d76](https://github.com/advanced-rest-client/oauth-authorization/commit/b7f3d76863fde6eef4765ee8aa0bcc593d8d5736) by Pawel Psztyc
+
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [5e908e3](https://github.com/advanced-rest-client/oauth-authorization/commit/5e908e3fd972533f4f7fdd29e77324e40713fcd7) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [a7f9d5c](https://github.com/advanced-rest-client/oauth-authorization/commit/a7f9d5cca728ceae6f3f601287f8e629918cedf4) by Ci agent
+
+
+### Documentation
+
+* updating readme file [a2cc541](https://github.com/advanced-rest-client/oauth-authorization/commit/a2cc5414462ec148936fb11107ac9fb497f9ea5e) by Pawel Psztyc
+
+
+### Features
+
+* adding `ignoreBeforeRequest` to OAuth 1 [2a4909e](https://github.com/advanced-rest-client/oauth-authorization/commit/2a4909e0f2eb5727f8316873d3d24b66225edff7) by Pawel Psztyc
+
+
+### Refactor
+
+* rename `body` to `payload` in OAuth 1 [644e94f](https://github.com/advanced-rest-client/oauth-authorization/commit/644e94fd1aaa309f617bdec0c4e7f59e6434bfbd) by Pawel Psztyc
+
+
