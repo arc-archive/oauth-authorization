@@ -471,3 +471,36 @@
 * updating test commands [e0800ff](https://github.com/advanced-rest-client/oauth-authorization/commit/e0800ffab5988e67e38f3351ab0997f413d489fb) by Pawel Psztyc
 
 
+<a name="4.0.1"></a>
+## [4.0.1](https://github.com/advanced-rest-client/oauth-authorization/compare/3.0.2...4.0.1) (2020-03-04)
+
+### Build
+
+* bumping version [b7f3d76](https://github.com/advanced-rest-client/oauth-authorization/commit/b7f3d76863fde6eef4765ee8aa0bcc593d8d5736) by Pawel Psztyc
+
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [a7f9d5c](https://github.com/advanced-rest-client/oauth-authorization/commit/a7f9d5cca728ceae6f3f601287f8e629918cedf4) by Ci agent
+* adding types [48c7017](https://github.com/advanced-rest-client/oauth-authorization/commit/48c70179c3f5b093869ec752212e31b2c276f08f) by Pawel Psztyc
+* adding exception handling for OAuth 1 [4f3be8d](https://github.com/advanced-rest-client/oauth-authorization/commit/4f3be8d9ca27e48120f78346e07bb5c6b1de98c6) by Pawel Psztyc
+* bumping major version [42a2238](https://github.com/advanced-rest-client/oauth-authorization/commit/42a2238b307e9c0c7e228ce13696a43f253189f4) by Pawel Psztyc
+* removing unused commands from `lint-starged` cnf [b1c8e47](https://github.com/advanced-rest-client/oauth-authorization/commit/b1c8e47bf562498d2e329e055494994903cc44c9) by Pawel Psztyc
+* [ci skip] automated merge master->stage. syncing main branches [32b86fd](https://github.com/advanced-rest-client/oauth-authorization/commit/32b86fde6967e653563a60bde92e5128bc77301c) by Ci agent
+
+
+### Documentation
+
+* updating readme file [a2cc541](https://github.com/advanced-rest-client/oauth-authorization/commit/a2cc5414462ec148936fb11107ac9fb497f9ea5e) by Pawel Psztyc
+
+
+### Features
+
+* adding `ignoreBeforeRequest` to OAuth 1 [2a4909e](https://github.com/advanced-rest-client/oauth-authorization/commit/2a4909e0f2eb5727f8316873d3d24b66225edff7) by Pawel Psztyc
+
+
+### Refactor
+
+* move sources to src and add events-target-mixin support [d37b847](https://github.com/advanced-rest-client/oauth-authorization/commit/d37b8478b703297584913eef89c9202fe052925a) by Pawel Psztyc
+
+
