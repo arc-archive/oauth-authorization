@@ -222,7 +222,12 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
       return;
     }
     const { settings } = authSettings;
-    this._applyBeforeRequestSignature(request, settings);
+    try {
+      this._applyBeforeRequestSignature(request, settings);
+    } catch(e) {
+      // eslint-disable-next-line no-console
+      console.warn('Unable to process OAuth 1 authorization', e);
+    }
   }
 
   /**
