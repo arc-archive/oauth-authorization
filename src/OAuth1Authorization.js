@@ -288,7 +288,7 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
 
     const withPayload = ['GET', 'HEAD'].indexOf(request.method) === -1;
     let body;
-    if (withPayload && request.headers && request.body) {
+    if (withPayload && request.headers && request.payload) {
       let contentType;
       try {
         contentType = this.getContentType(request.headers);
@@ -296,7 +296,7 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
         // ...
       }
       if (contentType && contentType.indexOf(this.urlEncodedType) === 0) {
-        body = request.body;
+        body = request.payload;
       }
     }
     const orderedParameters = this._prepareParameters(token, tokenSecret, method, request.url, {}, body);
@@ -967,7 +967,7 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
     method = method.toUpperCase();
     const withPayload = ['GET', 'HEAD'].indexOf(request.method) === -1;
     let body;
-    if (withPayload && request.headers && request.body) {
+    if (withPayload && request.headers && request.payload) {
       let contentType;
       try {
         contentType = this.getContentType(request.headers);
@@ -975,7 +975,7 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
         // ...
       }
       if (contentType && contentType.indexOf(this.urlEncodedType) === 0) {
-        body = request.body;
+        body = request.payload;
       }
     }
     const orderedParameters = this._prepareParameters(token, tokenSecret, method, request.url, {}, body);
@@ -1034,7 +1034,7 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
       headers: headers
     };
     if (withPayload && body) {
-      init.body = body;
+      init.payload = body;
     }
     let responseHeaders;
     return this.request(url, init)

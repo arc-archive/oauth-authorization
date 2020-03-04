@@ -482,7 +482,7 @@ describe('<oauth1-authorization>', function() {
         method: 'GET',
         url: 'http://domain.com/path/file.html?param=value',
         headers: 'content-type: text/plain',
-        body: 'test'
+        payload: 'test'
       };
       const result = element.signRequestObject({ ...request }, token, tokenSecret);
       assert.include(result.headers, 'oauth_token="abc"');
@@ -560,7 +560,7 @@ describe('<oauth1-authorization>', function() {
         method: 'POST',
         url: 'http://domain.com/path/file.html?param=value',
         headers: 'content-type: text/plain',
-        body: 'test'
+        payload: 'test'
       };
       const result = element.signRequest({ ...request }, auth);
       const { headers } = result;
