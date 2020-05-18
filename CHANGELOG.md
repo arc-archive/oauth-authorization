@@ -534,3 +534,34 @@
 * rename `body` to `payload` in OAuth 1 [644e94f](https://github.com/advanced-rest-client/oauth-authorization/commit/644e94fd1aaa309f617bdec0c4e7f59e6434bfbd) by Pawel Psztyc
 
 
+<a name="4.0.3"></a>
+## [4.0.3](https://github.com/advanced-rest-client/oauth-authorization/compare/4.0.1...4.0.3) (2020-05-18)
+
+### Build
+
+* bumping version [7ee38eb](https://github.com/advanced-rest-client/oauth-authorization/commit/7ee38eb48d9e8bdec43d3cb01e43d8586100d984) by Pawel
+* bumping version [f44fc61](https://github.com/advanced-rest-client/oauth-authorization/commit/f44fc61505cf9d2b548c60d28248668527b3ecb5) by Pawel Psztyc
+
+
+### Continuous integration
+
+* removing sudo from  Travis config [d787ae2](https://github.com/advanced-rest-client/oauth-authorization/commit/d787ae2707d77e75cfd7f970713dd6a8e7b688e9) by Pawel
+
+
+### Update
+
+* upgrading dependencies [73ff111](https://github.com/advanced-rest-client/oauth-authorization/commit/73ff111c5004c500ed37d05369fcb9d8de2ff79e) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [ee7e233](https://github.com/advanced-rest-client/oauth-authorization/commit/ee7e233b68286a053093bd2be1adc2068975163b) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [5e908e3](https://github.com/advanced-rest-client/oauth-authorization/commit/5e908e3fd972533f4f7fdd29e77324e40713fcd7) by Ci agent
+
+
+### Bug Fixes
+
+* fixes APIC-398 - XSS with invalid auth URI [14f877b](https://github.com/advanced-rest-client/oauth-authorization/commit/14f877bee49ab420be56ea3db5a4a6a947de7ea2) by Pawel
+
+
+### Refactor
+
+* rename `body` to `payload` in OAuth 1 [644e94f](https://github.com/advanced-rest-client/oauth-authorization/commit/644e94fd1aaa309f617bdec0c4e7f59e6434bfbd) by Pawel Psztyc
+
+
