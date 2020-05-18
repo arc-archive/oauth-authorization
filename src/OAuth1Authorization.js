@@ -1,7 +1,7 @@
 import { LitElement } from 'lit-element';
 import '@polymer/iron-meta/iron-meta.js';
-import { HeadersParserMixin } from '@advanced-rest-client/headers-parser-mixin/headers-parser-mixin.js';
 import { EventsTargetMixin } from '@advanced-rest-client/events-target-mixin/events-target-mixin.js';
+import * as HeadersParser from '@advanced-rest-client/headers-parser-mixin';
 
 /**
  * @typedef AuthSettings
@@ -85,15 +85,11 @@ npm i cryptojslib jsrsasign
 <script src="../cryptojslib/rollups/hmac-sha1.js"></script>
 <script src="../jsrsasign/lib/jsrsasign-rsa-min.js"></script>
 ```
-
-@customElement
-@appliesMixin HeadersParserMixin
-@appliesMixin EventsTargetMixin
 */
 if (window) {
   window.forceJURL = true;
 }
-export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(LitElement)) {
+export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
   get lastIssuedToken() {
     return this._lastIssuedToken;
   }
@@ -291,7 +287,7 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
     if (withPayload && request.headers && request.payload) {
       let contentType;
       try {
-        contentType = this.getContentType(request.headers);
+        contentType = HeadersParser.contentType(request.headers);
       } catch (e) {
         // ...
       }
@@ -303,7 +299,7 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
     if (this.authParamsLocation === 'authorization') {
       const authorization = this._buildAuthorizationHeaders(orderedParameters);
       try {
-        request.headers = this.replaceHeaderValue(request.headers, 'authorization', authorization);
+        request.headers = HeadersParser.replace(request.headers, 'authorization', authorization);
       } catch (_) {
         // ...
       }
@@ -970,7 +966,7 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
     if (withPayload && request.headers && request.payload) {
       let contentType;
       try {
-        contentType = this.getContentType(request.headers);
+        contentType = HeadersParser.contentType(request.headers);
       } catch (_) {
         // ...
       }
@@ -982,7 +978,7 @@ export class OAuth1Authorization extends EventsTargetMixin(HeadersParserMixin(Li
     if (this.authParamsLocation === 'authorization') {
       const authorization = this._buildAuthorizationHeaders(orderedParameters);
       try {
-        request.headers = this.replaceHeaderValue(request.headers, 'authorization', authorization);
+        request.headers = HeadersParser.replace(request.headers, 'authorization', authorization);
       } catch (_) {
         // ...
       }
