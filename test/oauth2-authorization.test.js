@@ -1,5 +1,5 @@
 import { fixture, assert } from '@open-wc/testing';
-import sinon from 'sinon/pkg/sinon-esm.js';
+import sinon from 'sinon';
 import '../oauth2-authorization.js';
 
 describe('<oauth2-authorization>', () => {
@@ -9,7 +9,6 @@ describe('<oauth2-authorization>', () => {
 
   function noop() {}
   function nooPromise() {
-    /* global Promise */
     return Promise.resolve();
   }
   let popupsAllowed = true;
@@ -1059,16 +1058,24 @@ describe('<oauth2-authorization>', () => {
       }, 'the value is missing');
     });
 
-    it('Throws when argument is mot a string', () => {
+    it('Throws when argument is not a string', () => {
       assert.throws(() => {
         element._checkUrl(100);
       }, 'the value is not a string');
     });
 
-    it('Throws when argument is mot a string', () => {
+    it('Throws when argument does not start with http or https', () => {
       assert.throws(() => {
-        element._checkUrl('javascript://');
+        element._checkUrl('javascript:http://%0Aalert(document.domain);//');
       }, 'the value has invalid scheme');
+    });
+
+    it('passes for valid http: scheme', () => {
+      element._checkUrl('http://api.domain.com');
+    });
+
+    it('passes for valid https: scheme', () => {
+      element._checkUrl('https://api.domain.com');
     });
   });
 

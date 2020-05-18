@@ -168,7 +168,7 @@ export class OAuth2Authorization extends EventsTargetMixin(HTMLElement) {
     if (typeof url !== 'string') {
       throw new TypeError('the value is not a string');
     }
-    if (url.indexOf('http://') === -1 && url.indexOf('https://') === -1) {
+    if (url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0) {
       throw new Error('the value has invalid scheme');
     }
   }
