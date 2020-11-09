@@ -1,3 +1,16 @@
+/* eslint-disable no-restricted-globals */
+/* eslint-disable no-bitwise */
+/* eslint-disable no-else-return */
+/* eslint-disable no-plusplus */
+/* eslint-disable func-names */
+/* eslint-disable no-shadow */
+/* eslint-disable default-case */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable object-shorthand */
+/* eslint-disable prefer-template */
+/* eslint-disable consistent-return */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-param-reassign */
 import { LitElement } from 'lit-element';
 import '@polymer/iron-meta/iron-meta.js';
 import { EventsTargetMixin } from '@advanced-rest-client/events-target-mixin/events-target-mixin.js';
@@ -10,11 +23,16 @@ import * as HeadersParser from '@advanced-rest-client/headers-parser-mixin';
  * @property {Object} settings
  */
 
+if (window) {
+  // @ts-ignore
+  window.forceJURL = true;
+}
+
 /**
 An element to perform OAuth1 authorization and to sign auth requests.
 
 Note that the OAuth1 authorization wasn't designed for browser. Most existing
-OAuth1 implementation deisallow browsers to perform the authorization by
+OAuth1 implementation disallow browsers to perform the authorization by
 not allowing POST requests to authorization server. Therefore receiving token
 may not be possible without using browser extensions to alter HTTP request to
 enable CORS.
@@ -23,8 +41,8 @@ then your application has to listen for `oauth1-token-requested` custom event
 and perform authorization on the server side.
 
 When auth token and secret is available and the user is to perform a HTTP request,
-the request panel sends `before-request` cutom event. This element handles the event
-and apllies authorization header with generated signature to the request.
+the request panel sends `before-request` custom event. This element handles the event
+and applies authorization header with generated signature to the request.
 
 ## OAuth 1 configuration object
 
@@ -85,11 +103,9 @@ npm i cryptojslib jsrsasign
 <script src="../cryptojslib/rollups/hmac-sha1.js"></script>
 <script src="../jsrsasign/lib/jsrsasign-rsa-min.js"></script>
 ```
+@deprecated This element is no longer maintained and will be removed
 */
-if (window) {
-  window.forceJURL = true;
-}
-export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
+export class OAuth1AuthorizationElement extends EventsTargetMixin(LitElement) {
   get lastIssuedToken() {
     return this._lastIssuedToken;
   }
@@ -171,6 +187,8 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     this._caseMap = {};
     this._camelRegex = /([A-Z])/g;
     this.urlEncodedType = 'application/x-www-form-urlencoded';
+
+    this.ignoreBeforeRequest = false;
   }
 
   connectedCallback() {
@@ -210,7 +228,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
   /**
    * The `before-request` handler. Creates an authorization header if needed.
    * Normally `before-request` expects to set a promise on the `detail.promises`
-   * object. But because this taks is sync it skips the promise and manipulate
+   * object. But because this task is sync it skips the promise and manipulate
    * request object directly.
    * @param {CustomEvent} e
    */
@@ -239,7 +257,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
    * from the auth object.
    *
    * @param {Object} request ARC/API Console request object
-   * @param {AuthSettings|Array<AuthSettings>} auth Authorization object
+   * @param {any} auth Authorization object
    * @return {Object} Signed request object.
    */
   signRequest(request, auth) {
@@ -277,7 +295,9 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
       return;
     }
 
+    // @ts-ignore
     const token = auth.token || this.lastIssuedToken.oauth_token;
+    // @ts-ignore
     const tokenSecret = auth.tokenSecret || this.lastIssuedToken.oauth_token_secret;
     let method = request.method || 'GET';
     method = method.toUpperCase();
@@ -307,6 +327,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
       request.url = this._buildAuthorizationQueryStirng(request.url, orderedParameters);
     }
   }
+
   /**
    * A handler for the `oauth1-token-requested` event.
    * Performs OAuth1 authorization for given settings.
@@ -322,11 +343,12 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     e.stopImmediatePropagation();
     this.authorize(e.detail);
   }
+
   /**
    * Performs a request to authorization server.
    *
    * @param {Object} settings Oauth1 configuration. See description for more
-   * details or `auth-methods/oauth1.html` element that collectes configuration
+   * details or `auth-methods/oauth1.html` element that collects configuration
    * from the user.
    */
   authorize(settings) {
@@ -356,6 +378,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
         this._dispatchError(msg, 'token-request-error');
       });
   }
+
   /**
    * Sets a configuration properties on this element from passed settings.
    *
@@ -406,6 +429,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     this._headers = params.customHeaders || this._defaultHeaders();
     this._oauthParameterSeperator = ',';
   }
+
   /**
    * List of default headers to send with auth request.
    *
@@ -418,6 +442,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
       'User-Agent': 'Advanced REST Client authorization'
     };
   }
+
   /**
    * Returns current timestamp.
    *
@@ -426,6 +451,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
   getTimestamp() {
     return Math.floor(new Date().getTime() / 1000);
   }
+
   /**
    * URL encodes the string.
    *
@@ -439,6 +465,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     const result = encodeURIComponent(toEncode);
     return this._finishEncodeParams(result);
   }
+
   /**
    * Normalizes url encoded values as defined in the OAuth 1 spec.
    *
@@ -468,6 +495,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     toDecode = toDecode.replace(/\+/g, ' ');
     return decodeURIComponent(toDecode);
   }
+
   /**
    * Computes signature for the request.
    *
@@ -505,6 +533,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
         throw new Error('Unknown signature method');
     }
   }
+
   /**
    * Normalizes URL to base string URI as described in
    * https://tools.ietf.org/html/rfc5849#section-3.4.1.2
@@ -536,8 +565,9 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
   _isParameterNameAnOAuthParameter(parameter) {
     return !!(parameter && parameter.indexOf('oauth_') === 0);
   }
+  
   /**
-   * Creates an Authorization header value to trasmit OAuth params in headers
+   * Creates an Authorization header value to transmit OAuth params in headers
    * as described in https://tools.ietf.org/html/rfc5849#section-3.5.1
    *
    * @param {Array} orderedParameters Oauth parameters that are already
@@ -556,6 +586,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     authHeader += params.join(this._oauthParameterSeperator + ' ');
     return authHeader;
   }
+
   /**
    * Creates a body for www-urlencoded content type to transmit OAuth params
    * in request body as described in
@@ -575,8 +606,9 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     });
     return result.join('&');
   }
+  
   /**
-   * Adds query paramteres with OAuth 1 parameters to the URL
+   * Adds query parameters with OAuth 1 parameters to the URL
    * as described in https://tools.ietf.org/html/rfc5849#section-3.5.3
    *
    * @param {String} url
@@ -591,6 +623,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     });
     return parser.toString();
   }
+
   // Takes an object literal that represents the arguments, and returns an array
   // of argument/value pairs.
   _makeArrayOfArgumentsHash(argumentsHash) {
@@ -620,6 +653,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     });
     return argumentPairs;
   }
+
   /**
    * Sort function to sort parameters as described in
    * https://tools.ietf.org/html/rfc5849#section-3.4.1.3.2
@@ -633,6 +667,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     }
     return String(a[0]).localeCompare(String(b[0]));
   }
+
   /**
    * Normalizes request parameters as described in
    * https://tools.ietf.org/html/rfc5849#section-3.4.1.3.2
@@ -662,6 +697,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     });
     return result.join('&');
   }
+
   /**
    * Computes array of parameters from the request URL.
    *
@@ -677,6 +713,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     });
     return result;
   }
+
   /**
    * Computes array of parameters from the entity body.
    * The body must be `application/x-www-form-urlencoded`.
@@ -703,6 +740,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     });
     return parts;
   }
+
   /**
    * Creates a signature base as defined in
    * https://tools.ietf.org/html/rfc5849#section-3.4.1
@@ -721,14 +759,18 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     oauthParams = this._makeArrayOfArgumentsHash(oauthParams);
     allParameter = uriParameters.concat(oauthParams);
     if (body) {
+      // @ts-ignore
       body = this._formUrlEncodedToParams(body);
       allParameter = allParameter.concat(body);
     }
+    // @ts-ignore
     allParameter = this._normaliseRequestParams(allParameter);
+    // @ts-ignore
     allParameter = this.encodeData(allParameter);
     url = this.encodeData(this._normalizeUrl(url));
     return [method.toUpperCase(), url, allParameter].join('&');
   }
+
   /**
    * Creates a signature key to compute the signature as described in
    * https://tools.ietf.org/html/rfc5849#section-3.4.2
@@ -746,6 +788,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     clientSecret = this.encodeData(clientSecret);
     return clientSecret + '&' + tokenSecret;
   }
+
   /**
    * Found at http://jsfiddle.net/ARTsinn/6XaUL/
    *
@@ -774,6 +817,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     }
     return ret;
   }
+
   /**
    * Creates a signature for the PLAINTEXT method.
    *
@@ -785,6 +829,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
   _createSignaturePlainText(key) {
     return key;
   }
+  
   /**
    * Creates a signature for the RSA-SHA1 method.
    *
@@ -794,11 +839,13 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
    */
   _createSignatureRsaSha1(baseText, privateKey) {
     /* global RSAKey */
+    // @ts-ignore
     const rsa = new RSAKey();
     rsa.readPrivateKeyFromPEMString(privateKey);
     const hSig = rsa.sign(baseText, 'sha1');
     return this.hex2b64(hSig);
   }
+
   /**
    * Creates a signature for the HMAC-SHA1 method.
    *
@@ -808,9 +855,12 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
    */
   _createSignatureHamacSha1(baseText, key) {
     /* global CryptoJS */
+    // @ts-ignore
     const hash = CryptoJS.HmacSHA1(baseText, key);
+    // @ts-ignore
     return hash.toString(CryptoJS.enc.Base64);
   }
+
   /**
    * Returns a list of characters that can be used to buid nonce.
    *
@@ -908,7 +958,9 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
       oauthParameters.oauth_token = token;
     }
     let sig;
+    // @ts-ignore
     if (this._isEcho) {
+      // @ts-ignore
       sig = this.getSignature(this.signatureMethod, 'GET', this._verifyCredentials, oauthParameters, tokenSecret, body);
     } else {
       if (extraParams) {
@@ -923,6 +975,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     orderedParameters[orderedParameters.length] = ['oauth_signature', sig];
     return orderedParameters;
   }
+
   // Encodes parameters in the map.
   encodeUriParams(params) {
     const result = Object.keys(params).map((key) => {
@@ -998,6 +1051,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     const headers = {};
     if (this.authParamsLocation === 'authorization') {
       const authorization = this._buildAuthorizationHeaders(orderedParameters);
+      // @ts-ignore
       if (this._isEcho) {
         headers['X-Verify-Credentials-Authorization'] = authorization;
       } else {
@@ -1048,6 +1102,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
         };
       });
   }
+  
   /**
    * Exchanges temporary authorization token for authorized token.
    * When ready this function fires `oauth1-token-response`
@@ -1088,6 +1143,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
         this.dispatchEvent(e);
       });
   }
+  
   /**
    * Clears variables set for current request after signature has been
    * generated and token obtained.
@@ -1097,12 +1153,13 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     this._timestamp = undefined;
     this._nonce = undefined;
   }
+
   /**
-   * Requests the authorization server for temporarty authorization token.
+   * Requests the authorization server for temporary authorization token.
    * This token should be passed to `authorizationUri` as a `oauth_token`
    * parameter.
    *
-   * @param {Object} extraParams List of extra parameters to include in the
+   * @param {Object=} extraParams List of extra parameters to include in the
    * request.
    * @return {Promise} A promise resolved to a map of OAuth 1 parameters:
    * `oauth_token`, `oauth_token_secret`, `oauth_verifier` and
@@ -1127,6 +1184,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
       return params;
     });
   }
+
   /**
    * Makes a HTTP request.
    * Before making the request it sends `auth-request-proxy` custom event
@@ -1134,7 +1192,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
    * If the event is cancelled then it will use detail's `result` value to
    * return from this function. The `result` must be a Promise that will
    * resolve to a `Response` object.
-   * Otherwise it will use internall `fetch` implementation.
+   * Otherwise it will use internal `fetch` implementation.
    *
    * @param {String} url An URL to call
    * @param {Object} init Init object that will be passed to a `Request`
@@ -1152,8 +1210,10 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
       }
     });
     this.dispatchEvent(e);
+    // @ts-ignore
     return e.defaultPrevented ? e.detail.result : this._fetch(url, init);
   }
+
   /**
    * Performs a HTTP request.
    * If `proxy` is set or `iron-meta` with a key `auth-proxy` is set then
@@ -1166,7 +1226,9 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
    */
   _fetch(url, init) {
     let proxy;
+    // @ts-ignore
     if (this.proxy) {
+      // @ts-ignore
       proxy = this.proxy;
     } else {
       proxy = document.createElement('iron-meta').byKey('auth-proxy');
@@ -1202,7 +1264,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     this._popup.close();
   }
 
-  // Observer if the popup has been closed befor the data has been received.
+  // Observer if the popup has been closed before the data has been received.
   _observePopupState() {
     const popupCheckInterval = setInterval(() => {
       if (!this._popup || this._popup.closed) {
@@ -1219,6 +1281,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     this._popup = undefined;
     this._dispatchError('No response has been recorded.', 'no-response');
   }
+
   /**
    * Dispatches an error event that propagates through the DOM.
    *
@@ -1236,9 +1299,10 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     });
     this.dispatchEvent(e);
   }
+  
   /**
    * Adds camel case keys to a map of parameters.
-   * It adds new keys to the object tranformed from `oauth_token`
+   * It adds new keys to the object transformed from `oauth_token`
    * to `oauthToken`
    *
    * @param {Object} obj
@@ -1248,6 +1312,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
     Object.keys(obj).forEach((key) => this._parseParameter(key, obj));
     return obj;
   }
+
   /**
    * Parses a query parameter object to produce camel case map of parameters.
    * This sets values to the `settings` object which is passed by reference.
@@ -1280,8 +1345,7 @@ export class OAuth1Authorization extends EventsTargetMixin(LitElement) {
    *
    * @event oauth1-error
    * @param {String} message Human readable error message
-   * @param {String} code Error code associated with the error. See description
-   * of the element fo code mening.
+   * @param {String} code Error code associated with the error. 
    */
 
   /**

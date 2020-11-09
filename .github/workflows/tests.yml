@@ -1,0 +1,16 @@
+on:
+  push:
+  pull_request:
+    branches:
+      - stage
+      - master
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest # or macos-latest, windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - uses: microsoft/playwright-github-action@v1
+      - name: Install dependencies and run tests
+        run: npm install && npm test
