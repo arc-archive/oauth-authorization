@@ -565,3 +565,41 @@
 * rename `body` to `payload` in OAuth 1 [644e94f](https://github.com/advanced-rest-client/oauth-authorization/commit/644e94fd1aaa309f617bdec0c4e7f59e6434bfbd) by Pawel Psztyc
 
 
+<a name="5.0.0"></a>
+# [5.0.0](https://github.com/advanced-rest-client/oauth-authorization/compare/4.0.2...5.0.0) (2020-11-10)
+
+## Build
+
+* bumping version [7ee38eb](https://github.com/advanced-rest-client/oauth-authorization/commit/7ee38eb48d9e8bdec43d3cb01e43d8586100d984) by Pawel
+
+
+## Continuous integration
+
+* removing sudo from  Travis config [d787ae2](https://github.com/advanced-rest-client/oauth-authorization/commit/d787ae2707d77e75cfd7f970713dd6a8e7b688e9) by Pawel
+
+
+## Update
+
+* removing previous ubuntu from tests [1ce9983](https://github.com/advanced-rest-client/oauth-authorization/commit/1ce99839fc18aa954e06959cdb3a2e57ade18252) by Pawel
+* playing with GH actions [fec47ca](https://github.com/advanced-rest-client/oauth-authorization/commit/fec47ca5ee22ef9cdea988735a05e292b74c819c) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [a5a3568](https://github.com/advanced-rest-client/oauth-authorization/commit/a5a356888117e3927d38510784e1cd84562e672e) by Ci agent
+* upgrading dependencies [73ff111](https://github.com/advanced-rest-client/oauth-authorization/commit/73ff111c5004c500ed37d05369fcb9d8de2ff79e) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [ee7e233](https://github.com/advanced-rest-client/oauth-authorization/commit/ee7e233b68286a053093bd2be1adc2068975163b) by Ci agent
+
+
+## Features
+
+* adding support for PKCE extension [f6f6585](https://github.com/advanced-rest-client/oauth-authorization/commit/f6f6585121d52b68f3171480c091dbe38550fc16) by Pawel
+
+
+## Bug Fixes
+
+* fixes #10 - secret with passwort grant [58bcb81](https://github.com/advanced-rest-client/oauth-authorization/commit/58bcb81dbdb2943bcd6e7763c2c69c34b68e173e) by Pawel
+* fixes APIC-398 - XSS with invalid auth URI [14f877b](https://github.com/advanced-rest-client/oauth-authorization/commit/14f877bee49ab420be56ea3db5a4a6a947de7ea2) by Pawel
+
+
+## Refactor
+
+* moving logic to a library [994c7d8](https://github.com/advanced-rest-client/oauth-authorization/commit/994c7d800906f3525490b2e5b03715d196c0e7c7) by Pawel
+
+
