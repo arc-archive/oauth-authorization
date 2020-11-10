@@ -366,6 +366,7 @@ describe('OAuth2', () => {
         scopes: ['scope1', 'scope2'],
         username: 'uname',
         password: 'passwd',
+        clientSecret: 'test-secret',
       });
 
       it('has the grant_type', () => {
@@ -398,6 +399,12 @@ describe('OAuth2', () => {
         assert.include(result, 'scope=scope1+scope2');
       });
 
+      it('has the client_secret', () => {
+        const auth  = new OAuth2Authorization(baseSettings);
+        const result = auth.getPasswordBody();
+        assert.include(result, 'client_secret=test-secret');
+      });
+
       it('ignores the client_id when not set', () => {
         const config = { ...baseSettings };
         delete config.clientId;
@@ -412,6 +419,14 @@ describe('OAuth2', () => {
         const auth  = new OAuth2Authorization(config);
         const result = auth.getPasswordBody();
         assert.isFalse(result.includes('scope='));
+      });
+
+      it('ignores the client_secret when not set', () => {
+        const config = { ...baseSettings };
+        delete config.clientSecret;
+        const auth  = new OAuth2Authorization(config);
+        const result = auth.getPasswordBody();
+        assert.isFalse(result.includes('client_secret'));
       });
     });
 

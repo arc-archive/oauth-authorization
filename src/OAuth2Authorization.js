@@ -786,6 +786,9 @@ export class OAuth2Authorization {
     if (settings.clientId) {
       params.set('client_id', settings.clientId);
     }
+    if (settings.clientSecret) {
+      params.set('client_secret', settings.clientSecret);
+    }
     if (Array.isArray(settings.scopes) && settings.scopes.length) {
       params.set('scope', settings.scopes.join(' '));
     }
