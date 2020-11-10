@@ -11,6 +11,6 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { OAuth1Authorization } from './src/OAuth1Authorization.js';
-export { OAuth1Authorization };
-window.customElements.define('oauth1-authorization', OAuth1Authorization);
+import { OAuth1AuthorizationElement } from './src/OAuth1AuthorizationElement.js';
+
+window.customElements.define('oauth1-authorization', OAuth1AuthorizationElement);

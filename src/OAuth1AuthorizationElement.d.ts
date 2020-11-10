@@ -18,9 +18,9 @@ import {HeadersParserMixin} from '@advanced-rest-client/headers-parser-mixin/hea
 
 import {EventsTargetMixin} from '@advanced-rest-client/events-target-mixin/events-target-mixin.js';
 
-export {OAuth1Authorization};
+export {OAuth1AuthorizationElement};
 
-declare class OAuth1Authorization {
+declare class OAuth1AuthorizationElement {
   lastIssuedToken: any;
 
   /**
