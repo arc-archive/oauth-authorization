@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@advanced-rest-client/arc-events": "^0.2.3",
-    "@advanced-rest-client/arc-types": "^0.2.13",
+    "@advanced-rest-client/arc-types": "^0.2.14",
     "@advanced-rest-client/events-target-mixin": "^3.2.3",
     "@advanced-rest-client/headers-parser-mixin": "^3.2.0",
     "@polymer/iron-meta": "^3.0.0",

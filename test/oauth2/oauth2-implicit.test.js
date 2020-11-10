@@ -8,7 +8,7 @@ import { OAuth2Authorization, popupValue } from '../../src/OAuth2Authorization.j
 describe('OAuth2', () => {
   describe('implicit grant', () => {
     const baseConfig = Object.freeze({
-      responseType: 'implicit',
+      grantType: 'implicit',
       clientId: 'auth-code-cid',
       authorizationUri: new URL('/oauth2/auth-implicit', document.baseURI).toString(),
       redirectUri: new URL('/test/oauth2/popup.html', document.baseURI).toString(),
@@ -168,7 +168,7 @@ describe('OAuth2', () => {
   
     describe('custom data', () => {
       const settings = {
-        responseType: 'implicit',
+        grantType: 'implicit',
         clientId: 'auth-code-cid',
         authorizationUri: new URL('/oauth2/auth-implicit-custom', document.baseURI).toString(),
         redirectUri: new URL('/test/oauth2/popup.html', document.baseURI).toString(),

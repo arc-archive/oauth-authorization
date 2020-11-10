@@ -26,7 +26,7 @@ npm install --save @advanced-rest-client/oauth-authorization
 import { OAuth2Authorization } from '@advanced-rest-client/oauth-authorization';
 
 const settings = {
-  responseType: 'implicit',
+  grantType: 'implicit',
   clientId: 'CLIENT ID',
   redirectUri: 'https://example.com/auth-popup.html',
   authorizationUri: 'https://auth.example.com/token',

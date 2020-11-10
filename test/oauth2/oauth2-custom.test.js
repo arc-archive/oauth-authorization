@@ -7,7 +7,7 @@ import { OAuth2Authorization } from '../../src/OAuth2Authorization.js';
 describe('OAuth2', () => {
   describe('custom grant', () => {
     const baseConfig = Object.freeze({
-      responseType: 'custom-grant',
+      grantType: 'custom-grant',
       username: 'test-uname',
       password: 'test-passwd',
       clientId: 'auth-code-cid',
@@ -61,7 +61,7 @@ describe('OAuth2', () => {
       it('throws when invalid grant', async () => {
         const config = {
           ...baseConfig,
-          responseType: 'other-custom',
+          grantType: 'other-custom',
         };
         const auth = new OAuth2Authorization(config);
         let err;
@@ -79,7 +79,7 @@ describe('OAuth2', () => {
     describe('custom data', () => {
       const settings = {
         clientId: 'custom-data',
-        responseType: 'custom-grant',
+        grantType: 'custom-grant',
         username: 'test-uname',
         password: 'test-passwd',
         scopes: ['a', 'b'],

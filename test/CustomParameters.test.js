@@ -11,19 +11,18 @@ describe('CustomParameters', () => {
       }],
     };
 
-    it('returns a string', () => {
-      const result = CustomParameters.applyCustomSettingsQuery('', params);
-      assert.typeOf(result, 'string');
-    });
-
-    it('returns the same string when no settings', () => {
-      const result = CustomParameters.applyCustomSettingsQuery('', {});
-      assert.equal(result, '');
+    it('returns unchanged URL when no settings', () => {
+      const value = 'https://api.domain.com/?a=b';
+      const instance = new URL(value);
+      CustomParameters.applyCustomSettingsQuery(instance, {});
+      assert.equal(instance.toString(), value);
     });
 
     it('returns params in query string.', () => {
-      const result = CustomParameters.applyCustomSettingsQuery('', params);
-      assert.equal(result, '?aqp1=aqQv1');
+      const value = 'https://api.domain.com/?a=b';
+      const instance = new URL(value);
+      CustomParameters.applyCustomSettingsQuery(instance, params);
+      assert.equal(instance.toString(), `${value}&aqp1=aqQv1`);
     });
   });
 

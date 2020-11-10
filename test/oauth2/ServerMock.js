@@ -1,3 +1,14 @@
+const crypto = require('crypto');
+
+/**
+ * Generates a random string of characters.
+ * 
+ * @returns {string} A random string.
+ */
+function randomString() {
+  return crypto.randomBytes(24).toString('base64').slice(0, 24);
+}
+
 async function readBody(ctx) {
   const { req } = ctx;
   return new Promise((resolve) => {
@@ -13,13 +24,15 @@ async function readBody(ctx) {
 }
 
 const acceptableClientIds = ['auth-code-cid', 'custom-scopes', 'custom-data'];
-const acceptableCodes = ['response-code-1234abc'];
 const acceptableSecrets = ['auth-code-cs', 'cc-secret'];
 
 const responseToken = 'token1234';
 const refreshToken = 'refresh1234';
 const formContentType = 'application/x-www-form-urlencoded';
 const customScopes = 'c1 c2';
+
+const codes = {};
+const codeChallenges = {};
 
 module.exports.CodeServerMock = {
   authRequest(request) {
@@ -30,9 +43,28 @@ module.exports.CodeServerMock = {
     const state = params.get('state');
     const scope = params.get('scope');
     const clientId = params.get('client_id');
-    let code = 'response-code-1234abc';
+    let code;
     if (clientId === 'invalid-code') {
       code = 'invalid';
+    } else {
+      code = randomString();
+      codes[code] = clientId;
+    }
+
+    const codeChallenge = params.get('code_challenge');
+    let codeChallengeMethod = params.get('code_challenge_method');
+    const failPkce = params.get('failPkce');
+    if (codeChallenge) {
+      if (!codeChallengeMethod) {
+        codeChallengeMethod = 'plain';
+      }
+      codeChallenges[code] = {
+        codeChallenge,
+        codeChallengeMethod,
+      };
+      if (failPkce === 'true') {
+        codeChallenges[code].codeChallenge += 'a';
+      }
     }
 
     const newUrl = new URL(redirect);
@@ -150,6 +182,10 @@ module.exports.CodeServerMock = {
     const redirectUri = params.get('redirect_uri');
     const code = params.get('code');
     const secret = params.get('client_secret');
+    const verifier = params.get('code_verifier');
+    const verifierSettings = codeChallenges[code];
+    const challenge = verifier && verifierSettings ? crypto.createHash('sha256').update(verifier).digest('base64') : undefined;
+
     if (params.get('grant_type') !== 'authorization_code') {
       result.set('error', 'invalid_grant');
     } else if (!acceptableClientIds.includes(cid)) {
@@ -157,12 +193,18 @@ module.exports.CodeServerMock = {
     } else if (!redirectUri.includes('popup.html')) {
       result.set('error', 'invalid_request');
       result.set('error_description', 'invalid redirect');
-    } else if (!acceptableCodes.includes(code)) {
+    } else if (!(code in codes)) {
       result.set('error', 'invalid_client');
       result.set('error_description', 'invalid code');
     } else if (!acceptableSecrets.includes(secret)) {
       result.set('error', 'invalid_client');
       result.set('error_description', 'invalid secret');
+    } else if (verifier && !verifierSettings) {
+      result.set('error', 'invalid_request');
+      result.set('error_description', 'code_challenge not found');
+    } else if (verifier && verifierSettings.codeChallenge !== challenge) {
+      result.set('error', 'invalid_request');
+      result.set('error_description', `invalid code_verifier`);
     } else {
       result.set('access_token', responseToken);
       result.set('refresh_token', refreshToken);

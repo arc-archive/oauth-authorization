@@ -7,7 +7,7 @@ import { OAuth2Authorization } from '../../src/OAuth2Authorization.js';
 describe('OAuth2', () => {
   describe('client credentials grant', () => {
     const baseConfig = Object.freeze({
-      responseType: 'client_credentials',
+      grantType: 'client_credentials',
       clientId: 'auth-code-cid',
       clientSecret: 'cc-secret',
       scopes: ['a', 'b'],
@@ -77,7 +77,7 @@ describe('OAuth2', () => {
   
     describe('custom data', () => {
       const settings = {
-        responseType: 'client_credentials',
+        grantType: 'client_credentials',
         clientId: 'auth-code-cid',
         clientSecret: 'cc-secret',
         scopes: ['a', 'b'],

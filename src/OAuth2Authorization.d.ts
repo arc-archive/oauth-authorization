@@ -1,4 +1,4 @@
-import { OAuth2, Authorization } from '@advanced-rest-client/arc-types';
+import { Authorization } from '@advanced-rest-client/arc-types';
 import { ProcessingOptions } from './types';
 
 export declare const resolveFunction: unique symbol;
@@ -33,6 +33,7 @@ export declare const createErrorParams: unique symbol;
 export declare const tokenInfoFromParams: unique symbol;
 export declare const processCodeResponse: unique symbol;
 export declare const handleTokenCodeError: unique symbol;
+export declare const codeVerifierValue: unique symbol;
 
 /**
  * A library that performs OAuth 2 authorization.
@@ -62,6 +63,8 @@ export class OAuth2Authorization {
   [resolveFunction]: Function;
   [rejectFunction]: Function;
 
+  [codeVerifierValue]: string;
+
   /**
    * @param settings The authorization configuration.
    * @param options Additional processing options to configure the behavior of this library.
@@ -89,7 +92,7 @@ export class OAuth2Authorization {
    * Performs the authorization.
    * @returns Promise resolved to the token info.
    */
-  authorize(): Promise<OAuth2.TokenInfo>;
+  authorize(): Promise<Authorization.TokenInfo>;
 
   /**
    * Reports authorization error back to the application.
@@ -111,13 +114,13 @@ export class OAuth2Authorization {
    * If the `interactive` flag is configured it  then it chooses between showing the UI (popup)
    * or non-interactive iframe.
    */
-  [authorizeImplicitCode](): void;
+  [authorizeImplicitCode](): Promise<void>;
 
   /**
    * Constructs the popup/iframe URL for the `implicit` or `authorization_code` grant types.
    * @return Full URL for the endpoint.
    */
-  constructPopupUrl(): string;
+  constructPopupUrl(): Promise<string>;
 
   /**
    * Opens a popup to request authorization from the user.
@@ -189,14 +192,14 @@ export class OAuth2Authorization {
   /**
    * Creates a token info object from query parameters
    */
-  [tokenInfoFromParams](oauthParams: URLSearchParams): OAuth2.TokenInfo;
+  [tokenInfoFromParams](oauthParams: URLSearchParams): Authorization.TokenInfo;
 
   /**
    * Processes token info object when it's ready.
    *
    * @param info Token info returned from the server.
    */
-  [handleTokenInfo](info: OAuth2.TokenInfo): void;
+  [handleTokenInfo](info: Authorization.TokenInfo): void;
 
   /**
    * Computes token expiration time.
@@ -206,7 +209,7 @@ export class OAuth2Authorization {
    * @param tokenInfo Token info object
    * @returns A copy with updated properties.
    */
-  [computeExpires](tokenInfo: OAuth2.TokenInfo): OAuth2.TokenInfo;
+  [computeExpires](tokenInfo: Authorization.TokenInfo): Authorization.TokenInfo;
 
   /**
    * Computes the final list of granted scopes.
@@ -225,7 +228,7 @@ export class OAuth2Authorization {
    * @param code Returned code from the authorization endpoint.
    * @returns The token info when the request was a success.
    */
-  exchangeCode(code: string): Promise<OAuth2.TokenInfo>;
+  exchangeCode(code: string): Promise<Authorization.TokenInfo>;
 
   /**
    * Returns a body value for the code exchange request.
@@ -241,7 +244,7 @@ export class OAuth2Authorization {
    * @param body Generated body for given type. Custom properties will be applied to the final body.
    * @returns Promise resolved to the response string.
    */
-  requestToken(url: string, body: string): Promise<OAuth2.TokenInfo>;
+  requestToken(url: string, body: string): Promise<Authorization.TokenInfo>;
 
   /**
    * Processes code response body and produces map of values.
@@ -251,7 +254,7 @@ export class OAuth2Authorization {
    * @return Response as an object.
    * @throws {Error} Exception when the body is invalid.
    */
-  [processCodeResponse](body: string, mime: string): OAuth2.TokenInfo;
+  [processCodeResponse](body: string, mime: string): Authorization.TokenInfo;
 
   /**
    * A handler for the error that happened during code exchange.

@@ -4,26 +4,21 @@
 /**
  * Applies custom properties defined in the OAuth settings object to the URL.
  *
- * @param {string} url Generated URL for an endpoint.
+ * @param {URL} url The instance of the URL class to use
  * @param {OAuth2AuthorizationRequestCustomData} data `customData.[type]` property from the settings object.
  * The type is either `auth` or `token`.
- * @return {string}
  */
 export function applyCustomSettingsQuery(url, data) {
   if (!data || !data.parameters) {
-    return url;
+    return;
   }
-  const char = url.includes('?') ? '&' : '?';
-  const params = data.parameters.map((item) => {
-    let { value } = item;
-    if (value) {
-      value = encodeURIComponent(value);
-    } else {
-      value = '';
+  data.parameters.forEach((item) => {
+    const { name, value='' } = item;
+    if (!name) {
+      return;
     }
-    return `${encodeURIComponent(item.name)}=${value}`;
-  }).join('&');
-  return `${url}${char}${params}`;
+    url.searchParams.set(name, value);
+  });
 }
 
 /**

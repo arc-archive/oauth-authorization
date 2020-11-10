@@ -47,7 +47,7 @@ describe('Utils', () => {
         Utils.sanityCheck({
           authorizationUri: 'https://domain.com',
           accessTokenUri: 'javascript://',
-          responseType: 'implicit'
+          grantType: 'implicit'
         });
       });
     });
@@ -56,7 +56,7 @@ describe('Utils', () => {
       assert.throws(() => {
         Utils.sanityCheck({
           authorizationUri: 'javascript://',
-          responseType: 'implicit'
+          grantType: 'implicit'
         });
       });
     });
@@ -65,7 +65,7 @@ describe('Utils', () => {
       assert.throws(() => {
         Utils.sanityCheck({
           authorizationUri: 'javascript://',
-          responseType: 'implicit'
+          grantType: 'implicit'
         });
       });
     });
@@ -75,7 +75,7 @@ describe('Utils', () => {
         Utils.sanityCheck({
           authorizationUri: 'https://domain.com',
           accessTokenUri: 'javascript://',
-          responseType: 'authorization_code'
+          grantType: 'authorization_code'
         });
       });
     });
@@ -84,7 +84,7 @@ describe('Utils', () => {
       assert.throws(() => {
         Utils.sanityCheck({
           authorizationUri: 'javascript://',
-          responseType: 'authorization_code'
+          grantType: 'authorization_code'
         });
       });
     });
@@ -93,55 +93,16 @@ describe('Utils', () => {
       assert.throws(() => {
         Utils.sanityCheck({
           authorizationUri: 'javascript://',
-          responseType: 'authorization_code'
+          grantType: 'authorization_code'
         });
       });
     });
   });
 
   describe('randomString()', () => {
-    it('Generates string of given length', () => {
-      let result = Utils.randomString(1);
+    it('generates a random string', () => {
+      const result = Utils.randomString();
       assert.typeOf(result, 'string');
-      assert.lengthOf(result, 1);
-      result = Utils.randomString(3);
-      assert.typeOf(result, 'string');
-      assert.lengthOf(result, 3);
-      result = Utils.randomString(6);
-      assert.typeOf(result, 'string');
-      assert.lengthOf(result, 6);
-      result = Utils.randomString(9);
-      assert.typeOf(result, 'string');
-      assert.lengthOf(result, 9);
-    });
-  });
-
-  describe('computeScope()', () => {
-    it('returns empty string for no argument', () => {
-      const result = Utils.computeScope(undefined);
-      assert.strictEqual(result, '');
-    });
-
-    it('returns value for single scope', () => {
-      const result = Utils.computeScope(['one']);
-      assert.strictEqual(result, 'one');
-    });
-
-    it('returns value for multiple scopes', () => {
-      const result = Utils.computeScope(['one', 'two']);
-      assert.strictEqual(result, 'one%20two');
-    });
-
-    it('returns empty string for invalid value', () => {
-      // @ts-ignore
-      const result = Utils.computeScope(true);
-      assert.strictEqual(result, '');
-    });
-
-    it('returns the same string', () => {
-      // @ts-ignore
-      const result = Utils.computeScope('test');
-      assert.strictEqual(result, 'test');
     });
   });
 

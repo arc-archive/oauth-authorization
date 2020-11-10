@@ -1,14 +1,14 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable class-methods-use-this */
 
-import { sanityCheck, randomString, computeScope, camel } from './Utils.js';
+import { sanityCheck, randomString, camel, generateCodeChallenge } from './Utils.js';
 import { applyCustomSettingsQuery, applyCustomSettingsBody, applyCustomSettingsHeaders } from './CustomParameters.js';
 import { AuthorizationError, CodeError } from './AuthorizationError.js';
 import { IframeAuthorization } from './lib/IframeAuthorization.js';
 import { PopupAuthorization } from './lib/PopupAuthorization.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').OAuth2.TokenInfo} TokenInfo */
 /** @typedef {import('@advanced-rest-client/arc-types').Authorization.OAuth2Authorization} OAuth2Settings */
+/** @typedef {import('@advanced-rest-client/arc-types').Authorization.TokenInfo} TokenInfo */
 /** @typedef {import('./types').ProcessingOptions} ProcessingOptions */
 
 export const resolveFunction = Symbol('resolveFunction');
@@ -43,6 +43,7 @@ export const createErrorParams = Symbol('createErrorParams');
 export const tokenInfoFromParams = Symbol('tokenInfoFromParams');
 export const processCodeResponse = Symbol('processCodeResponse');
 export const handleTokenCodeError = Symbol('handleTokenCodeError');
+export const codeVerifierValue = Symbol('codeVerifierValue');
 
 /**
  * A library that performs OAuth 2 authorization.
@@ -70,7 +71,7 @@ export class OAuth2Authorization {
    */
   get state() {
     if (!this[stateValue]) {
-      this[stateValue] = this.settings.state || randomString(6);
+      this[stateValue] = this.settings.state || randomString();
     }
     return this[stateValue];
   }
@@ -181,7 +182,7 @@ export class OAuth2Authorization {
    */
   [authorize]() {
     const { settings } = this;
-    switch (settings.responseType) {
+    switch (settings.grantType) {
       case 'implicit':
       case 'authorization_code':
         this[authorizeImplicitCode]();
@@ -202,9 +203,9 @@ export class OAuth2Authorization {
    * If the `interactive` flag is configured it  then it chooses between showing the UI (popup)
    * or non-interactive iframe.
    */
-  [authorizeImplicitCode]() {
+  async [authorizeImplicitCode]() {
     const { settings } = this;
-    const url = this.constructPopupUrl();
+    const url = await this.constructPopupUrl();
     try {
       if (settings.interactive === false) {
         this[authorizeTokenNonInteractive](url);
@@ -221,57 +222,55 @@ export class OAuth2Authorization {
 
   /**
    * Constructs the popup/iframe URL for the `implicit` or `authorization_code` grant types.
-   * @return {string} Full URL for the endpoint.
+   * @return {Promise<string>} Full URL for the endpoint.
    */
-  constructPopupUrl() {
+  async constructPopupUrl() {
     const { settings } = this;
     const mapping = {
       implicit: 'token',
       authorization_code: 'code',
     };
-    const type = mapping[settings.responseType];
+    const type = mapping[settings.grantType];
     if (!type) {
       return null;
     }
-
-    let url = settings.authorizationUri;
-    if (!url.includes('?')) {
-      url += '?';
-    } else {
-      url += '&';
-    }
-    const parts = [];
-    parts[parts.length] = `response_type=${type}`;
-    parts[parts.length] = `client_id=${ encodeURIComponent(settings.clientId)}`;
+    const url = new URL(settings.authorizationUri);
+    url.searchParams.set('response_type', type);
+    url.searchParams.set('client_id', settings.clientId);
+    url.searchParams.set('state', this.state);
     if (settings.redirectUri) {
-      parts[parts.length] = `redirect_uri=${encodeURIComponent(settings.redirectUri)}`;
+      url.searchParams.set('redirect_uri', settings.redirectUri);
     }
     const { scopes } = settings;
     if (Array.isArray(scopes) && scopes.length) {
-      parts[parts.length] = `scope=${computeScope(scopes)}`;
+      url.searchParams.set('scope', scopes.join(' '));
     }
-    parts[parts.length] = `state=${encodeURIComponent(this.state)}`;
     if (settings.includeGrantedScopes) {
       // this is Google specific
-      parts[parts.length] = 'include_granted_scopes=true';
+      url.searchParams.set('include_granted_scopes', 'true');
     }
     if (settings.loginHint) {
       // this is Google specific
-      parts[parts.length] = `login_hint=${encodeURIComponent(settings.loginHint)}`;
+      url.searchParams.set('login_hint', settings.loginHint);
     }
     if (settings.interactive === false) {
       // this is Google specific
-      parts[parts.length] = 'prompt=none';
+      url.searchParams.set('prompt', 'none');
     }
-    url += parts.join('&');
-    // custom query parameters from `api-authorization-method` component
+    if (settings.pkce && type === 'code') {
+      this[codeVerifierValue] = randomString();
+      const challenge = await generateCodeChallenge(this[codeVerifierValue]);
+      url.searchParams.set('code_challenge', challenge);
+      url.searchParams.set('code_challenge_method', 'S256');
+    }
+    // custom query parameters from the `api-authorization-method` component
     if (settings.customData) {
       const cs = settings.customData.auth;
       if (cs) {
-        url = applyCustomSettingsQuery(url, cs);
+        applyCustomSettingsQuery(url, cs);
       }
     }
-    return url;
+    return url.toString();
   }
 
   /**
@@ -351,7 +350,7 @@ export class OAuth2Authorization {
    * It checks whether the token info has been set by the redirect page and if not then it reports an error.
    */
   [popupUnloadHandler]() {
-    if (this[tokenResponse] || (this.settings.responseType === 'authorization_code' && this[codeValue])) {
+    if (this[tokenResponse] || (this.settings.grantType === 'authorization_code' && this[codeValue])) {
       // everything seems to be ok.
       return;
     }
@@ -415,12 +414,12 @@ export class OAuth2Authorization {
       this[reportOAuthError](...this[createTokenResponseError](oauthParams));
       return;
     }
-    const { responseType } = this.settings;
-    if (responseType === 'implicit') {
+    const { grantType } = this.settings;
+    if (grantType === 'implicit') {
       this[handleTokenInfo](this[tokenInfoFromParams](oauthParams));
       return;
     }
-    if (responseType === 'authorization_code') {
+    if (grantType === 'authorization_code') {
       const code = oauthParams.get('code');
       if (!code) {
         this[reportOAuthError]('The authorization server did not returned the authorization code.', 'no_code');
@@ -603,6 +602,9 @@ export class OAuth2Authorization {
     } else {
       params.set('client_secret', '');
     }
+    if (settings.pkce) {
+      params.set('code_verifier', this[codeVerifierValue]);
+    }
     return params.toString();
   }
 
@@ -614,13 +616,14 @@ export class OAuth2Authorization {
    * @return {Promise<TokenInfo>} Promise resolved to the response string.
    */
   async requestToken(url, body) {
+    const urlInstance = new URL(url);
     const { settings } = this;
     let headers = {
       'content-type': 'application/x-www-form-urlencoded',
     };
     if (settings.customData) {
       if (settings.customData.token) {
-        url = applyCustomSettingsQuery(url, settings.customData.token);
+        applyCustomSettingsQuery(urlInstance, settings.customData.token);
       }
       body = applyCustomSettingsBody(body, settings.customData);
       headers = applyCustomSettingsHeaders(headers, settings.customData);
@@ -631,7 +634,7 @@ export class OAuth2Authorization {
       method: 'POST',
       cache: 'no-cache',
     });
-    const response = await fetch(url, init);
+    const response = await fetch(urlInstance.toString(), init);
     const { status } = response;
     let responseBody;
     try {
@@ -817,7 +820,7 @@ export class OAuth2Authorization {
   getCustomGrantBody() {
     const { settings } = this;
     const params = new URLSearchParams();
-    params.set('grant_type', settings.responseType);
+    params.set('grant_type', settings.grantType);
     if (settings.clientId) {
       params.set('client_id', settings.clientId);
     }

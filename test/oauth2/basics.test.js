@@ -15,6 +15,7 @@ import {
   codeValue,
   processTokenResponse,
   processPopupRawData,
+  codeVerifierValue,
 } from '../../src/OAuth2Authorization.js';
 
 describe('OAuth2', () => {
@@ -133,105 +134,126 @@ describe('OAuth2', () => {
         loginHint: 'email@domain.com',
         interactive: false
       };
-      const responseType = 'implicit';
+      const grantType = 'implicit';
 
-      it('uses the authorization url', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('uses the authorization url', async () => {
+        const cnf = { ...baseSettings, grantType };
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.isTrue(result.startsWith('http://test.com/auth?'));
       });
   
-      it('sets the response_type property', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('sets the response_type property', async () => {
+        const cnf = { ...baseSettings, grantType };
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.isTrue(result.includes('response_type=token&'));
       });
   
-      it('sets the client_id property', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('sets the client_id property', async () => {
+        const cnf = { ...baseSettings, grantType };
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
-        assert.isTrue(result.includes('client_id=test%20client%20id&'));
+        const result = await auth.constructPopupUrl();
+        assert.isTrue(result.includes('client_id=test+client+id&'));
       });
   
-      it('sets the redirect_uri property', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('sets the redirect_uri property', async () => {
+        const cnf = { ...baseSettings, grantType };
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.isTrue(result.includes('redirect_uri=http%3A%2F%2Ftest.com%2Fredirect'));
       });
   
-      it('sets the scopes property', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('sets the scopes property', async () => {
+        const cnf = { ...baseSettings, grantType };
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
-        assert.notEqual(result.indexOf('scope=one%20two'), -1);
+        const result = await auth.constructPopupUrl();
+        assert.notEqual(result.indexOf('scope=one+two'), -1);
       });
   
-      it('sets state property', () => {
-        const cnf = { ...baseSettings, responseType, state: 'test state' };
+      it('sets state property', async () => {
+        const cnf = { ...baseSettings, grantType, state: 'test state' };
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
-        assert.notEqual(result.indexOf('state=test%20state'), -1);
+        const result = await auth.constructPopupUrl();
+        assert.notEqual(result.indexOf('state=test+state'), -1);
       });
   
-      it('sets Google OAuth 2 properties.', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('sets Google OAuth 2 properties.', async () => {
+        const cnf = { ...baseSettings, grantType };
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.notEqual(result.indexOf('include_granted_scopes=true'), -1);
         assert.notEqual(result.indexOf('prompt=none'), -1);
         assert.notEqual(result.indexOf('login_hint=email%40domain.com'), -1);
       });
   
-      it('skips the redirect_uri if not set', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('skips the redirect_uri if not set', async () => {
+        const cnf = { ...baseSettings, grantType };
         cnf.redirectUri = undefined;
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.equal(result.indexOf('redirect_uri='), -1);
       });
   
-      it('skips the scope if not set', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('skips the scope if not set', async () => {
+        const cnf = { ...baseSettings, grantType };
         cnf.scopes = undefined;
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.equal(result.indexOf('scope='), -1);
       });
   
-      it('skips the include_granted_scopes if not set', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('skips the include_granted_scopes if not set', async () => {
+        const cnf = { ...baseSettings, grantType };
         cnf.includeGrantedScopes = undefined;
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.equal(result.indexOf('include_granted_scopes='), -1);
       });
   
-      it('skips the prompt if not set', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('skips the prompt if not set', async () => {
+        const cnf = { ...baseSettings, grantType };
         cnf.interactive = undefined;
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.equal(result.indexOf('prompt='), -1);
       });
   
-      it('skips the login_hint if not set', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('skips the login_hint if not set', async () => {
+        const cnf = { ...baseSettings, grantType };
         cnf.loginHint = undefined;
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.equal(result.indexOf('login_hint='), -1);
       });
   
-      it('do not inserts "?" when auth url already contains it', () => {
-        const cnf = { ...baseSettings, responseType };
+      it('do not inserts "?" when auth url already contains it', async () => {
+        const cnf = { ...baseSettings, grantType };
         cnf.authorizationUri = 'http://test.com/auth?custom=value';
         const auth = new OAuth2Authorization(cnf);
-        const result = auth.constructPopupUrl();
+        const result = await auth.constructPopupUrl();
         assert.equal(result.indexOf('http://test.com/auth?custom=value&response_type'), 0);
+      });
+
+      it('adds code_challenge for PKCE extension', async () => {
+        const cnf = { ...baseSettings, grantType: 'authorization_code', pkce: true };
+        const auth = new OAuth2Authorization(cnf);
+        const result = await auth.constructPopupUrl();
+        const url = new URL(result);
+        const challenge = url.searchParams.get('code_challenge');
+        assert.typeOf(challenge, 'string', 'the challenge is set')
+        const method = url.searchParams.get('code_challenge_method');
+        assert.equal(method, 'S256', 'the method is set')
+      });
+
+      it('sets [codeVerifierValue]', async () => {
+        const cnf = { ...baseSettings, grantType: 'authorization_code', pkce: true };
+        const auth = new OAuth2Authorization(cnf);
+        await auth.constructPopupUrl();
+        const verifier = auth[codeVerifierValue];
+        assert.typeOf(verifier, 'string', 'the verifier is set');
+        assert.isAbove(verifier.length, 42); // min length 43 characters
+        assert.isBelow(verifier.length, 129); // max length 128 characters
       });
     });
   
@@ -401,7 +423,7 @@ describe('OAuth2', () => {
         password: 'passwd',
         clientSecret: 'client secret',
         redirectUri: 'https://auth.api.com/oauth',
-        responseType: 'custom',
+        grantType: 'custom',
       });
 
       it('has the grant_type', () => {
@@ -583,12 +605,12 @@ describe('OAuth2', () => {
     describe('[popupUnloadHandler]()', () => {
       const baseSettings = Object.freeze({
         clientId: 'test client id',
-        responseType: 'authorization_code',
+        grantType: 'authorization_code',
       });
 
       it('reports the error', () => {
         const cnf = { ...baseSettings };
-        cnf.responseType = 'implicit';
+        cnf.grantType = 'implicit';
         const client = new OAuth2Authorization(cnf);
         client[rejectFunction] = () => {};
         const spy = sinon.spy(client, reportOAuthError);

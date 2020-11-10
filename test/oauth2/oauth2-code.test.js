@@ -8,7 +8,7 @@ import { OAuth2Authorization, popupValue } from '../../src/OAuth2Authorization.j
 describe('OAuth2', () => {
   describe('authorization_code grant', () => {
     const baseConfig = Object.freeze({
-      responseType: 'authorization_code',
+      grantType: 'authorization_code',
       clientId: 'auth-code-cid',
       clientSecret: 'auth-code-cs',
       authorizationUri: new URL('/oauth2/auth-code', document.baseURI).toString(),
@@ -268,7 +268,7 @@ describe('OAuth2', () => {
   
     describe('custom data', () => {
       const settings = {
-        responseType: 'authorization_code',
+        grantType: 'authorization_code',
         clientId: 'auth-code-cid',
         clientSecret: 'auth-code-cs',
         authorizationUri: new URL('/oauth2/auth-code-custom', document.baseURI).toString(),
@@ -303,6 +303,50 @@ describe('OAuth2', () => {
         const auth = new OAuth2Authorization(settings);
         const result = await auth.authorize();
         assert.equal(result.accessToken, 'token1234');
+      });
+    });
+
+    describe('PKCE', () => {
+      const settings = {
+        grantType: 'authorization_code',
+        clientId: 'auth-code-cid',
+        clientSecret: 'auth-code-cs',
+        authorizationUri: new URL('/oauth2/auth-code', document.baseURI).toString(),
+        accessTokenUri: new URL('/oauth2/token', document.baseURI).toString(),
+        redirectUri: new URL('/test/oauth2/popup.html', document.baseURI).toString(),
+        pkce: true,
+      };
+
+      it('returns the token for PKCE extension', async () => {
+        // during this test the mock server actually performs the check for the challenge and the verifier
+        const auth = new OAuth2Authorization(settings);
+        const result = await auth.authorize();
+        assert.equal(result.accessToken, 'token1234');
+      });
+
+      it('returns error when verification fails', async () => {
+        // just to be sure we got it right. With the custom data the "server" adds a single character to the stored challenge.
+        // This will case the verification to fail and therefore this test is... well, tested.
+        const opts = {
+          ...settings,
+          customData: {
+            auth: {
+              parameters: [{
+                name: 'failPkce',
+                value: 'true'
+              }]
+            },
+          },
+        };
+        const auth = new OAuth2Authorization(opts);
+        let err;
+        try {
+          await auth.authorize();
+        } catch (e) {
+          err = e;
+        }
+        assert.typeOf(err, 'error');
+        assert.equal(err.message, 'invalid code_verifier');
       });
     });
   });

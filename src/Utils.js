@@ -26,7 +26,7 @@ export function checkUrl(url) {
  * @throws {Error} When settings are not valid
  */
 export function sanityCheck(settings) {
-  if (['implicit', 'authorization_code'].includes(settings.responseType)) {
+  if (['implicit', 'authorization_code'].includes(settings.grantType)) {
     try {
       checkUrl(settings.authorizationUri);
     } catch (e) {
@@ -49,37 +49,14 @@ export function sanityCheck(settings) {
 }
 
 /**
- * Generates a random string for the state parameter.
+ * Generates a random string of characters.
  * 
- * See: http://stackoverflow.com/a/10727155/1127848
- * 
- * @param {number} len The number of random characters to return.
  * @returns {string} A random string.
  */
-export function randomString(len) {
-  const p1 = 36 ** (len+1);
-  const p2 = 36 ** len;
-  return Math.round(p1 - Math.random() * p2).toString(36).slice(1);
-}
-
-/**
- * Computes `scope` URL parameter from scopes array.
- *
- * @param {string[]} scopes List of scopes to use with the request.
- * @return {string} Computed scope value.
- */
-export function computeScope(scopes) {
-  if (!scopes) {
-    return '';
-  }
-  if (typeof scopes === 'string') {
-    return scopes;
-  }
-  if (Array.isArray(scopes)) {
-    const scope = scopes.join(' ');
-    return encodeURIComponent(scope);
-  }
-  return '';
+export function randomString() {
+  const array = new Uint32Array(28);
+  window.crypto.getRandomValues(array);
+  return Array.from(array, (dec) => (`0${dec.toString(16)}`).substr(-2)).join('');
 }
 
 /**
@@ -102,4 +79,34 @@ export function camel(name) {
     i++;
   }
   return changed ? name : undefined;
+}
+
+/**
+ * Computes the SHA256 hash ogf the given input.
+ * @param {string} value The value to encode.
+ * @returns {Promise<ArrayBuffer>}
+ */
+export async function sha256(value) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(value);
+  return window.crypto.subtle.digest('SHA-256', data);
+}
+
+/**
+ * Encoded the array buffer to a base64 string value.
+ * @param {ArrayBuffer} buffer
+ * @returns
+ */
+export function base64Buffer(buffer) {
+  return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))); // .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/**
+ * Generates code challenge for the PKCE extension to the OAuth2 specification.
+ * @param {string} verifier The generated code verifier.
+ * @returns {Promise<string>} The code challenge string
+ */
+export async function generateCodeChallenge(verifier) {
+  const hashed = await sha256(verifier);
+  return base64Buffer(hashed);
 }
