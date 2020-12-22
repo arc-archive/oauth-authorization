@@ -603,3 +603,30 @@
 * moving logic to a library [994c7d8](https://github.com/advanced-rest-client/oauth-authorization/commit/994c7d800906f3525490b2e5b03715d196c0e7c7) by Pawel
 
 
+<a name="5.0.1"></a>
+## [5.0.1](https://github.com/advanced-rest-client/oauth-authorization/compare/4.0.3...5.0.1) (2020-12-22)
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [296b442](https://github.com/advanced-rest-client/oauth-authorization/commit/296b4429525dd07b5f2b7cf63e834296fc956a41) by Ci agent
+* removing previous ubuntu from tests [1ce9983](https://github.com/advanced-rest-client/oauth-authorization/commit/1ce99839fc18aa954e06959cdb3a2e57ade18252) by Pawel
+* playing with GH actions [fec47ca](https://github.com/advanced-rest-client/oauth-authorization/commit/fec47ca5ee22ef9cdea988735a05e292b74c819c) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [a5a3568](https://github.com/advanced-rest-client/oauth-authorization/commit/a5a356888117e3927d38510784e1cd84562e672e) by Ci agent
+
+
+### Features
+
+* adding support for PKCE extension [f6f6585](https://github.com/advanced-rest-client/oauth-authorization/commit/f6f6585121d52b68f3171480c091dbe38550fc16) by Pawel
+
+
+### Bug Fixes
+
+* missing client_secret when constructing popup url [a50496f](https://github.com/advanced-rest-client/oauth-authorization/commit/a50496f01b9434254be717ae6e5bde3343a28e39) by Carolina Wright
+* fixes #10 - secret with passwort grant [58bcb81](https://github.com/advanced-rest-client/oauth-authorization/commit/58bcb81dbdb2943bcd6e7763c2c69c34b68e173e) by Pawel
+
+
+### Refactor
+
+* moving logic to a library [994c7d8](https://github.com/advanced-rest-client/oauth-authorization/commit/994c7d800906f3525490b2e5b03715d196c0e7c7) by Pawel
+
+
