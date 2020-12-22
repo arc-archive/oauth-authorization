@@ -255,6 +255,14 @@ describe('OAuth2', () => {
         assert.isAbove(verifier.length, 42); // min length 43 characters
         assert.isBelow(verifier.length, 129); // max length 128 characters
       });
+
+      it('sets client_secret and client_id', async () => {
+        const cnf = { ...baseSettings, clientSecret: 'secret', grantType };
+        const auth = new OAuth2Authorization(cnf);
+        const result = await auth.constructPopupUrl();
+        assert.isTrue(result.includes('client_secret=secret'));
+        assert.isTrue(result.includes('client_id=test+client+id'));
+      });
     });
   
     describe('getCodeRequestBody()', () => {
