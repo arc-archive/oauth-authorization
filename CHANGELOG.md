@@ -630,3 +630,24 @@
 * moving logic to a library [994c7d8](https://github.com/advanced-rest-client/oauth-authorization/commit/994c7d800906f3525490b2e5b03715d196c0e7c7) by Pawel
 
 
+<a name="5.0.3"></a>
+## [5.0.3](https://github.com/advanced-rest-client/oauth-authorization/compare/5.0.0...5.0.3) (2020-12-28)
+
+### Build
+
+* bumping version [d285b59](https://github.com/advanced-rest-client/oauth-authorization/commit/d285b593828bb9ae7974cd5d04b0cbab2eda5a18) by Pawel Psztyc
+
+
+### Update
+
+* minor bug fixes [b64bafd](https://github.com/advanced-rest-client/oauth-authorization/commit/b64bafd10ea75219766ade7bcf453614969ab09f) by Pawel Psztyc
+* updating dependencies [a3b4cbd](https://github.com/advanced-rest-client/oauth-authorization/commit/a3b4cbdbad2b93d343531a4dd3e9b559f93d42ee) by Pawel Psztyc
+* [ci skip] automated merge master->stage. syncing main branches [e37f61a](https://github.com/advanced-rest-client/oauth-authorization/commit/e37f61a7fe3b00c8c1c93fa90d9e4b8aa0f0d210) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [296b442](https://github.com/advanced-rest-client/oauth-authorization/commit/296b4429525dd07b5f2b7cf63e834296fc956a41) by Ci agent
+
+
+### Bug Fixes
+
+* missing client_secret when constructing popup url [a50496f](https://github.com/advanced-rest-client/oauth-authorization/commit/a50496f01b9434254be717ae6e5bde3343a28e39) by Carolina Wright
+
+
