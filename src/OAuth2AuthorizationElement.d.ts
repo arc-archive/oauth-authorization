@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { OAuth2AuthorizeEvent } from '@advanced-rest-client/arc-events';
 import { EventsTargetMixin } from '@advanced-rest-client/events-target-mixin';
-import { OAuth2, Authorization } from '@advanced-rest-client/arc-types'
+import { Authorization } from '@advanced-rest-client/arc-types'
 
 export declare const authorizeHandler: unique symbol;
 
@@ -24,5 +24,5 @@ export class OAuth2AuthorizationElement extends EventsTargetMixin(HTMLElement) {
    *
    * @param settings The authorization configuration.
    */
-  authorize(settings: Authorization.OAuth2Authorization): OAuth2.TokenInfo;
+  authorize(settings: Authorization.OAuth2Authorization): Authorization.TokenInfo;
 }

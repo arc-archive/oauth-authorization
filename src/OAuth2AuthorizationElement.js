@@ -3,7 +3,7 @@ import { AuthorizationEventTypes } from '@advanced-rest-client/arc-events';
 import { EventsTargetMixin } from '@advanced-rest-client/events-target-mixin';
 import { OAuth2Authorization } from './OAuth2Authorization.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').OAuth2.TokenInfo} TokenInfo */
+/** @typedef {import('@advanced-rest-client/arc-types').Authorization.TokenInfo} TokenInfo */
 /** @typedef {import('@advanced-rest-client/arc-types').Authorization.OAuth2Authorization} OAuth2Settings */
 /** @typedef {import('@advanced-rest-client/arc-events').OAuth2AuthorizeEvent} OAuth2AuthorizeEvent */
 
@@ -45,6 +45,7 @@ export class OAuth2AuthorizationElement extends EventsTargetMixin(HTMLElement) {
    */
   async authorize(settings) {
     const auth = new OAuth2Authorization(settings);
+    auth.checkConfig();
     return auth.authorize();
   }
 }

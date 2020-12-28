@@ -672,7 +672,8 @@ export class OAuth2Authorization {
     let tokenInfo = {};
     if (mime.includes('json')) {
       const info = JSON.parse(body);
-      Object.keys(info).forEach((name) => {
+      Object.keys(info).forEach((key) => {
+        let name = key;
         if (name.includes('_') || name.includes('-')) {
           name = camel(name);
         }
