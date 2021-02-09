@@ -16,6 +16,7 @@ import {
   processTokenResponse,
   processPopupRawData,
   codeVerifierValue,
+  processCodeResponse,
 } from '../../src/OAuth2Authorization.js';
 
 describe('OAuth2', () => {
@@ -733,6 +734,124 @@ describe('OAuth2', () => {
         const spy = sinon.spy(client, processTokenResponse);
         client[processPopupRawData]('');
         assert.isFalse(spy.called);
+      });
+    });
+
+    describe('processCodeResponse()', () => {
+      describe('JSON response', () => {
+        const mime = 'application/json';
+        let instance = /** @type OAuth2Authorization */ (null);
+        beforeEach(() => {
+          instance = new OAuth2Authorization({});
+        });
+  
+        it('returns the token info object', () => {
+          const body = JSON.stringify({
+            access_token: 't123',
+            expires_in: 10,
+            scope: 'a b',
+            token_type: 'tt',
+          });
+          const result = instance[processCodeResponse](body, mime);
+          assert.equal(result.accessToken, 't123', 'accessToken is set');
+          assert.equal(result.expiresIn, 10, 'expiresIn is set');
+          assert.deepEqual(result.scope, ['a', 'b'], 'scope is set');
+          assert.equal(result.tokenType, 'tt', 'tokenType is set');
+          assert.typeOf(result.expiresAt, 'number', 'expiresAt is set');
+          assert.isFalse(result.expiresAssumed, 'expiresAssumed is set');
+        });
+
+        it('throws error when returned error', () => {
+          const body = JSON.stringify({
+            error: 'client_error',
+            error_description: 'this is an error',
+          });
+          let e;
+          try {
+            instance[processCodeResponse](body, mime);
+          } catch (cause) {
+            e = cause;
+          }
+          assert.equal(e.code, 'client_error');
+          assert.equal(e.message, 'this is an error');
+        });
+
+        it('returns empty scope when missing', () => {
+          const body = JSON.stringify({
+            access_token: 't123',
+            expires_in: 10,
+            token_type: 'tt',
+          });
+          const result = instance[processCodeResponse](body, mime);
+          assert.deepEqual(result.scope, []);
+        });
+
+        it('ignores token_type when missing', () => {
+          const body = JSON.stringify({
+            access_token: 't123',
+            expires_in: 10,
+          });
+          const result = instance[processCodeResponse](body, mime);
+          assert.isUndefined(result.tokenType);
+        });
+      });
+
+      describe('URL encoded response', () => {
+        const mime = 'application/x-www-form-urlencoded';
+        let instance = /** @type OAuth2Authorization */ (null);
+        beforeEach(() => {
+          instance = new OAuth2Authorization({});
+        });
+  
+        it('returns the token info object', () => {
+          const params = new URLSearchParams();
+          params.set('access_token', 't123');
+          params.set('expires_in', '10');
+          params.set('scope', 'a b');
+          params.set('token_type', 'tt');
+          const body = params.toString();
+          const result = instance[processCodeResponse](body, mime);
+          assert.equal(result.accessToken, 't123', 'accessToken is set');
+          assert.equal(result.expiresIn, 10, 'expiresIn is set');
+          assert.deepEqual(result.scope, ['a', 'b'], 'scope is set');
+          assert.equal(result.tokenType, 'tt', 'tokenType is set');
+          assert.typeOf(result.expiresAt, 'number', 'expiresAt is set');
+          assert.isFalse(result.expiresAssumed, 'expiresAssumed is set');
+        });
+
+        it('throws error when returned error', () => {
+          const params = new URLSearchParams();
+          params.set('error', 'client_error');
+          params.set('error_description', 'this is an error');
+          const body = params.toString();
+          let e;
+          try {
+            instance[processCodeResponse](body, mime);
+          } catch (cause) {
+            e = cause;
+          }
+          assert.equal(e.code, 'client_error');
+          assert.equal(e.message, 'this is an error');
+        });
+
+        it('returns empty scope when missing', () => {
+          const params = new URLSearchParams();
+          params.set('access_token', 't123');
+          params.set('expires_in', '10');
+          params.set('token_type', 'tt');
+          const body = params.toString();
+          const result = instance[processCodeResponse](body, mime);
+          assert.deepEqual(result.scope, []);
+        });
+
+        it('ignores token_type when missing', () => {
+          const params = new URLSearchParams();
+          params.set('access_token', 't123');
+          params.set('expires_in', '10');
+          const body = params.toString();
+          const result = instance[processCodeResponse](body, mime);
+          assert.isUndefined(result.tokenType);
+        });
       });
     });
   });

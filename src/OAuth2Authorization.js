@@ -681,7 +681,7 @@ export class OAuth2Authorization {
         if (name.includes('_') || name.includes('-')) {
           name = camel(name);
         }
-        tokenInfo[name] = info[name];
+        tokenInfo[name] = info[key];
       });
     } else {
       tokenInfo = {};
@@ -695,7 +695,7 @@ export class OAuth2Authorization {
       });
     }
     if (tokenInfo.error) {
-      throw new CodeError(tokenInfo.error, tokenInfo.errorDescription);
+      throw new CodeError(tokenInfo.errorDescription, tokenInfo.error);
     }
     const expiresIn = Number(tokenInfo.expiresIn);
     const scope = this[computeTokenInfoScopes](tokenInfo.scope);
@@ -715,7 +715,7 @@ export class OAuth2Authorization {
    */
   [handleTokenCodeError](e) {
     if (e instanceof CodeError) {
-      this[reportOAuthError](...this[createErrorParams](e.message, e.code));
+      this[reportOAuthError](...this[createErrorParams](e.code, e.message));
     } else {
       this[reportOAuthError](`Couldn't connect to the server. ${e.message}`, 'request_error');
     }
