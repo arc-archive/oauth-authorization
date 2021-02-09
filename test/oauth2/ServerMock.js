@@ -345,6 +345,54 @@ module.exports.CodeServerMock = {
     };
   },
 
+  async tokenClientCredentialsHeader(ctx) {
+    const body = await readBody(ctx);
+
+    const params = new URLSearchParams(body);
+    const result = new URLSearchParams();
+
+    const qpCid = params.get('client_id');
+    const qpSecret = params.get('client_secret');
+    const scope = params.get('scope');
+    
+    const { headers } = ctx.request;
+    const { authorization } = headers;
+    if (!authorization) {
+      result.set('error', 'invalid_request');
+      result.set('error_description', 'authorization header not set');
+    } else if (qpCid) {
+      result.set('error', 'invalid_request');
+      result.set('error_description', 'client_id not allowed in query parameters');
+    } else if (qpSecret) {
+      result.set('error', 'invalid_request');
+      result.set('error_description', 'client_secret not allowed in query parameters');
+    } else if (scope && scope !== 'a b') {
+      result.set('error', 'invalid_request');
+      result.set('error_description', 'invalid scope');
+    } else {
+      const hash = authorization.replace(/basic /i, '');
+      const unHashed = Buffer.from(hash, 'base64').toString();
+      const [cid, secret] = unHashed.split(':');
+      if (!cid) {
+        result.set('error', 'invalid_request');
+        result.set('error_description', 'client_id is not set');
+      } else if (!secret) {
+        result.set('error', 'invalid_request');
+        result.set('error_description', 'client_secret is not set');
+      } else {
+        result.set('access_token', responseToken);
+        result.set('refresh_token', refreshToken);
+        result.set('expires_in', '3600');
+        result.set('scope', scope);
+      }
+    }
+
+    return { 
+      body: result.toString(), 
+      type: formContentType,
+    };
+  },
+
   async tokenCustomGrant(ctx) {
     const body = await readBody(ctx);
 
