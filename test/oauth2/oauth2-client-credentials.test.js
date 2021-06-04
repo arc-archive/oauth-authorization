@@ -4,17 +4,19 @@ import { OAuth2Authorization } from '../../src/OAuth2Authorization.js';
 
 // responses are defined in the ./ServerMock.js
 
+/** @typedef {import('@advanced-rest-client/arc-types').Authorization.OAuth2Authorization} OAuth2Settings */
+
 describe('OAuth2', () => {
   describe('client credentials grant', () => {
-    const baseConfig = Object.freeze({
-      grantType: 'client_credentials',
-      clientId: 'auth-code-cid',
-      clientSecret: 'cc-secret',
-      scopes: ['a', 'b'],
-      accessTokenUri: new URL('/oauth2/client-credentials', document.baseURI).toString(),
-    });
+    describe('Body delivery method', () => {
+      const baseConfig = /** @type OAuth2Settings */ (Object.freeze({
+        grantType: 'client_credentials',
+        clientId: 'auth-code-cid',
+        clientSecret: 'cc-secret',
+        scopes: ['a', 'b'],
+        accessTokenUri: new URL('/oauth2/client-credentials', document.baseURI).toString(),
+      }));
 
-    describe('requesting the data', () => {
       it('returns the token info', async () => {
         const config = {
           ...baseConfig,
@@ -72,6 +74,33 @@ describe('OAuth2', () => {
         const auth = new OAuth2Authorization(config);
         const result = await auth.authorize();
         assert.deepEqual(result.scope, ['custom']);
+      });
+    });
+
+    describe('Headers delivery method', () => {
+      const baseConfig = /** @type OAuth2Settings */ (Object.freeze({
+        grantType: 'client_credentials',
+        clientId: 'auth-code-cid',
+        clientSecret: 'cc-secret',
+        scopes: ['a', 'b'],
+        accessTokenUri: new URL('/oauth2/client-credentials-header', document.baseURI).toString(),
+        deliveryMethod: 'header', 
+        deliveryName: 'authorization',
+      }));
+
+      it('returns the token info', async () => {
+        const config = {
+          ...baseConfig,
+        };
+        const auth = new OAuth2Authorization(config);
+        const result = await auth.authorize();
+        assert.typeOf(result, 'object', 'the response is an object');
+        assert.equal(result.accessToken, 'token1234', 'access token is set');
+        assert.equal(result.refreshToken, 'refresh1234', 'refresh token is set');
+        assert.equal(result.expiresIn, 3600, 'expiresIn is set');
+        assert.typeOf(result.expiresAt, 'number', 'expiresAt is set');
+        assert.isFalse(result.expiresAssumed, 'expiresAssumed is set');
+        assert.deepEqual(result.scope, baseConfig.scopes, 'scopes are set to the default scopes');
       });
     });
   

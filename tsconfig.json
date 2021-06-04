@@ -17,9 +17,6 @@
       }
     ]
   },
-  "include": [
-    "**/*.js",
-    "node_modules/@open-wc/**/*.js", "src/OAuth2Authorization.d.ts"
-  ],
+  "include": ["**/*.js", "node_modules/@open-wc/**/*.js", "src/OAuth2Authorization.d.ts", "src/AuthorizationError.d.ts"],
   "exclude": ["node_modules/!(@open-wc)"]
 }

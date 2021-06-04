@@ -614,22 +614,26 @@ export class OAuth2Authorization {
   /**
    * Requests for token from the authorization server for `code`, `password`, `client_credentials` and custom grant types.
    *
-   * @param {String} url Base URI of the endpoint. Custom properties will be applied to the final URL.
-   * @param {String} body Generated body for given type. Custom properties will be applied to the final body.
+   * @param {string} url Base URI of the endpoint. Custom properties will be applied to the final URL.
+   * @param {string} body Generated body for given type. Custom properties will be applied to the final body.
+   * @param {Record<string, string>=} optHeaders Optional headers to add to the request. Applied after custom data.
    * @return {Promise<TokenInfo>} Promise resolved to the response string.
    */
-  async requestToken(url, body) {
+  async requestToken(url, body, optHeaders) {
     const urlInstance = new URL(url);
     const { settings } = this;
-    let headers = {
+    let headers = /** @type Record<string, string> */ ({
       'content-type': 'application/x-www-form-urlencoded',
-    };
+    });
     if (settings.customData) {
       if (settings.customData.token) {
         applyCustomSettingsQuery(urlInstance, settings.customData.token);
       }
       body = applyCustomSettingsBody(body, settings.customData);
       headers = applyCustomSettingsHeaders(headers, settings.customData);
+    }
+    if (optHeaders) {
+      headers = { ...headers, ...optHeaders };
     }
     const init = /** @type RequestInit */ ({
       headers,
@@ -677,7 +681,7 @@ export class OAuth2Authorization {
         if (name.includes('_') || name.includes('-')) {
           name = camel(name);
         }
-        tokenInfo[name] = info[name];
+        tokenInfo[name] = info[key];
       });
     } else {
       tokenInfo = {};
@@ -691,7 +695,7 @@ export class OAuth2Authorization {
       });
     }
     if (tokenInfo.error) {
-      throw new CodeError(tokenInfo.error, tokenInfo.errorDescription);
+      throw new CodeError(tokenInfo.errorDescription, tokenInfo.error);
     }
     const expiresIn = Number(tokenInfo.expiresIn);
     const scope = this[computeTokenInfoScopes](tokenInfo.scope);
@@ -711,7 +715,7 @@ export class OAuth2Authorization {
    */
   [handleTokenCodeError](e) {
     if (e instanceof CodeError) {
-      this[reportOAuthError](...this[createErrorParams](e.message, e.code));
+      this[reportOAuthError](...this[createErrorParams](e.code, e.message));
     } else {
       this[reportOAuthError](`Couldn't connect to the server. ${e.message}`, 'request_error');
     }
@@ -726,10 +730,17 @@ export class OAuth2Authorization {
    */
   async [authorizeClientCredentials]() {
     const { settings } = this;
-    const url = settings.accessTokenUri;
+    const { accessTokenUri, deliveryMethod='body', deliveryName='authorization' } = settings;
     const body = this.getClientCredentialsBody();
+    let headers = /** @type Record<string, string> */ (null);
+    const headerTransport = deliveryMethod === 'header';
+    if (headerTransport) {
+      headers = {
+        [deliveryName]: this.getClientCredentialsHeader(settings),
+      };
+    }
     try {
-      const tokenInfo = await this.requestToken(url, body);
+      const tokenInfo = await this.requestToken(accessTokenUri, body, headers);
       this[handleTokenInfo](tokenInfo);
     } catch (cause) {
       this[handleTokenCodeError](cause);
@@ -743,18 +754,33 @@ export class OAuth2Authorization {
    */
   getClientCredentialsBody() {
     const { settings } = this;
+    const headerTransport = settings.deliveryMethod === 'header';
     const params = new URLSearchParams();
     params.set('grant_type', 'client_credentials');
-    if (settings.clientId) {
+    if (!headerTransport && settings.clientId) {
       params.set('client_id', settings.clientId);
     }
-    if (settings.clientSecret) {
+    if (!headerTransport && settings.clientSecret) {
       params.set('client_secret', settings.clientSecret);
     }
     if (Array.isArray(settings.scopes) && settings.scopes.length) {
       params.set('scope', settings.scopes.join(' '));
     }
     return params.toString();
+  }
+
+  /**
+   * Builds the authorization header for Client Credentials grant type.
+   * According to the spec the authorization header for this grant type
+   * is the Base64 of `clientId` + `:` + `clientSecret`.
+   * 
+   * @param {OAuth2Settings} settings The OAuth 2 settings to use
+   * @returns {string}
+   */
+  getClientCredentialsHeader(settings) {
+    const { clientId='', clientSecret='' } = settings;
+    const hash = btoa(`${clientId}:${clientSecret}`);
+    return `Basic ${hash}`;
   }
 
   /**

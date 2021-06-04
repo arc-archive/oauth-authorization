@@ -278,6 +278,15 @@ export class OAuth2Authorization {
   getClientCredentialsBody(): string;
 
   /**
+   * Builds the authorization header for Client Credentials grant type.
+   * According to the spec the authorization header for this grant type
+   * is the Base64 of `clientId` + `:` + `clientSecret`.
+   * 
+   * @param settings The OAuth 2 settings to use
+   */
+  getClientCredentialsHeader(settings: Authorization.OAuth2Authorization): string;
+
+  /**
    * Requests a token for `client_credentials` request type.
    * 
    * This method resolves the main promise set by the `authorize()` function.

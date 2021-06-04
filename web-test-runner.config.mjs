@@ -28,6 +28,9 @@ export default {
         if (context.path === '/oauth2/client-credentials') {
           return CodeServerMock.tokenClientCredentials(context);
         }
+        if (context.path === '/oauth2/client-credentials-header') {
+          return CodeServerMock.tokenClientCredentialsHeader(context);
+        }
         if (context.path === '/oauth2/custom-grant') {
           return CodeServerMock.tokenCustomGrant(context);
         }

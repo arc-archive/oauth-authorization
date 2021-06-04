@@ -24,5 +24,5 @@ export class OAuth2AuthorizationElement extends EventsTargetMixin(HTMLElement) {
    *
    * @param settings The authorization configuration.
    */
-  authorize(settings: Authorization.OAuth2Authorization): Authorization.TokenInfo;
+  authorize(settings: Authorization.OAuth2Authorization): Promise<Authorization.TokenInfo>;
 }
