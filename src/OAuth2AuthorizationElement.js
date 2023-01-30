@@ -31,14 +31,16 @@ export class OAuth2AuthorizationElement extends EventsTargetMixin(HTMLElement) {
   /**
    * @param {OAuth2AuthorizeEvent} e
    */
-  [authorizeHandler](e) {
-    setTimeout(() => {
-      if (e.defaultPrevented) {
-        return;
-      }
-      const config = { ...e.detail };
-      e.detail.result = this.authorize(config);
-    }, 0);
+  async [authorizeHandler](e) {
+    e.detail.result = new Promise(resolve => { //here
+      setTimeout(() => {
+        if (e.defaultPrevented) {
+          return resolve();
+        }
+        const config = { ...e.detail };
+        this.authorize(config).then(result => resolve(result))
+      }, 0);
+    })
   }
 
   /**
@@ -51,6 +53,6 @@ export class OAuth2AuthorizationElement extends EventsTargetMixin(HTMLElement) {
   async authorize(settings) {
     const auth = new OAuth2Authorization(settings);
     auth.checkConfig();
-    return auth.authorize();
+    return await auth.authorize();
   }
 }
