@@ -32,13 +32,15 @@ export class OAuth2AuthorizationElement extends EventsTargetMixin(HTMLElement) {
    * @param {OAuth2AuthorizeEvent} e
    */
   async [authorizeHandler](e) {
-    e.detail.result = new Promise(resolve => { //here
+    e.detail.result = new Promise((resolve, reject) => {
       setTimeout(() => {
         if (e.defaultPrevented) {
           return resolve();
         }
         const config = { ...e.detail };
-        this.authorize(config).then(result => resolve(result))
+        this.authorize(config)
+          .then(result => resolve(result))
+          .catch(error => reject(error))
       }, 0);
     })
   }
