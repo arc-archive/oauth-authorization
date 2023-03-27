@@ -42,7 +42,7 @@
     "@advanced-rest-client/arc-demo-helper": "^3.0.0",
     "@esm-bundle/chai": "^4.3.4",
     "@open-wc/eslint-config": "^4.3.0",
-    "@open-wc/testing": "^2.5.33",
+    "@open-wc/testing": "^3.1.7",
     "@web/dev-server": "^0.1.17",
     "@web/test-runner": "^0.13.5",
     "@web/test-runner-playwright": "^0.8.6",
