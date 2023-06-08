@@ -13,15 +13,16 @@
     </p>
     <script>
     const messageTarget = (window.opener || window.parent || window.top);
+    const targetOrigin = messageTarget.origin || '*'
     if (!messageTarget || messageTarget === window || !messageTarget.postMessage) {
       const elm = document.getElementById('general-error');
       elm.removeAttribute('hidden');
     } else {
       const search = window.location.search.substr(1);
       if (search) {
-        messageTarget.postMessage(search, '*');
+        messageTarget.postMessage(search, targetOrigin);
       } else {
-        messageTarget.postMessage(window.location.hash.substr(1), '*');
+        messageTarget.postMessage(window.location.hash.substr(1), targetOrigin);
       }
     }
     </script>
