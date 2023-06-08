@@ -13,7 +13,7 @@
     </p>
     <script>
     const messageTarget = (window.opener || window.parent || window.top);
-    const targetOrigin = messageTarget.origin || '*'
+    const targetOrigin = messageTarget.origin;
     if (!messageTarget || messageTarget === window || !messageTarget.postMessage) {
       const elm = document.getElementById('general-error');
       elm.removeAttribute('hidden');
