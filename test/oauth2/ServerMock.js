@@ -184,7 +184,7 @@ module.exports.CodeServerMock = {
     const secret = params.get('client_secret');
     const verifier = params.get('code_verifier');
     const verifierSettings = codeChallenges[code];
-    const challenge = verifier && verifierSettings ? crypto.createHash('sha256').update(verifier).digest('base64') : undefined;
+    const challenge = verifier && verifierSettings ? crypto.createHash('sha256').update(verifier).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')  : undefined;
 
     if (params.get('grant_type') !== 'authorization_code') {
       result.set('error', 'invalid_grant');
