@@ -98,7 +98,7 @@ export async function sha256(value) {
  * @returns
  */
 export function base64Buffer(buffer) {
-  return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))); // .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**
